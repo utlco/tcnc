@@ -73,12 +73,13 @@ For now installation must be done by hand...
 
 **Location of user Inkscape extension folder:**
 
-*  MacOS, Linux:
-    * *~/.config/inkscape/extensions*, where *~* is your home
+* MacOS, Linux:
+
+    `~/.config/inkscape/extensions`, where *~* is your home
     directory (i.e. /Users/YourUserName).
 
-*  Windows:
-    * *C:\\Users\\YourUserName\\.Appdata\\Roaming\\inkscape\\extensions*
+* Windows:
 
+    `C:\\Users\\YourUserName\\.Appdata\\Roaming\\inkscape\\extensions`
 
 
