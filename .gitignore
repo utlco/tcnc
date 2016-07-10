@@ -1,0 +1,24 @@
+# Ignore Eclipse project files and compiled Python
+.project
+.pydevproject
+.settings
+*.pyc
+
+# Ignore the Sphinx build folder
+docs/build/
+
+# Ignore temporary test scripts in case they haven't been deleted...
+**/t.py
+**/t1.py
+**/t2.py
+test/t.html
+test/t1.html
+test/t2.html
+
+# Ignore any open vim sessions
+**/*.swp
+
+# Ignore any bins of misc. saved cruft
+unused/
+saved/
+tmp/
