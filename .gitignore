@@ -3,6 +3,7 @@
 .pydevproject
 .settings
 *.pyc
+README.html
 
 # Ignore the Sphinx build folder
 docs/build/
