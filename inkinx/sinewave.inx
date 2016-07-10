@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+
+    <name>Sine Wave</name>
+
+    <id>com.utlco.sinewave</id>
+
+  <dependency type="executable" location="extensions">tcnc/sinewave.py</dependency>
+
+  <param name="active-tab" type="notebook">
+
+        <page name="sinewave" _gui-text="Sine Wave">
+            <param name="amplitude" type="float" precision="5" min="0" max="10000" _gui-text="Amplitude">1</param>
+            <param name="wavelength" type="float" precision="5" min="0" max="10000" _gui-text="Wavelength">1</param>
+            <param name="cycles" type="int" _gui-text="Cycles">1</param>
+            <param name="origin_x" type="float" precision="5" min="0" max="10000" _gui-text="Origin X">0</param>
+            <param name="origin_y" type="float" precision="5" min="0" max="10000" _gui-text="Origin Y">0</param>
+        </page>
+
+<!--
+            <param name="" type="description">
+Debug Output and logging</param>
+            <param name="create-debug-layer" type="boolean" _gui-text="Create debug layer">false</param>
+      <param name="log-create" type="boolean" _gui-text="Create log file">false</param>
+      <param name="log-level" type="optiongroup" appearance="minimal" _gui-text="Log level">
+        <_option value="DEBUG">Debug</_option>
+        <_option value="INFO">Info</_option>
+        <_option value="WARNING">Warning</_option>
+        <_option value="ERROR">Error</_option>
+        <_option value="CRITICAL">Critical</_option>
+      </param>
+      <param name="log-filename" type="string" _gui-text="Full path of log file">~/tcnc.log</param>
+    </page>
+ -->
+    <page name="about" _gui-text="About">
+      <_param name="about-text" type="description">
+Sine Wave Version 0.2
+Draw a sine wave with Bezier curves.
+Copyright 2015-2016 Claude Zervas
+      </_param>
+    </page>
+
+  </param>
+    <effect needs-live-preview="false">
+    <effects-menu>
+      <submenu _name="UTLCo"/>
+    </effects-menu>
+    <object-type>path</object-type>
+    </effect>
+    <script>
+        <command reldir="extensions" interpreter="python">tcnc/sinewave.py</command>
+    </script>
+</inkscape-extension>

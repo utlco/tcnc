@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+
+  <name>PolyPath</name>
+  <id>com.utlco.polypath</id>
+  <dependency type="executable" location="extensions">tcnc/polypath.py</dependency>
+  <effect needs-live-preview="false">
+    <effects-menu>
+      <submenu _name="UTLCo"/>
+    </effects-menu>
+    <object-type>path</object-type>
+  </effect>
+  <script>
+    <command reldir="extensions" interpreter="python">tcnc/polypath.py</command>
+  </script>
+
+  <param name="active-tab" type="notebook">
+    <page name="polypath" _gui-text="PolyPath">
+      <param name="polysegpath-draw" type="boolean" _gui-text="Draw polygon segment paths">true</param>
+      <param name="polysegpath-min-length" type="int" min="0" max="10" _gui-text="Minimum number of path segments">1</param>
+      <param name="polysegpath-longest" type="boolean" _gui-text="Draw longest paths">true</param>
+      <param name="polysegpath-max" type="int" min="0" max="10" _gui-text="Maximum number of long paths">1</param>
+      <param name="polysegpath-type" type="optiongroup" appearance="minimal" _gui-text="Edge following strategy">
+        <_option value="0">Straightest</_option>
+        <_option value="1">Squiggly</_option>
+        <_option value="2">Random</_option>
+        <_option value="3">Random 2</_option>
+      </param>
+  <!--
+      <param name="epsilon" type="float" precision="5" min="0" max="1" _gui-text="Epsilon:">0.0001</param>
+   -->
+    </page>
+
+    <page name="polyface" _gui-text="PolyFaces">
+      <param name="polyface-draw" type="boolean" _gui-text="Create face polygons">false</param>
+      <param name="polyface-offset" type="float" precision="2" min="-1000" max="1000" _gui-text="Offset">0</param>
+      <param name="polyface-fillet" type="boolean" _gui-text="Fillet face polygons">false</param>
+      <param name="polyface-fillet-radius" type="float" precision="2" min="-1000" max="1000" _gui-text="Fillet radius">0</param>
+    </page>
+
+    <page name="polyhull" _gui-text="PolyHull">
+      <param name="convex-hull-draw" type="boolean" _gui-text="Draw convex hull">true</param>
+
+      <param name="hull-draw" type="boolean" _gui-text="Draw polyhull">true</param>
+      <param name="hull-inner-draw" type="boolean" _gui-text="Draw inner polyhulls">true</param>
+
+      <param name="hull2-draw" type="boolean" _gui-text="Create expanded polyhull">true</param>
+      <param name="hull2-max-angle" type="float" precision="4" max="180" _gui-text="Max angle">90</param>
+      <param name="hull2-clip" type="boolean" _gui-text="Use expanded polyhull to clip">true</param>
+      <param name="hull2-draw-rays" type="boolean" _gui-text="Draw rays">true</param>
+    </page>
+
+    <page name="debug" _gui-text="Debug">
+      <param name="create-debug-layer" type="boolean" _gui-text="Create debug layer">false</param>
+      <param name="log-create" type="boolean" _gui-text="Generate log file">false</param>
+      <param name="log-level" type="optiongroup" appearance="minimal" _gui-text="Log level">
+        <_option value="DEBUG">Debug</_option>
+        <_option value="INFO">Info</_option>
+        <_option value="WARNING">Warning</_option>
+        <_option value="ERROR">Error</_option>
+        <_option value="CRITICAL">Critical</_option>
+      </param>
+      <param name="log-filename" type="string" _gui-text="Full path to log file">~/polypath.log</param>
+    </page>
+
+    <page name="about" _gui-text="About">
+      <_param name="" type="description">PolyPath Version 0.1</_param>
+      <_param name="" type="description">Copyright 2010-2016 Claude Zervas</_param>
+    </page>
+  </param>
+</inkscape-extension>

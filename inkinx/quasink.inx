@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+
+  <name>Quasi/Penrose Tessellations</name>
+  <id>com.utlco.quasink</id>
+  <dependency type="executable" location="extensions">tcnc/quasink.py</dependency>
+  <effect needs-live-preview="false">
+    <effects-menu>
+      <submenu _name="UTLCo"/>
+    </effects-menu>
+    <object-type>path</object-type>
+  </effect>
+  <script>
+    <command reldir="extensions" interpreter="python">tcnc/quasink.py</command>
+  </script>
+
+  <param name="active-tab" type="notebook">
+    <page name="quasi" _gui-text="Quasi">
+      <param name="symmetry" type="int" min="0" max="100" _gui-text="Degrees of symmetry:">5</param>
+      <param name="scale" type="float" min="0.0" max="1000.0" _gui-text="Scale:">10</param>
+      <param name="rotate" type="float" min="-360.0" max="360.0" _gui-text="Rotate:">0</param>
+      <param name="offset-x" type="float" precision="2" min="-1000" max="1000" _gui-text="X offset:">0</param>
+      <param name="offset-y" type="float" precision="2" min="-1000" max="1000" _gui-text="Y offset:">0</param>
+    </page>
+
+    <page name="segments" _gui-text="Segments">
+      <param name="segment-draw" type="boolean" _gui-text="Draw segments">True</param>
+      <param name="segpath-draw" type="boolean" _gui-text="Draw segments paths">True</param>
+      <param name="segpath-fillclosed" type="boolean" _gui-text="Fill closed polygons">False</param>
+      <param name="segpath-closed" type="boolean" _gui-text="Draw closed polygons only">True</param>
+      <param name="segtype-skinny" type="optiongroup" appearance="minimal" _gui-text="Segment type for skinny rhombi:">
+        <_option value="0">No segment</_option>
+        <_option value="1">acute angle sides joined</_option>
+        <_option value="2">obtuse angle sides joined</_option>
+        <_option value="3">opposite sides joined to make cross</_option>
+        <_option value="4">all sides joined to make rectangle</_option>
+        <_option value="5">acute angle vertices joined</_option>
+        <_option value="6">obtuse angle vertices joined</_option>
+        <_option value="7">vertices joined to make cross</_option>
+      </param>
+      <param name="segtype-fat" type="optiongroup" appearance="minimal" _gui-text="Segment type for fat rhombi:">
+        <_option value="0">No segment</_option>
+        <_option value="1">acute angle sides joined</_option>
+        <_option value="2">obtuse angle sides joined</_option>
+        <_option value="3">opposite sides joined to make cross</_option>
+        <_option value="4">all sides joined to make rectangle</_option>
+        <_option value="5">acute angle vertices joined</_option>
+        <_option value="6">obtuse angle vertices joined</_option>
+        <_option value="7">vertices joined to make cross</_option>
+      </param>
+      <param name="segment-split-cross" type="boolean" _gui-text="Split crossed segments.">False</param>
+      <param name="skinnyfat-ratio" type="float" precision="2" min="0.0" max="1.0" _gui-text="Skinny/fat ratio:">0.2</param>
+      <param name="segment-ratio" type="float" precision="2" min="0.0" max="1.0" _gui-text="Segment ratio:">0.5</param>
+      <param name="segment-scale" type="float" precision="2" min="-1000" max="1000" _gui-text="Segment line scale:">1.0</param>
+<!--
+      <param name="segment-sort" type="optiongroup" appearance="minimal" _gui-text="Sort segments by:">
+          <_option value="0">no sort</_option>
+          <_option value="1">inside out</_option>
+          <_option value="2">outside in</_option>
+      </param>
+      <param name="segment-draw" type="boolean" _gui-text="Draw segments">true</param>
+      <param name="segpath-draw" type="boolean" _gui-text="Chain segments into paths">True</param>
+      <param name="segpath-min-segments" type="int" min="0" max="10000" _gui-text="Min segments in path">1</param>
+-->
+    </page>
+
+    <page name="polygons" _gui-text="Polygons">
+      <param name="polygon-draw" type="boolean" _gui-text="Draw polygons">true</param>
+      <param name="min-rhombus-width" type="float" precision="4" min="-999" max="1000" _gui-text="Minimum rhombus width:">0</param>
+      <param name="polygon-mult" type="int" min="0" max="10" _gui-text="Number of concentric polygons:">1</param>
+      <param name="polygon-mult-spacing" type="float" precision="4" min="-999" max="1000" _gui-text="Concentric spacing:">0</param>
+      <param name="polygon-fill" type="boolean" _gui-text="Fill polygons">false</param>
+      <param name="polygon-zfill" type="boolean" _gui-text="Polygon type determines fill color">false</param>
+      <param name="polygon-fill-lut" type="optiongroup" appearance="minimal" _gui-text="Fill color LUT">
+        <_option value="gray05">Gray 5&#37; incr</_option>
+        <_option value="gray10">Gray 10&#37; incr</_option>
+        <_option value="red">Red</_option>
+        <_option value="red05">Red 5&#37; incr</_option>
+        <_option value="red10">Red 10&#37; incr</_option>
+        <_option value="yellow">Yellow</_option>
+        <_option value="yellow05">Yellow 5&#37; incr</_option>
+        <_option value="yellow10">Yellow 10&#37; incr</_option>
+      </param>
+      <param name="polygon-fill-lut-offset" type="int" min="0" max="100" _gui-text="LUT offset:">0</param>
+      <param name="polygon-sort" type="optiongroup" appearance="minimal" _gui-text="Sort polygons by:">
+        <_option value="0">no sort</_option>
+        <_option value="1">inside out</_option>
+        <_option value="2">outside in</_option>
+      </param>
+    </page>
+
+    <page name="polysegs" _gui-text="PolySegs">
+      <param name="polyseg-draw" type="boolean" _gui-text="Draw polygon segments">true</param>
+      <param name="polyseg-scale" type="float" precision="2" min="-1000" max="1000" _gui-text="Segment line scale:">1.0</param>
+      <param name="polyseg-stroke-width" type="string" _gui-text="Polygon segment stroke width">3pt</param>
+      <param name="polyseg-lut" type="optiongroup" appearance="minimal" _gui-text="Color set:">
+        <_option value="none">none</_option>
+        <_option value="cmy">CMY</_option>
+        <_option value="rgb">RGB</_option>
+        <_option value="rainbow">rainbow</_option>
+        <_option value="gray05">Gray 5&#37; incr</_option>
+        <_option value="gray10">Gray 10&#37; incr</_option>
+        <_option value="red">Red</_option>
+        <_option value="red05">Red 5&#37; incr</_option>
+        <_option value="red10">Red 10&#37; incr</_option>
+        <_option value="yellow">Yellow</_option>
+        <_option value="yellow05">Yellow 5&#37; incr</_option>
+        <_option value="yellow10">Yellow 10&#37; incr</_option>
+      </param>
+      <param name="polyseg-layer-per-color" type="boolean" _gui-text="Layer per color:">false</param>
+      <param name="polyseg-clip-to-margins" type="boolean" _gui-text="Clip to margins:">false</param>
+    </page>
+
+    <page name="ellipses" _gui-text="Ellipses">
+      <param name="ellipse-draw" type="boolean" _gui-text="Draw ellipses in polygons:">false</param>
+      <param name="ellipse-cull" type="boolean" _gui-text="Cull eccentric ellipses:">false</param>
+      <param name="ellipse-min-radius" type="float" precision="4" min="0" max="1000" _gui-text="Min ellipse radius:">1.0</param>
+      <param name="ellipse-inset" type="float" precision="4" min="-999" max="1000" _gui-text="Ellipse inset:">0</param>
+    </page>
+
+    <page name="optional" _gui-text="Optional">
+      <param name="numlines" type="int" min="0" max="100" _gui-text="Number of vector lines:">30</param>
+      <param name="salt-x" type="float" precision="5" min="-10" max="10" _gui-text="X offset salt:">0.2137</param>
+      <param name="salt-y" type="float" precision="5" min="-10" max="10" _gui-text="Y offset salt:">0.1132</param>
+      <param name="epsilon" type="float" precision="5" min="0" max="1" _gui-text="Epsilon:">0.00001</param>
+    </page>
+
+    <page name="margins" _gui-text="Margins">
+      <param name="clip-to-doc" type="boolean" _gui-text="Clip to document">True</param>
+      <param name="clip-to-margins" type="boolean" _gui-text="Clip to margins">True</param>
+      <param name="clip-to-circle" type="boolean" _gui-text="Circular clip region:">False</param>
+      <param name="margin-top" type="float" precision="3" min="-999" max="1000" _gui-text="Top margin:">0</param>
+      <param name="margin-left" type="float" precision="3" min="-999" max="1000" _gui-text="Left margin:">0</param>
+      <param name="margin-right" type="float" precision="3" min="-999" max="1000" _gui-text="Right margin:">0</param>
+      <param name="margin-bottom" type="float" precision="3" min="-999" max="1000" _gui-text="Bottom margin:">0</param>
+      <param name="margin-draw" type="boolean" _gui-text="Draw margins:">False</param>
+    </page>
+
+    <page name="projection" _gui-text="Projection">
+      <param name="project-sphere" type="boolean" _gui-text="Project on to sphere">False</param>
+      <param name="project-invert" type="boolean" _gui-text="Invert projection">False</param>
+      <param name="project-radius-useclip" type="boolean" _gui-text="Use clip circle for radius">False</param>
+      <param name="project-radius" type="float" precision="2" min="0" max="1000" _gui-text="Radius:">0</param>
+      <param name="blowup-scale" type="float" precision="4" min="-100" max="100" _gui-text="Blow up scale:">1.0</param>
+    </page>
+
+     <page name="layers" _gui-text="Layers">
+      <param name="create-culledrhombus-layer" type="boolean" _gui-text="Create culled rhombus layer">false</param>
+      <param name="create-info-layer" type="boolean" _gui-text="Create info layer">false</param>
+    </page>
+
+    <page name="log" _gui-text="Debug">
+      <param name="create-debug-layer" type="boolean" _gui-text="Create debug layer">false</param>
+      <param name="log-create" type="boolean" _gui-text="Generate log file">false</param>
+      <param name="log-level" type="optiongroup" appearance="minimal" _gui-text="Log level">
+        <_option value="DEBUG">Debug</_option>
+        <_option value="INFO">Info</_option>
+        <_option value="WARNING">Warning</_option>
+        <_option value="ERROR">Error</_option>
+        <_option value="CRITICAL">Critical</_option>
+      </param>
+      <param name="log-filename" type="string" _gui-text="Full path to log file">~/quasink.log</param>
+    </page>
+
+    <page name="about" _gui-text="About">
+      <_param name="about-text" type="description">
+Quasink Version 0.1
+Quasicrystal/Penrose tesselator
+Based on Eric Weeks quasi.c and quasi_colour.c:
+http://www.physics.emory.edu/~weeks/software/quasic.html
+      </_param>
+    </page>
+  </param>
+</inkscape-extension>

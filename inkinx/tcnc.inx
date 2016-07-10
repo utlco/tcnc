@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+
+    <name>Tcnc</name>
+
+    <id>com.utlco.tcnc</id>
+
+  <dependency type="executable" location="extensions">tcnc/tcnc.py</dependency>
+    <effect needs-live-preview="false">
+    <effects-menu>
+      <submenu _name="UTLCo"/>
+    </effects-menu>
+    <object-type>path</object-type>
+    </effect>
+    <script>
+        <command reldir="extensions" interpreter="python">tcnc/tcnc.py</command>
+    </script>
+
+  <param name="active-tab" type="notebook">
+
+    <page name="options" _gui-text="Options">
+            <param name="origin-ref" type="optiongroup" appearance="minimal" _gui-text="Origin reference">
+                <_option value="paper">Bottom left corner of document</_option>
+                <_option value="bbox">Bounding box of selected paths</_option>
+            </param>
+            <param name="path-sort-method" type="optiongroup" appearance="minimal" _gui-text="Path sorting method">
+                <_option value="">None</_option>
+                <_option value="flip">Flip paths</_option>
+                <_option value="optimize">Bottom to top, left to right</_option>
+<!--
+                <_option value="y+">bottom to top</_option>
+                <_option value="y-">top to bottom</_option>
+                <_option value="x+">left to right</_option>
+                <_option value="x-">right to left</_option>
+                <_option value="cw_out">CW from center</_option>
+                <_option value="ccw_out">CCW from center</_option>
+                <_option value="cw_in">CW to center</_option>
+                <_option value="ccw_in">CCW to center</_option>
+-->
+      </param>
+<!--
+            <param name="skip-path-count" type="int" min="0" max="1000000" _gui-text="Number of paths to skip">0</param>
+-->
+
+            <param name="" type="description">-----------------------------------------------------</param>
+
+            <param name="path-split-cusps" type="boolean" _gui-text="Split paths at non-tangent control points">false</param>
+            <param name="path-tool-fillet" type="boolean" _gui-text="Fillet paths for tool width compensation">false</param>
+            <param name="path-close-polygons" type="boolean" _gui-text="Close polygons with fillet">false</param>
+            <param name="path-tool-offset" type="boolean" _gui-text="Offset paths for tool trail offset compensation">false</param>
+            <param name="path-preserve-g1" type="boolean" _gui-text="Smooth offsets to preserve tangent (G1) continuity">false</param>
+            <param name="path-smooth-fillet" type="boolean" _gui-text="Add final smoothing fillets">false</param>
+            <param name="path-smooth-radius" type="float" precision="4" min="0" max="9999" _gui-text="Smoothing fillet radius">0</param>
+    </page>
+
+    <page name="tool" _gui-text="Tool">
+            <param name="z-step" type="float" precision="4" min="-9999" max="9999" _gui-text="Depth per pass">0.25</param>
+            <param name="z-depth" type="float" precision="4" min="-9999" max="9999" _gui-text="Final depth">0.25</param>
+
+            <param name="" type="description">-----------------------------------------------------</param>
+
+            <param name="tool-width" type="float" precision="4" min="0" max="9999" _gui-text="Tool width">0</param>
+            <param name="a-feed-match" type="boolean" _gui-text="Match tool rotation edge velocity to XY feed rate">false</param>
+            <param name="tool-trail-offset" type="float" precision="4" min="-999" max="9999" _gui-text="Trail offset">0</param>
+            <param name="a-offset" type="float" precision="2" min="-360" max="360" _gui-text="Tool angle offset (deg)">0.0</param>
+<!--
+            <param name="allow-tool-reversal" type="boolean" _gui-text="Allow tool reversal">false</param>
+      <param name="" type="description">.</param>
+            <param name="tool-wait" type="float" precision="3" min="0" max="99" _gui-text="Wait for tool up/down (seconds)">0</param>
+-->
+
+            <param name="" type="description">-----------------------------------------------------</param>
+
+            <param name="spindle-mode" type="optiongroup" appearance="minimal" _gui-text="Spindle mode">
+                <_option value="">No spindle</_option>
+                <_option value="start">Spindle on at start</_option>
+                <_option value="path">Spindle on before every path</_option>
+            </param>
+            <param name="spindle-speed" type="int" min="0" max="50000" _gui-text="Spindle RPM">0</param>
+            <param name="spindle-wait-on" type="float" precision="4"  min="0" _gui-text="Spindle warmup (seconds)">0</param>
+            <param name="spindle-clockwise" type="boolean" _gui-text="Clockwise spindle rotation">true</param>
+    </page>
+
+        <page name="brush" _gui-text="Brush">
+            <param name="brush-reload-enable" type="boolean" _gui-text="Enable brush reload">false</param>
+            <param name="brush-reload-max-paths" type="int" min="1" max="1000" _gui-text="Number of paths between reload">1</param>
+            <param name="brush-reload-rotate" type="boolean" _gui-text="Rotate brush for reload">false</param>
+            <param name="brush-reload-angle" type="float" precision="0" min="0" max="360" _gui-text="Brush reload angle (degrees)">0</param>
+            <param name="brush-pause-mode" type="optiongroup" appearance="minimal" _gui-text="Brush reload pause">
+                <_option value="">No pause</_option>
+                <_option value="restart">Pause brush until restart</_option>
+                <_option value="time">Pause brush for time:</_option>
+            </param>
+            <param name="brush-reload-dwell" type="float" precision="1" _gui-text="Brush pause time (seconds)">0</param>
+
+      <param name="" type="description">-----------------------------------------------------</param>
+
+            <param name="brush-overshoot-mode" type="optiongroup" appearance="minimal" _gui-text="Brush overshoot">
+                <_option value="">No overshoot</_option>
+                <_option value="auto">Overshoot based on tool width</_option>
+                <_option value="manual">Manual overshoot distance:</_option>
+            </param>
+            <param name="brush-overshoot-distance" type="float" precision="4" min="0" _gui-text="Manual overshoot distance">0</param>
+
+      <param name="" type="description">-----------------------------------------------------</param>
+
+            <param name="brush-soft-landing" type="boolean" _gui-text="Perform soft brush landing and liftoff">false</param>
+            <param name="brush-landing-strip" type="float" precision="4" min="0" _gui-text="Landing strip distance">0</param>
+<!--
+            <param name="brush-flip-path" type="boolean" _gui-text="Flip brush after every path">false</param>
+            <param name="brush-trail-up" type="float" precision="4" min="0" max="1000" _gui-text="Brush trail up:">0.25</param>
+            <param name="brush-reload" type="boolean" _gui-text="Enable brush reload:">false</param>
+            <param name="brushstroke-overlap" type="float" precision="2" min="0" max="1000" _gui-text="Brushstroke overlap:">.5</param>
+            <param name="brush-reload-pause" type="boolean" _gui-text="Pause brush before path">false</param>
+            <param name="brushstroke-max" type="float" precision="2" min="0" max="1000" _gui-text="Max brushstroke distance before reload">0</param>
+
+            <param name="desc2" type="description">Brush landing profile</param>
+
+            <param name="brush-landing-start-height" type="float" precision="4" max="5" _gui-text="Start height">.3</param>
+            <param name="brush-landing-end-height" type="float" precision="4" min="-2" max="5" _gui-text="End height">-0.2</param>
+            <param name="brush-landing-angle" type="float" precision="2" min="-360" max="360" _gui-text="Landing angle">45.0</param>
+
+            <param name="desc3" type="description">Brush liftoff profile</param>
+
+            <param name="brush-liftoff-height" type="float" precision="4" max="5" _gui-text="Liftoff height">.3</param>
+            <param name="brush-liftoff-angle" type="float" precision="2" min="-360" max="360" _gui-text="Liftoff angle">45.0</param>
+            <param name="brush-fillet-radius" type="float" precision="4" min="0" max="1000" _gui-text="Brush fillet radius">0.25</param>
+            <param name="brush-fillet-radius-auto" type="boolean" _gui-text="Auto-calc fillet radius">false</param>
+-->
+        </page>
+
+        <page name="machine" _gui-text="Machine">
+            <param name="gcode-units" type="optiongroup" appearance="minimal" _gui-text="Units">
+                <_option value="doc">Infer from document</_option>
+                <_option value="in">inch</_option>
+                <_option value="mm">mm</_option>
+            </param>
+
+      <param name="" type="description">-----------------------------------------------------</param>
+
+            <param name="xy-feed" type="float" precision="2" min="0" max="9999" _gui-text="XY feed rate (units/minute)">400.0</param>
+            <param name="z-feed" type="float" precision="2" min="0" max="9999" _gui-text="Z feed rate (units/minute)">400.0</param>
+            <param name="a-feed" type="float" precision="2" min="0" max="9999" _gui-text="A feed rate (deg/minute)">360.0</param>
+
+      <param name="" type="description">-----------------------------------------------------</param>
+
+            <param name="z-safe" type="float" precision="4" min="-9999" max="9999" _gui-text="Z safe height">1.0</param>
+
+      <param name="" type="description">-----------------------------------------------------</param>
+
+            <param name="blend-mode" type="optiongroup" appearance="minimal" _gui-text="Trajectory blending mode">
+                <_option value="">Default mode (G64)</_option>
+                <_option value="blend">Blend with tolerance (G64 P&lt;t&gt;)</_option>
+                <_option value="exact">Exact path (G61)</_option>
+            </param>
+            <param name="blend-tolerance" type="float" precision="4" min="0" max="9999" _gui-text="Blend tolerance (P value)">0</param>
+        </page>
+
+        <page name="tolerances" _gui-text="Tolerances">
+            <param name="tolerance" type="float" precision="8" min="0" max="1" _gui-text="Numeric tolerance (epsilon)">0.00001</param>
+<!--
+            <param name="gc-precision" type="float" precision="0" min="1" max="15" _gui-text="G code output precision">5</param>
+-->
+
+      <param name="" type="description">-----------------------------------------------------</param>
+
+      <param name="biarc-tolerance" type="float" precision="5" min="0.00001" max="10" _gui-text="Curve approximation tolerance">0.01</param>
+            <param name="biarc-max-depth" type="int" min="1" max="8" _gui-text="Maximum Bezier curve subdivisions">4</param>
+            <param name="line-flatness" type="float" precision="5" min="0.00001" max="10" _gui-text="Curve to line flatness">0.001</param>
+            <param name="min-arc-radius" type="float" precision="5" min="0.00001" max="10"  _gui-text="Minimum arc radius">0.001</param>
+<!--
+            <param name="angle-tolerance" type="float" precision="5" min="0" max="1" _gui-text="Angle tolerance:">0.0001</param>
+-->
+        </page>
+
+    <page name="output" _gui-text="Output">
+      <param name="output-path" type="string" _gui-text="Full path of G code output file">~/output.ngc</param>
+      <param name="append-suffix" type="boolean" _gui-text="Add numeric suffix to filename">false</param>
+            <param name="separate-layers" type="boolean" _gui-text="Create separate gcode file per Inkscape layer">false</param>
+
+      <param name="" type="description">-----------------------------------------------------</param>
+
+            <param name="preview-scale" type="optiongroup" appearance="minimal" _gui-text="Preview line scale">
+                <_option value="medium">Default</_option>
+                <_option value="small">Small</_option>
+                <_option value="medium">Medium</_option>
+                <_option value="large">Large</_option>
+            </param>
+
+      <param name="" type="description">-----------------------------------------------------</param>
+
+            <param name="create-debug-layer" type="boolean" _gui-text="Create debug layer">false</param>
+      <param name="log-create" type="boolean" _gui-text="Create log file">false</param>
+      <param name="log-level" type="optiongroup" appearance="minimal" _gui-text="Log level">
+        <_option value="DEBUG">Debug</_option>
+        <_option value="INFO">Info</_option>
+        <_option value="WARNING">Warning</_option>
+        <_option value="ERROR">Error</_option>
+        <_option value="CRITICAL">Critical</_option>
+      </param>
+      <param name="log-filename" type="string" _gui-text="Full path of log file">~/tcnc.log</param>
+    </page>
+
+    <page name="about" _gui-text="About">
+      <_param name="" type="description">Tcnc Version 0.2</_param>
+      <_param name="" type="description">Copyright 2010-2016 Claude Zervas</_param>
+      <_param name="" type="description"></_param>
+    </page>
+
+  </param>
+</inkscape-extension>

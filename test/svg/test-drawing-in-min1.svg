@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   sodipodi:docname="test-drawing-in-min1.svg"
+   width="11in"
+   height="8.5in"
+   viewBox="0 0 11 8.5"
+   id="svg3368"
+   version="1.1"
+   inkscape:version="0.91 r13725">
+  <sodipodi:namedview
+     inkscape:document-units="in"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.1849816"
+     inkscape:cx="428.44625"
+     inkscape:cy="355.3212"
+     inkscape:current-layer="layer1"
+     id="namedview3372"
+     showgrid="false"
+     inkscape:window-width="1440"
+     inkscape:window-height="851"
+     inkscape:window-x="0"
+     inkscape:window-y="1"
+     inkscape:window-maximized="1" />
+  <defs
+     id="defs3370">
+    <marker
+       style="overflow:visible"
+       refY="0.0"
+       refX="0.0"
+       orient="auto"
+       id="PreviewLineEnd0">
+      <path
+         id="path195534"
+         transform="scale(0.38) translate(-4.5,0)"
+         style="fill-rule:evenodd;fill:#ff3030;stroke:none;marker-start:none"
+         d="M 5.77,0.0 L -2.88,5.0 L -2.88,-5.0 L 5.77,0.0 z" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       refY="0.0"
+       refX="0.0"
+       orient="auto"
+       id="PreviewLineEnd1">
+      <path
+         id="path195537"
+         transform="scale(-0.38) translate(-4.5,0)"
+         style="fill-rule:evenodd;fill:#ff3030;stroke:none;marker-start:none"
+         d="M 5.77,0.0 L -2.88,5.0 L -2.88,-5.0 L 5.77,0.0 z" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       refY="0.0"
+       refX="0.0"
+       orient="auto"
+       id="PreviewLineEnd2">
+      <path
+         id="path195540"
+         transform="scale(0.38) translate(-4.5,0)"
+         style="fill-rule:evenodd;fill:#10cc10;stroke:none;marker-start:none"
+         d="M 5.77,0.0 L -2.88,5.0 L -2.88,-5.0 L 5.77,0.0 z" />
+    </marker>
+  </defs>
+  <metadata
+     id="metadata3374">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-2.5)">
+    <path
+       sodipodi:nodetypes="cccsc"
+       inkscape:connector-curvature="0"
+       id="path143507"
+       d="m 1.7788564,7.282676 c 0,0 2.0952667,-3.2929523 2.963891,-1.5914935 0.2172793,0.4256038 0.4377774,0.855321 0.6519659,1.2792563 L 6.047796,5.6911825 C 6.9164203,3.9897237 9.0116869,7.282676 9.0116869,7.282676"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.01111111px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+  </g>
+</svg>
