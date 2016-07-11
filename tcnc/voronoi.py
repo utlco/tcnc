@@ -16,7 +16,7 @@ from __future__ import (absolute_import, division,
 from future_builtins import *
 
 import gettext
-# import logging
+import logging
 
 import geom
 
@@ -31,8 +31,9 @@ from inkscape import inkext
 __version__ = "0.2"
 
 _ = gettext.gettext
+logger = logging.getLogger(__name__)
 
-_GEOM_EPSILON = 1e-06
+_GEOM_EPSILON = 1e-09
 
 class Voronoi(inkext.InkscapeExtension):
     """Inkscape plugin that creates Voronoi diagrams.
@@ -185,8 +186,13 @@ class Voronoi(inkext.InkscapeExtension):
                     # The line direction is left
                     p1 = p2
                     xclip = clip_rect.xmin
+                # Ignore start points outside of clip rect.
+                if not clip_rect.point_inside(p1):
+                    continue
                 a, b, c = edge.equation
-                if b == 0:
+                if geom.is_zero(b):#b == 0:
+                    logger.debug('vert: a=%f, b=%f, c=%f, p1=%s, p2=%s',
+                                 a, b, c, str(p1), str(p2))
                     # vertical line
                     x = c / a
                     center_y = (clip_rect.ymin + clip_rect.ymax) / 2
