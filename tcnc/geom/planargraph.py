@@ -415,7 +415,8 @@ class GraphPathBuilder(object):
         Args:
             start_edge: The graph edge that starts the path.
             path_strategy: How paths will be constructed. Possible
-                pat strategies are:
+                path strategies are:
+
                     PATH_STRAIGHTEST, PATH_SQUIGGLY,
                     PATH_RANDOM, and PATH_RANDOM2
 

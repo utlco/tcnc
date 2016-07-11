@@ -16,6 +16,7 @@ Mostly unchanged except to make it a little more pythonic and:
     - Fixed divide by zero exception for even symmetries
     - Added segment connection to vertices options
     - Removed coloring - should be done in plotter
+
 ====
 """
 # Python 3 compatibility boilerplate

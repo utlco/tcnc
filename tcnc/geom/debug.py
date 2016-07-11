@@ -22,7 +22,7 @@ def svg_context():
 
 def set_svg_context(svg_context):
     """Initialize this module with an SVGContext that can be used
-    for debug output by draw_...() methods."""
+    for debug output by draw...() methods."""
     global _SVG_CONTEXT
     _SVG_CONTEXT = svg_context
 
@@ -34,9 +34,9 @@ def draw_obj(obj, color='#c00000', parent=None):
         draw_line(obj, color=color, parent=parent)
     elif isinstance(obj, arc.Arc):
         draw_arc(obj, color=color, parent=parent)
-    elif isinstance(obj, ellipse.ellipse.Ellipse):
+    elif isinstance(obj, ellipse.Ellipse):
         draw_ellipse(obj, color=color, parent=parent)
-    elif isinstance(obj, bezier.bezier.CubicBezier):
+    elif isinstance(obj, bezier.CubicBezier):
         draw_bezier(obj, color=color, parent=parent)
 
 def draw_point(point, color='#000000', radius=3, parent=None):

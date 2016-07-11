@@ -6,8 +6,8 @@ Tcnc
 .. toctree::
     :maxdepth: 1
 
-    usage.rst
-    code.rst
+    usage_tcnc.rst
+    source_code.rst
 
 * :ref:`genindex`
 

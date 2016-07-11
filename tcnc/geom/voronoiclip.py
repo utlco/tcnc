@@ -7,11 +7,10 @@ from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from future_builtins import *
 
-import . import voronoi
+from . import polygon
 
 from .point import P
 from .line import Line
-from . import polygon
 
 def clip_voronoi_segments(self, diagram, clip_rect):
     """Clip a voronoi diagram to a clipping rectangle.

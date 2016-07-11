@@ -43,7 +43,7 @@ class Ellipse(object):
         Args:
             center: The center of the ellipse.
             rx: Semi-major axis length.
-            ry: Semi-minor axis length. Default is :param:`rx` if None.
+            ry: Semi-minor axis length. Default is `rx` if None.
             phi: Rotation angle of the ellipse.
         """
         self.center = P(center)
@@ -102,7 +102,7 @@ class Ellipse(object):
             t: Parametric angle - 0 < t < 2*PI.
 
         Returns:
-            A point at :param:`t`
+            A point at `t`
         """
         cos_theta = math.cos(self.phi)
         sin_theta = math.sin(self.phi)

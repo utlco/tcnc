@@ -2,7 +2,9 @@
 # Copyright 2012-2016 Claude Zervas
 # email: claude@utlco.com
 #-----------------------------------------------------------------------------
-"""Basic 2D affine transform matrix operations.
+"""
+Basic 2D affine transform matrix operations.
+
 ====
 """
 # Python 3 compatibility boilerplate
@@ -20,8 +22,9 @@ IDENTITY_MATRIX = ((1.0, 0.0, 0.0), (0.0, 1.0, 0.0))
 def compose_transform(m1, m2):
     """Combine two matrices by multiplying them.
 
-    :param m1: 2X3 2D transform matrix.
-    :param m2: 2X3 2D transform matrix.
+    Args:
+        m1: 2X3 2D transform matrix.
+        m2: 2X3 2D transform matrix.
 
     Note:
         `m2` is applied before (to) `m1`
@@ -40,8 +43,12 @@ def compose_transform(m1, m2):
 def matrix_rotate(angle, origin=(0.0, 0.0)):
     """Create a transform matrix to rotate about the origin.
 
-    :param angle: Rotation angle in radians.
-    :param origin: Optional rotation origin. Default is (0,0).
+    Args:
+        angle: Rotation angle in radians.
+        origin: Optional rotation origin. Default is (0,0).
+
+    Returns:
+        A transform matrix as 2x3 tuple
     """
     cos_a = math.cos(angle)
     sin_a = math.sin(angle)
@@ -52,17 +59,25 @@ def matrix_rotate(angle, origin=(0.0, 0.0)):
 def matrix_translate(x, y):
     """Create a transform matrix to translate (move).
 
-    :param x: translation along X axis
-    :param y: translation along Y axis
+    Args:
+        x: translation along X axis
+        y: translation along Y axis
+
+    Returns:
+        A transform matrix as 2x3 tuple
     """
     return ((1.0, 0.0, x), (0.0, 1.0, y))
 
 def matrix_scale(scale_x, scale_y, origin=None):
     """Create a transform matrix to scale.
 
-    :param scale_x: X axis scale factor
-    :param scale_y: Y axis scale factor
-    :param origin: Optional scale origin. Default is (0,0).
+    Args:
+        scale_x: X axis scale factor
+        scale_y: Y axis scale factor
+        origin: Optional scale origin. Default is (0,0).
+
+    Returns:
+        A transform matrix as 2x3 tuple
     """
     m = ((scale_x, 0.0, 0.0), (0.0, scale_y, 0.0))
     if origin is not None:
@@ -74,24 +89,36 @@ def matrix_scale(scale_x, scale_y, origin=None):
 def matrix_scale_translate(scale_x, scale_y, offset_x, offset_y):
     """Create a transform matrix to scale and translate.
 
-    :param scale_x: X axis scale factor
-    :param scale_y: Y axis scale factor
-    :param offset_x: translation along X axis
-    :param offset_y: translation along Y axis
+    Args:
+        scale_x: X axis scale factor
+        scale_y: Y axis scale factor
+        offset_x: translation along X axis
+        offset_y: translation along Y axis
+
+    Returns:
+        A transform matrix as 2x3 tuple
     """
     return ((scale_x, 0.0, offset_x), (0.0, scale_y, offset_y))
 
 def matrix_skew_x(angle):
     """Create a transform matrix to skew along X axis by `angle`.
 
-    :param angle: Angle in radians to skew.
+    Args:
+        angle: Angle in radians to skew.
+
+    Returns:
+        A transform matrix as 2x3 tuple
     """
     return ((1.0, math.tan(angle), 0.0),(0.0, 1.0, 0.0))
 
 def matrix_skew_y(angle):
     """Create a transform matrix to skew along Y axis by `angle`.
 
-    :param angle: Angle in radians to skew.
+    Args:
+        angle: Angle in radians to skew.
+
+    Returns:
+        A transform matrix as 2x3 tuple
     """
     return ((1.0, 0.0, 0.0),(math.tan(angle), 1.0, 0.0))
 
@@ -106,9 +133,13 @@ def canonicalize_point(p, origin, theta):
 
     This just rotates then translates the point.
 
-    :param p: The point to canonicalize.
-    :param origin: The origin offset as a 2-tuple (X, Y).
-    :param theta: The axis rotation angle.
+    Args:
+        p: The point to canonicalize (x, y).
+        origin: The origin offset as a 2-tuple (X, Y).
+        theta: The axis rotation angle.
+
+    Returns:
+        A point as 2-tuple
     """
     p = matrix_apply_to_point(matrix_rotate(-theta), p)
     return (p[0] - origin[0], p[1] - origin[1])

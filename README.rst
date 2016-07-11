@@ -11,7 +11,11 @@ TCNC
 * GitHub: https://github.com/utlco/tcnc
 * Free software: LGPL v3 license
 
-An Inkscape (version .91+) extension that generates G-code suitable for a
+This is a mostly rewritten/refactored version of the previous
+repository (now tcnc-old).
+
+Tcnc is an Inkscape (version .91+) extension that generates
+G-code suitable for a
 3.5 axis CNC machine controlled by LinuxCNC v2.4+.
 The rotational axis (A) is assumed to rotate about
 the Z axis and is kept tangent to movement along the X and Y axis.

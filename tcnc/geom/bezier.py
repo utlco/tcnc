@@ -183,6 +183,7 @@ class CubicBezier(tuple):
 
     def subdivide_inflections(self):
         """Subdivide this curve at the inflection points, if any.
+
         Returns:
             A list containing one to three curves depending on whether
             there are no inflections, one inflection, or two inflections.

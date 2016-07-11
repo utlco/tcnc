@@ -2,6 +2,25 @@
 Source Code
 ===========
 
+Modules
+-------
+
+.. toctree::
+    :maxdepth: 2
+
+    api_extensions.rst
+
+    api_inkscape.rst
+
+    api_svg.rst
+
+    api_geom.rst
+
+    api_cam.rst
+
+* :ref:`modindex`
+
+
 Notes
 -----
 
@@ -96,22 +115,4 @@ Emails, pull requests, feature requests,
 and issues are infrequently examined and may be left ignored
 for an uncomfortably long period of time... Sorry about that.
 Bug reports are welcome in any case.
-
-
-Modules
--------
-
-.. toctree::
-    :maxdepth: 2
-
-    tcnc.rst
-    geom.rst
-    gcode.rst
-    quasi.rst
-    voronoi.rst
-    svg.rst
-    polygon.rst
-    simplecam.rst
-
-* :ref:`modindex`
 

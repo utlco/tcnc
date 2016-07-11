@@ -159,8 +159,7 @@ class Line(tuple):#namedtuple('Line', 'p1, p2')):
             distance: The distance to offset the line by.
 
         Returns:
-            A line segment parallel to this one and offset by
-            :param:`distance`.
+            A line segment parallel to this one and offset by `distance`.
             If offset is < 0 the offset line will be to the right of this line,
             otherwise to the left. If offset is zero or the line segment length
             is zero then this line is returned.

@@ -1,6 +1,6 @@
-==========
-Using Tcnc
-==========
+=================================
+Tcnc Extension User Documentation
+=================================
 
 Tcnc is designed as an Inkscape extension plugin but
 can be also invoked as a standalone program from

@@ -148,10 +148,11 @@ class P(tuple):#namedtuple('P', 'x, y')):
     def dot(self, other):
         """Compute the dot product with another vector.
 
-        See http://en.wikipedia.org/wiki/Dot_product
-
-        Equivalent to |p1|*|p2|*cos(theta) where theta is the
+        Equivalent to \|p1\|\*\|p2\|\*cos(theta) where theta is the
         angle between the two vectors.
+
+        See:
+            http://en.wikipedia.org/wiki/Dot_product
 
         Args:
             other: The vector with which to compute the dot product.
