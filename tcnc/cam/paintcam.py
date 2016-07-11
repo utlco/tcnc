@@ -12,9 +12,10 @@ from future_builtins import *
 import math
 # import logging
 
-from lib import simplecam
-from lib import toolpath
-from lib import geom
+import geom
+
+from . import util
+from . import simplecam
 
 class PaintCAM(simplecam.SimpleCAM):
     """
@@ -95,7 +96,7 @@ class PaintCAM(simplecam.SimpleCAM):
     def process_brush_path(self, path):
         """
         """
-        start_angle = toolpath.seg_start_angle(path[0])
+        start_angle = util.seg_start_angle(path[0])
         # First prepend the landing strip if any.
         strip_dist = self.brush_landing_strip
         if strip_dist > self.gc.tolerance:
@@ -129,7 +130,7 @@ class PaintCAM(simplecam.SimpleCAM):
                 overshoot_dist = self.brush_overshoot_distance
 #             logger.debug('tw=%f, od=%f' % (self.tool_width, overshoot_dist))
             segment = path[-1]
-            brush_direction = toolpath.seg_end_angle(segment)
+            brush_direction = util.seg_end_angle(segment)
             if overshoot_dist > self.gc.tolerance:
                 delta = geom.P.from_polar(overshoot_dist, brush_direction)
                 overshoot_endp = segment.p2 + delta

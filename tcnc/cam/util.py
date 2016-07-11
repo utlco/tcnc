@@ -11,7 +11,7 @@ from future_builtins import *
 
 import logging
 
-from lib import geom
+import geom
 
 logger = logging.getLogger(__name__)
 
@@ -57,13 +57,13 @@ def copy_segment_attrs(seg1, seg2):
 
 def seg_start_angle(segment):
     """The tangent angle of this segment at the first end point.
-    If there is a toolpath segment hint attribute ('inline_start_angle')
+    If there is a cam segment hint attribute ('inline_start_angle')
     its value will be returned instead."""
     return getattr(segment, 'inline_start_angle', segment.start_tangent_angle())
 
 def seg_end_angle(segment):
     """The tangent angle of this segment at the last end point.
-    If there is a toolpath segment hint  attribute ('inline_end_angle')
+    If there is a cam segment hint  attribute ('inline_end_angle')
     its value will be returned instead."""
     return getattr(segment, 'inline_end_angle', segment.end_tangent_angle())
 

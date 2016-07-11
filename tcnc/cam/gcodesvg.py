@@ -13,8 +13,9 @@ from future_builtins import *
 import math
 import logging
 
-from lib import geom
-from lib import gcode
+import geom
+
+from . import gcode
 
 
 class SVGPreviewPlotter(gcode.PreviewPlotter):

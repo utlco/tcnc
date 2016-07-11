@@ -12,8 +12,9 @@ from future_builtins import *
 
 # import logging
 
-from lib import geom
-from lib.geom import fillet
+import geom
+
+from geom import fillet
 
 
 def fillet_path(path, radius, fillet_close=True,

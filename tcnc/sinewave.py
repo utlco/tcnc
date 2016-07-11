@@ -15,8 +15,9 @@ from future_builtins import *
 
 import gettext
 
-from lib import inkext
-from lib import geom
+import geom
+
+from inkscape import inkext
 
 __version__ = '0.2'
 

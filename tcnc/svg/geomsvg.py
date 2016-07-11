@@ -13,9 +13,11 @@ from future_builtins import *
 import math
 import logging
 
-from lib import svg
-from lib import geom
-from lib.geom import transform2d
+import geom
+
+from geom import transform2d
+
+from . import svg
 
 
 def svg_to_geometry(svg_elements, parent_transform=None):

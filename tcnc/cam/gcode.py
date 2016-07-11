@@ -30,7 +30,7 @@ class PreviewPlotter(object):
     """Base interface that can be implemented by users of the GCode
     class to provide a graphical preview of the G-code output.
 
-    See :py:mod:`lib.gcodesvg` for an example of an SVG implemention.
+    See :py:mod:`cam.gcodesvg` for an example of an SVG implemention.
     """
 
     def __init__(self):

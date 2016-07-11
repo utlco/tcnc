@@ -13,8 +13,6 @@ from future_builtins import *
 import math
 # import logging
 
-from lib import geom
-
 from . import const
 from . import util
 from .line import Line
@@ -202,8 +200,8 @@ def fillet_line_line(line1, line2, fillet_radius):
         fp2 = line2.normal_projection_point(fillet_center, segment=True)
         # Test for fillet fit
         if (fp1 is not None and fp2 is not None and fp1 != fp2
-                and geom.float_eq(fp1.distance(fillet_center), fillet_radius)
-                and geom.float_eq(fp2.distance(fillet_center), fillet_radius)):
+                and const.float_eq(fp1.distance(fillet_center), fillet_radius)
+                and const.float_eq(fp2.distance(fillet_center), fillet_radius)):
             fillet_arc = Arc.from_two_points_and_center(fp1, fp2,
                                                        fillet_center)
     return fillet_arc
@@ -264,7 +262,7 @@ def fillet_line_arc(line, arc, fillet_radius):
     # If the direction is arc->line then reverse both
     # to make things simpler.
     is_reversed = False
-    if geom.float_eq(arc.p2, line.p1):
+    if const.float_eq(arc.p2, line.p1):
         # The two segments are connected but in reverse order.
         line = line.reversed()
         arc = arc.reversed()
@@ -291,7 +289,7 @@ def fillet_line_arc(line, arc, fillet_radius):
     fp1 = line.normal_projection_point(fillet_center, segment=True)
     fp2 = arc.point_at_angle(alpha2, segment=True)
     if (fp1 is not None and fp2 is not None and fp1 != fp2 and
-        geom.float_eq(fillet_center.distance(fp1),
+        const.float_eq(fillet_center.distance(fp1),
                       fillet_center.distance(fp2))):
         if is_reversed:
             fillet_arc = Arc.from_two_points_and_center(fp2, fp1,

@@ -13,8 +13,12 @@ from future_builtins import *
 import math
 import logging
 
-from lib import geom
-from lib import toolpath
+import geom
+
+from . import util
+from . import toolpath
+from . import fillet
+from . import offset
 
 
 class CAMException(Exception):
@@ -91,7 +95,7 @@ class SimpleCAM(object):
         self.path_tool_offset = False
         #: Preserve G1 continuity for offset arcs
         self.path_preserve_g1 = False
-        #: Split toolpath at points that are not G1 or C1 continuous
+        #: Split cam at points that are not G1 or C1 continuous
         self.path_split_cusps = False
         #: Close polygons with tool fillet
         self.path_close_polygons = False
@@ -219,7 +223,7 @@ class SimpleCAM(object):
         #DEBUG
 #         if self.path_tool_offset and self.tool_trail_offset > 0:
 #             for path in path_list:
-#                 new_path = toolpath.offset_path(path, self.tool_trail_offset,
+#                 new_path = cam.offset_path(path, self.tool_trail_offset,
 #                                             preserve_g1=self.path_preserve_g1)
 #                 new_path_list.append(new_path)
 #                 if self.debug_svg is not None:
@@ -242,14 +246,14 @@ class SimpleCAM(object):
                 geom.debug.plot_path(path, '#33cc33', biarc_layer)
             # First, create fillets to compensate for tool width
             if self.path_tool_fillet and self.tool_width > 0:
-                path = toolpath.fillet_path(path, self.tool_width / 2,
+                path = fillet.fillet_path(path, self.tool_width / 2,
                                         fillet_close=self.path_close_polygons,
                                         mark_fillet=True)
                 if self.debug_svg is not None:
                     geom.debug.plot_path(path, '#3333cc', fillet_layer)
             # Split path at cusps. This may add more than one path.
             if self.path_split_cusps:
-                paths = toolpath.split_path_g1(path)
+                paths = util.split_path_g1(path)
                 biarc_path_list.extend(paths)
             else:
                 biarc_path_list.append(path)
@@ -262,7 +266,7 @@ class SimpleCAM(object):
         if self.path_tool_offset and self.tool_trail_offset > 0:
             new_path_list = []
             for path in path_list:
-                path = toolpath.offset_path(path, self.tool_trail_offset)
+                path = offset.offset_path(path, self.tool_trail_offset)
                 if self.debug_svg is not None:
                     geom.debug.plot_path(path, '#cc3333', offset_layer)
                 new_path_list.append(path)
@@ -272,7 +276,7 @@ class SimpleCAM(object):
             if self.path_preserve_g1:
                 new_path_list = []
                 for path in path_list:
-                    path = toolpath.fix_G1_path(path,
+                    path = offset.fix_G1_path(path,
                                                 self.biarc_tolerance,
                                                 self.line_flatness)
                     if self.debug_svg is not None:
@@ -284,19 +288,19 @@ class SimpleCAM(object):
         if self.path_smooth_fillet and self.path_smooth_radius > 0.0:
             new_path_list = []
             for path in path_list:
-                path = toolpath.fillet_path(path, self.path_smooth_radius,
-                                        fillet_close=self.path_close_polygons,
-                                        adjust_rotation=True)
+                path = fillet.fillet_path(path, self.path_smooth_radius,
+                                          fillet_close=self.path_close_polygons,
+                                          adjust_rotation=True)
                 if self.debug_svg is not None:
                     geom.debug.plot_path(path, '#ff0000', smooth_layer)
                 new_path_list.append(path)
             path_list = new_path_list
 
         # DEBUG
-#         logger.debug('a1=%f, a2=%f, a3=%f, a4=%f' % (toolpath.seg_start_angle(path[0]),
-#                                               toolpath.seg_end_angle(path[0]),
-#                                               toolpath.seg_start_angle(path[-1]),
-#                                               toolpath.seg_end_angle(path[-1])))
+#         logger.debug('a1=%f, a2=%f, a3=%f, a4=%f' % (cam.seg_start_angle(path[0]),
+#                                               cam.seg_end_angle(path[0]),
+#                                               cam.seg_start_angle(path[-1]),
+#                                               cam.seg_end_angle(path[-1])))
 #         for path in path_list:
 #             prev_seg = path[0]
 #             for seg in path[1:]:
@@ -377,7 +381,7 @@ class SimpleCAM(object):
         """Generate G code for a rapid move to the beginning of the tool path.
         """
         start_segment = path[0]
-        start_angle = toolpath.seg_start_angle(start_segment)
+        start_angle = util.seg_start_angle(start_segment)
         rotation = geom.calc_rotation(self.current_angle, start_angle)
         self.current_angle += rotation
         self.gc.rapid_move(start_segment.p1.x, start_segment.p1.y,
@@ -435,8 +439,8 @@ class SimpleCAM(object):
             start_angle = self.current_angle
             end_angle = self.current_angle
         else:
-            start_angle = toolpath.seg_start_angle(segment)
-            end_angle = toolpath.seg_end_angle(segment)
+            start_angle = util.seg_start_angle(segment)
+            end_angle = util.seg_end_angle(segment)
             # Rotate A axis to segment start angle
             rotation = geom.calc_rotation(self.current_angle, start_angle)
             if not geom.is_zero(rotation):

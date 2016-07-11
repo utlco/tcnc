@@ -17,11 +17,7 @@ from . import const
 from .point import P
 
 # Full module path to resolve circular import
-import lib.geom.line
-
-# print('importing box')
-# def dummy():
-#     print('dummy')
+import geom.line
 
 
 class Box(tuple):
@@ -172,7 +168,7 @@ class Box(tuple):
             if u_minmax[0] > 0.0:
                 x1 += u_minmax[0] * dx
                 y1 += u_minmax[0] * dy
-            return lib.geom.line.Line(P(x1, y1), P(x2, y2))
+            return geom.line.Line(P(x1, y1), P(x2, y2))
         return None
 
     def _clipT(self, nQ, nP, u_minmax):

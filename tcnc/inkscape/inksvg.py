@@ -4,9 +4,6 @@
 #-----------------------------------------------------------------------------
 """
 A simple library for SVG output - but more Inkscape-centric.
-
-Requires lxml.etree
-====
 """
 # Python 3 compatibility boilerplate
 from __future__ import (absolute_import, division,
@@ -17,9 +14,10 @@ from future_builtins import *
 
 from lxml import etree
 
-from lib import svg
-from lib.geom import transform2d
-from lib.svg import svg_ns, _add_ns
+from geom import transform2d
+
+from svg import svg
+from svg.svg import svg_ns, _add_ns
 
 # logger = logging.getLogger(__name__)
 
@@ -288,142 +286,142 @@ class InkscapeSVGContext(svg.SVGContext):
             nodelist.append((node, node_transform))
         return nodelist
 
-    def convert_element_to_path(self, node):
-        """Convert an SVG element into a simplepath.
-
-        This handles paths, rectangles, circles, ellipses, lines, and polylines.
-        Anything else raises an exception.
-        """
-        # Do a lazy import here so that the module doesn't depend on it.
-        import simplepath
-
-        node_tag = svg.strip_ns(node.tag) # node tag stripped of namespace part
-
-        if node_tag == 'path':
-            return simplepath.parsePath(node.get('d'))
-        elif node_tag == 'rect':
-            return self.convert_rect_to_path(node)
-        elif node_tag == 'line':
-            return self.convert_line_to_path(node)
-        elif node_tag == 'circle':
-            return self.convert_circle_to_path(node)
-        elif node_tag == 'ellipse':
-            return self.convert_ellipse_to_path(node)
-        elif node_tag == 'polyline':
-            return self.convert_polyline_to_path(node)
-        elif node_tag == 'polygon':
-            return self.convert_polygon_to_path(node)
-        elif node_tag == 'text':
-            raise Exception(_('Unable to convert text. '
-                              'Please convert text to paths first.'))
-        elif node_tag == 'image':
-            raise Exception(_('Unable to convert bitmap images. '
-                              'Please convert them to line art first.'))
-        else:
-            raise Exception(_('Unable to convert this SVG element to a path:'
-                              ' <%s>') % (node.tag))
-
-
-    def convert_rect_to_path(self, node):
-        """Convert an SVG rect shape element to a simplepath.
-
-        Convert this:
-           <rect x='X' y='Y' width='W' height='H'/>
-        to this:
-           'M X1 Y1 L X1 Y2 L X2 Y2 L X2 Y1 Z'
-        """
-        x1 = float(node.get('x', 0))
-        y1 = float(node.get('y', 0))
-        x2 = x1 + float(node.get('width', 0))
-        y2 = y1 + float(node.get('height', 0))
-        return [['M', [x1, y1]], ['L', [x1, y2]], ['L', [x2, y2]],
-                ['L', [x2, y1]], ['L', [x1, y1]]]
-        #return 'M %f %f L %f %f L %f %f L %f %f Z' % (x1, y1, x1, y2, x2, y2, x2, y1)
-
-
-    def convert_line_to_path(self, node):
-        """Convert an SVG line shape element to a simplepath.
-
-        Convert this:
-           <line x1='X1' y1='Y1' x2='X2' y2='Y2/>
-        to this:
-           'MX1 Y1 LX2 Y2'
-        """
-        x1 = float(node.get('x1', 0))
-        y1 = float(node.get('y1', 0))
-        x2 = float(node.get('x2', 0))
-        y2 = float(node.get('y2', 0))
-        return [['M', [x1, y1]], ['L', [x2, y2]]]
-        #return 'M %s %s L %s %s' % (node.get('x1'), node.get('y1'), node.get('x2'), node.get('y2'))
-
-
-    def convert_circle_to_path(self, node):
-        """Convert an SVG circle shape element to a simplepath.
-        The circle is divided into two 180deg circular arcs.
-
-        Convert this:
-           <circle r='RX' cx='X' cy='Y'/>
-        to this:
-           'M X1,CY A RX,RY 0 1 0 X2,CY A ...'
-        """
-        r = float(node.get('r', 0))
-        cx = float(node.get('cx', 0))
-        cy = float(node.get('cy', 0))
-        d = [['M', [cx + r, cy]],
-             ['A', [r, r, 0, 1, 1, cx - r, cy]],
-             ['A', [r, r, 0, 1, 1, cx + r, cy]]]
-        return d
-
-
-    def convert_ellipse_to_path(self, node):
-        """Convert an SVG ellipse shape element to a path.
-        The ellipse is divided into two 180deg elliptical arcs.
-
-        Convert this:
-           <ellipse rx='RX' ry='RY' cx='X' cy='Y'/>
-        to this:
-           'M X1,CY A RX,RY 0 1 0 X2,CY A RX,RY 0 1 0 X1,CY'
-        """
-        rx = float(node.get('rx', 0))
-        ry = float(node.get('ry', 0))
-        cx = float(node.get('cx', 0))
-        cy = float(node.get('cy', 0))
-        return [['M', [cx + rx, cy]],
-                ['A', [rx, ry, 0, 1, 1, cx - rx, cy]],
-                ['A', [rx, ry, 0, 1, 1, cx + rx, cy]]]
-
-
-    def convert_polyline_to_path(self, node):
-        """Convert an SVG line shape element to a path.
-
-        Convert this:
-           <polyline points='x1,y1 x2,y2 x3,y3 [...]'/>
-        to this:
-           'M x1 y1 L x2 y2 L x3 y3 [...]'/>
-        """
-        points = node.get('points', '').split()
-        point = points[0].split(',')
-        d = [ [ 'M', [float(point[0]), float(point[1])] ], ]
-        #d = 'M ' + ''.join(points[0].split(',')) # remove comma separator
-        for i in range(1, len(points)):
-            point = points[i].split(',')
-            d.append( ['L', [float(point[0]), float(point[1])]] )
-            #d += ' L ' + ''.join(points[i].split(','))
-        return d
-
-
-    def convert_polygon_to_path(self, node):
-        """Convert an SVG line shape element to a path.
-
-        Convert this:
-           <polygon points='x1,y1 x2,y2 x3,y3 [...]'/>
-        to this:
-           'M x1 y1 L x2 y2 L x3 y3 [...]'/>
-        """
-        d = self.convert_polyline_to_path(node)
-        #d += ' Z' # close path for polygons
-        d.append(['L', d[0][1]])
-        return d
+#     def convert_element_to_path(self, node):
+#         """Convert an SVG element into a simplepath.
+#
+#         This handles paths, rectangles, circles, ellipses, lines, and polylines.
+#         Anything else raises an exception.
+#         """
+#         # Do a lazy import here so that the module doesn't depend on it.
+#         import simplepath
+#
+#         node_tag = svg.strip_ns(node.tag) # node tag stripped of namespace part
+#
+#         if node_tag == 'path':
+#             return simplepath.parsePath(node.get('d'))
+#         elif node_tag == 'rect':
+#             return self.convert_rect_to_path(node)
+#         elif node_tag == 'line':
+#             return self.convert_line_to_path(node)
+#         elif node_tag == 'circle':
+#             return self.convert_circle_to_path(node)
+#         elif node_tag == 'ellipse':
+#             return self.convert_ellipse_to_path(node)
+#         elif node_tag == 'polyline':
+#             return self.convert_polyline_to_path(node)
+#         elif node_tag == 'polygon':
+#             return self.convert_polygon_to_path(node)
+#         elif node_tag == 'text':
+#             raise Exception(_('Unable to convert text. '
+#                               'Please convert text to paths first.'))
+#         elif node_tag == 'image':
+#             raise Exception(_('Unable to convert bitmap images. '
+#                               'Please convert them to line art first.'))
+#         else:
+#             raise Exception(_('Unable to convert this SVG element to a path:'
+#                               ' <%s>') % (node.tag))
+#
+#
+#     def convert_rect_to_path(self, node):
+#         """Convert an SVG rect shape element to a simplepath.
+#
+#         Convert this:
+#            <rect x='X' y='Y' width='W' height='H'/>
+#         to this:
+#            'M X1 Y1 L X1 Y2 L X2 Y2 L X2 Y1 Z'
+#         """
+#         x1 = float(node.get('x', 0))
+#         y1 = float(node.get('y', 0))
+#         x2 = x1 + float(node.get('width', 0))
+#         y2 = y1 + float(node.get('height', 0))
+#         return [['M', [x1, y1]], ['L', [x1, y2]], ['L', [x2, y2]],
+#                 ['L', [x2, y1]], ['L', [x1, y1]]]
+#         #return 'M %f %f L %f %f L %f %f L %f %f Z' % (x1, y1, x1, y2, x2, y2, x2, y1)
+#
+#
+#     def convert_line_to_path(self, node):
+#         """Convert an SVG line shape element to a simplepath.
+#
+#         Convert this:
+#            <line x1='X1' y1='Y1' x2='X2' y2='Y2/>
+#         to this:
+#            'MX1 Y1 LX2 Y2'
+#         """
+#         x1 = float(node.get('x1', 0))
+#         y1 = float(node.get('y1', 0))
+#         x2 = float(node.get('x2', 0))
+#         y2 = float(node.get('y2', 0))
+#         return [['M', [x1, y1]], ['L', [x2, y2]]]
+#         #return 'M %s %s L %s %s' % (node.get('x1'), node.get('y1'), node.get('x2'), node.get('y2'))
+#
+#
+#     def convert_circle_to_path(self, node):
+#         """Convert an SVG circle shape element to a simplepath.
+#         The circle is divided into two 180deg circular arcs.
+#
+#         Convert this:
+#            <circle r='RX' cx='X' cy='Y'/>
+#         to this:
+#            'M X1,CY A RX,RY 0 1 0 X2,CY A ...'
+#         """
+#         r = float(node.get('r', 0))
+#         cx = float(node.get('cx', 0))
+#         cy = float(node.get('cy', 0))
+#         d = [['M', [cx + r, cy]],
+#              ['A', [r, r, 0, 1, 1, cx - r, cy]],
+#              ['A', [r, r, 0, 1, 1, cx + r, cy]]]
+#         return d
+#
+#
+#     def convert_ellipse_to_path(self, node):
+#         """Convert an SVG ellipse shape element to a path.
+#         The ellipse is divided into two 180deg elliptical arcs.
+#
+#         Convert this:
+#            <ellipse rx='RX' ry='RY' cx='X' cy='Y'/>
+#         to this:
+#            'M X1,CY A RX,RY 0 1 0 X2,CY A RX,RY 0 1 0 X1,CY'
+#         """
+#         rx = float(node.get('rx', 0))
+#         ry = float(node.get('ry', 0))
+#         cx = float(node.get('cx', 0))
+#         cy = float(node.get('cy', 0))
+#         return [['M', [cx + rx, cy]],
+#                 ['A', [rx, ry, 0, 1, 1, cx - rx, cy]],
+#                 ['A', [rx, ry, 0, 1, 1, cx + rx, cy]]]
+#
+#
+#     def convert_polyline_to_path(self, node):
+#         """Convert an SVG line shape element to a path.
+#
+#         Convert this:
+#            <polyline points='x1,y1 x2,y2 x3,y3 [...]'/>
+#         to this:
+#            'M x1 y1 L x2 y2 L x3 y3 [...]'/>
+#         """
+#         points = node.get('points', '').split()
+#         point = points[0].split(',')
+#         d = [ [ 'M', [float(point[0]), float(point[1])] ], ]
+#         #d = 'M ' + ''.join(points[0].split(',')) # remove comma separator
+#         for i in range(1, len(points)):
+#             point = points[i].split(',')
+#             d.append( ['L', [float(point[0]), float(point[1])]] )
+#             #d += ' L ' + ''.join(points[i].split(','))
+#         return d
+#
+#
+#     def convert_polygon_to_path(self, node):
+#         """Convert an SVG line shape element to a path.
+#
+#         Convert this:
+#            <polygon points='x1,y1 x2,y2 x3,y3 [...]'/>
+#         to this:
+#            'M x1 y1 L x2 y2 L x3 y3 [...]'/>
+#         """
+#         d = self.convert_polyline_to_path(node)
+#         #d += ' Z' # close path for polygons
+#         d.append(['L', d[0][1]])
+#         return d
 
 #    _number = 0
 #    def _draw_number(self, vertices):

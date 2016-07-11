@@ -18,15 +18,15 @@ import random
 import gettext
 # import logging
 
-from lib import inkext
-from lib import geomsvg
-from lib import geom
+import geom
 
-from lib.geom import planargraph
-from lib.geom import polygon
-from lib.geom import fillet
+from geom import planargraph
+from geom import polygon
+from geom import fillet
 
-from lib.contrib import clipper
+from svg import geomsvg
+from contrib import clipper
+from inkscape import inkext
 
 __version__ = "0.2"
 
@@ -40,7 +40,6 @@ class PolyPath(inkext.InkscapeExtension):
     _OPTIONSPEC = (
         inkext.ExtOption('--epsilon', type='docunits', default=0.00001,
                          help='Epsilon'),
-
         inkext.ExtOption('--polysegpath-draw', type='inkbool', default=True,
                          help='Draw paths from polygon segments.'),
         inkext.ExtOption('--polysegpath-longest', type='inkbool', default=True,
@@ -73,7 +72,6 @@ class PolyPath(inkext.InkscapeExtension):
                          help='Polygon CSS stroke color.'),
         inkext.ExtOption('--hull-stroke-width', default='3px',
                          help='Polygon CSS stroke width.'),
-
         inkext.ExtOption('--hull2-draw', type='inkbool', default=True,
                          help='Create expanded polyhull.'),
         inkext.ExtOption('--hull2-clip', type='inkbool', default=True,
@@ -84,7 +82,7 @@ class PolyPath(inkext.InkscapeExtension):
                          help='Max angle'),
     )
 
-    styles = {
+    _styles = {
         'dot':
             'fill:%s;stroke-width:1px;stroke:#000000;',
         'polyhull':
@@ -104,7 +102,7 @@ class PolyPath(inkext.InkscapeExtension):
             'stroke-width:${convexhull_stroke_width};stroke:${convexhull_stroke};',
     }
 
-    style_defaults = {
+    _style_defaults = {
         'polyhull_stroke_width': '3pt',
         'polyhull_stroke': '#505050',
         'polychain_stroke_width': '3pt',
@@ -123,8 +121,8 @@ class PolyPath(inkext.InkscapeExtension):
         geom.set_epsilon(self.options.epsilon)
         geom.debug.set_svg_context(self.debug_svg)
 
-        self.styles.update(self.svg.styles_from_templates(self.styles,
-                                                          self.style_defaults,
+        self._styles.update(self.svg.styles_from_templates(self._styles,
+                                                          self._style_defaults,
                                                           self.options.__dict__))
 
         # Get a list of selected SVG shape elements and their transforms
@@ -170,7 +168,7 @@ class PolyPath(inkext.InkscapeExtension):
         for path in path_list:
             if len(path) > self.options.polysegpath_min_length:
                 self.svg.create_polygon(path, close_polygon=False,
-                                        style=self.styles['polypath'],
+                                        style=self._styles['polypath'],
                                         parent=layer)
 
     def _draw_longest_polypaths(self, path_builder):
@@ -182,7 +180,7 @@ class PolyPath(inkext.InkscapeExtension):
             layer = self.svg.create_layer('q_polypath_long_%d_' % i,
                                           incr_suffix=True)
             self.svg.create_polygon(path, close_polygon=False,
-                                    style=self.styles['polypath'],
+                                    style=self._styles['polypath'],
                                     parent=layer)
 
     def _draw_face_polygons(self, graph):
@@ -196,47 +194,47 @@ class PolyPath(inkext.InkscapeExtension):
                     offset_path = fillet.fillet_polygon(offset_poly,
                                         self.options.polyface_fillet_radius)
                     self.svg.create_polypath(offset_path, close_path=True,
-                                            style=self.styles['polypath'],
+                                            style=self._styles['polypath'],
                                             parent=layer)
                 else:
                     self.svg.create_polygon(offset_poly, close_path=True,
-                                            style=self.styles['polypath'],
+                                            style=self._styles['polypath'],
                                             parent=layer)
 
     def _draw_convex_hull(self, segment_graph):
         layer = self.svg.create_layer('q_convex_hull', incr_suffix=True)
         vertices = polygon.convex_hull(segment_graph.vertices())
-        style = self.styles['convexhull']
+        style = self._styles['convexhull']
         self.svg.create_polygon(vertices, style=style, parent=layer)
 
     def _draw_polygon_hulls(self, polygon_hulls):
         layer = self.svg.create_layer('q_polyhull', incr_suffix=True)
         for polyhull in polygon_hulls:
             self.svg.create_polygon(polyhull,
-                                    style=self.styles['polyhull'], parent=layer)
+                                    style=self._styles['polyhull'], parent=layer)
         polyhull = polygon_hulls[0]
 
 #         layer = self.svg.create_layer('q_polyhull2_triangles', incr_suffix=True)
 #         concave_verts, polyhull2 = self.concave_vertices(polyhull, max_angle=math.pi/2)
 #         for triangle in concave_verts:
-#             self.svg.create_polygon(triangle, style=self.styles['polyhull'], parent=layer)
+#             self.svg.create_polygon(triangle, style=self._styles['polyhull'], parent=layer)
 #
 #         layer = self.svg.create_layer('q_polyhull2', incr_suffix=True)
 #         self.svg.create_polygon(polyhull2,
-#                                 style=self.styles['polyhull'], parent=layer)
+#                                 style=self._styles['polyhull'], parent=layer)
 #
 #         layer = self.svg.create_layer('q_polyhull_rays', incr_suffix=True)
 #         convex_verts = self.convex_vertices(polyhull)
 #         rays = self.get_polygon_rays(convex_verts, self.clip_rect)
 #         for ray in rays:
-#             self.svg.create_line(ray.p1, ray.p2, style=self.styles['polyhull'],
+#             self.svg.create_line(ray.p1, ray.p2, style=self._styles['polyhull'],
 #                                  parent=layer)
 #
 #         layer = self.svg.create_layer('q_polyhull2_rays', incr_suffix=True)
 #         convex_verts = self.convex_vertices(polyhull2)
 #         rays = self.get_polygon_rays(convex_verts, self.clip_rect)
 #         for ray in rays:
-#             self.svg.create_line(ray.p1, ray.p2, style=self.styles['polyhull'],
+#             self.svg.create_line(ray.p1, ray.p2, style=self._styles['polyhull'],
 #                                  parent=layer)
 
     def get_polygon_rays(self, vertices, clip_rect):
@@ -312,11 +310,17 @@ class PolyPath(inkext.InkscapeExtension):
 
     def concave_vertices(self, vertices, max_angle=math.pi):
         """
-        :param vertices: the polygon vertices. An iterable of 2-tuple (x, y) points.
-        :param max_angle: Maximum interior angle of the concave vertices. Only
-        concave vertices with an interior angle less than this will be returned.
-        :return: A list of triplet vertices that are pointy towards the inside
-        and a new, somewhat more convex, polygon with the concave vertices closed.
+        Args:
+            vertices: the polygon vertices. An iterable of
+                2-tuple (x, y) points.
+            max_angle: Maximum interior angle of the concave vertices.
+                Only concave vertices with an interior angle less
+                than this will be returned.
+
+        Returns:
+            A list of triplet vertices that are pointy towards the inside
+            and a new, somewhat more convex, polygon with the concave
+            vertices closed.
         """
         concave_verts = []
         new_polygon = []

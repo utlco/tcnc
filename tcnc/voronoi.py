@@ -18,12 +18,15 @@ from future_builtins import *
 import gettext
 # import logging
 
-from lib import inkext
-from lib import geomsvg
-from lib import geom
-from lib.geom import planargraph
-from lib.geom import polygon
-from lib.geom import voronoi
+import geom
+
+from geom import planargraph
+from geom import polygon
+from geom import voronoi
+
+from svg import geomsvg
+
+from inkscape import inkext
 
 __version__ = "0.2"
 

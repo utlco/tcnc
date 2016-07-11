@@ -13,16 +13,16 @@ from __future__ import (absolute_import, division,
 from future_builtins import *
 
 import gettext
-import logging
+# import logging
 
-from lib import inkext
-from lib import geomsvg
-from lib import geom
+import geom
 
-from lib.geom import bezier
+from geom import bezier
+from inkscape import inkext
+from svg import geomsvg
 
 _ = gettext.gettext
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 
 
 class PolySmooth(inkext.InkscapeExtension):
@@ -99,7 +99,7 @@ class PolySmooth(inkext.InkscapeExtension):
             smoothness: Smoothness value (usually between 0 and 1).
                 .5 is a reasonable default.
 
-        ReturnsL
+        Returns:
             A list of CubicBezier segments.
         """
         new_path = []

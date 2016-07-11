@@ -17,19 +17,20 @@ import sys
 import math
 import random
 import gettext
-import logging
+# import logging
 
-from lib import quasi
-from lib import inkext
-from lib import geom
-from lib.geom import planargraph
-from lib.geom import transform2d
-from lib.geom import polygon
+import geom
+from geom import quasi
+from geom import planargraph
+from geom import transform2d
+from geom import polygon
+
+from inkscape import inkext
 
 __version__ = "0.2"
 
 _ = gettext.gettext
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 
 class IdentityProjector(object):
     """Identity projection. No distortion."""
@@ -58,7 +59,7 @@ class QuasiExtension(inkext.InkscapeExtension):
     """Inkscape plugin that creates quasi-crystal-like patterns.
     Based on quasi.c by Eric Weeks.
     """
-    styles = {
+    _styles = {
         'infotext':
             'font-size:.2;font-style:normal;font-weight:normal;'
             'line-height:125%;letter-spacing:0px;word-spacing:0px;'
@@ -95,7 +96,7 @@ class QuasiExtension(inkext.InkscapeExtension):
             'fill:%s;fill-opacity:0.5;stroke-opacity:0.75;stroke-linejoin:round;'
             'stroke-width:$segchain_stroke_width;stroke:$segchain_stroke;',
     }
-    style_defaults = {
+    _style_defaults = {
         'infotext_size': '12pt',
         'margin_stroke_width': '.1in',
         'margin_stroke': '#000000',
@@ -109,7 +110,7 @@ class QuasiExtension(inkext.InkscapeExtension):
         'segchain_stroke': '#000000',
     }
 
-    FILL_LUT = {
+    _FILL_LUT = {
                 'none': ('#808080',),
                 'cmy': ('#00FFFF', '#FF00FF', '#FFFF00'),
                 'rgb': ('#FF0000', '#00FF00', '#0000FF'),
@@ -216,8 +217,8 @@ class QuasiExtension(inkext.InkscapeExtension):
         # Create color LUTs
         for i in range(255):
             ci = 255 - i
-            self.FILL_LUT['red'].append('#%02x0000' % ci)
-            self.FILL_LUT['yellow'].append('#%02x%02x00' % (ci, ci))
+            self._FILL_LUT['red'].append('#%02x0000' % ci)
+            self._FILL_LUT['yellow'].append('#%02x%02x00' % (ci, ci))
 
         q = quasi.Quasi()
         q.offset_salt_x = self.options.salt_x
@@ -234,20 +235,12 @@ class QuasiExtension(inkext.InkscapeExtension):
         q.color_by_polytype = self.options.polygon_zfill
         q.quasi()
 
-#         logger = logging.getLogger(__name__)
-#         logger.debug('colors: %d' % len(q.plotter.color_count))
-#         for color, n in q.plotter.color_count.iteritems():
-#             fill_lut = self.FILL_LUT[self.options.polygon_fill_lut]
-#             color_index = int(color * len(fill_lut))
-#             logger.debug('%f (%d): %d' % (color, color_index, n))
-
         # Re-center the quasi polygons to the clip region borders
         if self.options.clip_recenter and self.clip_region is not None:
             q.plotter.recenter()
 
         polygon_segment_graph = planargraph.Graph()
         for poly in q.plotter.polygons:
-            logger.debug('adding poly')
             polygon_segment_graph.add_poly(poly)
         polygon_segments = list(polygon_segment_graph.edges)
 
@@ -287,8 +280,8 @@ class QuasiExtension(inkext.InkscapeExtension):
 #             polygon_segments.sort(key=angle_key)
 
 
-        self.styles.update(self.svg.styles_from_templates(self.styles,
-                                                          self.style_defaults,
+        self._styles.update(self.svg.styles_from_templates(self._styles,
+                                                          self._style_defaults,
                                                           self.options.__dict__))
 
         if self.options.create_info_layer:
@@ -351,7 +344,7 @@ class QuasiExtension(inkext.InkscapeExtension):
         self.svg.create_text(info, self.svg.unit2uu('10px'),
                              self.svg.unit2uu('30px'),
                              line_height=self.svg.unit2uu('25px'),
-                             style=self.styles['infotext'],
+                             style=self._styles['infotext'],
                              parent=layer)
 
 
@@ -361,7 +354,7 @@ class QuasiExtension(inkext.InkscapeExtension):
             self.svg.create_ellipse(self.clip_region.center,
                                     self.clip_region.rx, self.clip_region.ry,
                                     angle = 0.0,
-                                    style=self.styles['margins'], parent=layer)
+                                    style=self._styles['margins'], parent=layer)
         else:
             margin_vertices = [self.clip_region.p1,
                                geom.P(self.clip_region.p1.x,
@@ -371,11 +364,11 @@ class QuasiExtension(inkext.InkscapeExtension):
                                       self.clip_region.p1.y),
                                ]
             self.svg.create_polygon(margin_vertices,
-                                    style=self.styles['margins'], parent=layer)
+                                    style=self._styles['margins'], parent=layer)
         bbox_vertices = [bbox.p1, geom.P(bbox.p1.x, bbox.p2.y),
                          bbox.p2, geom.P(bbox.p2.x, bbox.p1.y)]
         self.svg.create_polygon(bbox_vertices,
-                                style=self.styles['bbox'], parent=layer)
+                                style=self._styles['bbox'], parent=layer)
 
     def _draw_frame(self):
         layer = self.svg.create_layer('q_frame')
@@ -386,7 +379,7 @@ class QuasiExtension(inkext.InkscapeExtension):
                           self.doc_center + geom.P(cx, -cy),
                           self.doc_center + geom.P(-cx, -cy),
                           self.doc_center + geom.P(-cx, cy)]
-        style = self.styles['frame'] % self.options.frame_thickness
+        style = self._styles['frame'] % self.options.frame_thickness
         self.svg.create_polygon(frame_vertices,
                                 style=style, parent=layer)
 
@@ -397,13 +390,13 @@ class QuasiExtension(inkext.InkscapeExtension):
         if self.options.create_culledrhombus_layer:
             layer2_name = 'q_polygons_x_%d' % self.options.symmetry
             layer2 = self.svg.create_layer(layer2_name, incr_suffix=True)
-        fill_lut = self.FILL_LUT[self.options.polygon_fill_lut]
+        fill_lut = self._FILL_LUT[self.options.polygon_fill_lut]
         fill_lut_offset = self.options.polygon_fill_lut_offset
 #         if self.options.polygon_fill and self.options.polygon_stroke == 'none':
         if self.options.polygon_fill:
-            style_template = self.styles['polygon_nostroke']
+            style_template = self._styles['polygon_nostroke']
         else:
-            style_template = self.styles['polygon']
+            style_template = self._styles['polygon']
 #         if not self.options.polygon_fill:
             style = style_template % 'none'
         color_index = 0
@@ -423,11 +416,11 @@ class QuasiExtension(inkext.InkscapeExtension):
                 d1 = vertices[0].distance(vertices[2])
                 d2 = vertices[1].distance(vertices[3])
                 if self.options.min_rhombus_width < min(d1, d2):
-                    style = self.styles['polygon'] % (fill_lut[color_index],)
+                    style = self._styles['polygon'] % (fill_lut[color_index],)
                     self.svg.create_polygon(vertices, style=style, parent=layer2)
 
     def _draw_inset_polygons(self, polygon_list, offset, nmax=1):
-        style = self.styles['polygon'] % ('none',)
+        style = self._styles['polygon'] % ('none',)
         offset_total = offset
         for n in range(nmax):
             layer = self.svg.create_layer('q_insetpolygons_%d' % (n+1,),
@@ -461,7 +454,7 @@ class QuasiExtension(inkext.InkscapeExtension):
 
     def _draw_polygon_circles(self, polygon_list):
         layer = self.svg.create_layer('q_polygon_circles', incr_suffix=True)
-        style = self.styles['polygon_circle']
+        style = self._styles['polygon_circle']
         for poly in polygon_list:
             center = geom.Line(poly[0], poly[2]).midpoint()
             a = abs(poly[1].angle2(poly[0], poly[2]))
@@ -474,14 +467,14 @@ class QuasiExtension(inkext.InkscapeExtension):
 
     def _draw_polygon_ellipses(self, polygon_list, inset):
         layer = self.svg.create_layer('q_polygon_ellipses', incr_suffix=True)
-        style = self.styles['polygon_ellipse']
+        style = self._styles['polygon_ellipse']
         for poly in polygon_list:
             e = geom.ellipse.ellipse_in_parallelogram(poly)
             self.svg.create_ellipse(e.center, e.a - inset, e.b - inset,
                                     e.rotation, style=style, parent=layer)
 
     def _draw_polygon_segments(self, segment_list):
-        fill_lut = self.FILL_LUT[self.options.polyseg_lut]
+        fill_lut = self._FILL_LUT[self.options.polyseg_lut]
         if self.options.polyseg_layer_per_color:
             layers = []
             for i in range(len(fill_lut)):
@@ -498,7 +491,7 @@ class QuasiExtension(inkext.InkscapeExtension):
                 segment = segment.extend(ext, from_midpoint=True)
             if self.options.polyseg_clip_to_margins:
                 segment = self.margin_clip_rect.clip_line(segment)
-            style=self.styles['polyseg_color'] % fill_lut[color_index]
+            style=self._styles['polyseg_color'] % fill_lut[color_index]
             color_index = (color_index + 1) % len(fill_lut)
             if self.options.polyseg_layer_per_color:
                 layer = layers[color_index]
@@ -513,7 +506,7 @@ class QuasiExtension(inkext.InkscapeExtension):
                 ext = (seglen * self.options.segment_scale) - seglen
                 segment = segment.extend(ext, from_midpoint=True)
             self.svg.create_line(segment.p1, segment.p2,
-                                 style=self.styles['segment'],
+                                 style=self._styles['segment'],
                                  parent=layer)
 
     def _draw_segment_chains(self, segment_list):
@@ -524,9 +517,9 @@ class QuasiExtension(inkext.InkscapeExtension):
         chain_list.sort(key=key, reverse=True)
         for vertices in chain_list:
             if self.options.segpath_fillclosed and polygon.is_closed(vertices):
-                style = self.styles['segchain'] % '#c0c0c0'
+                style = self._styles['segchain'] % '#c0c0c0'
             else:
-                style = self.styles['segchain'] % 'none'
+                style = self._styles['segchain'] % 'none'
             if not self.options.segpath_closed or polygon.is_closed(vertices):
                 self.svg.create_polygon(vertices, close_polygon=False,
                                         close_path=True, style=style,

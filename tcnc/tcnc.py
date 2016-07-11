@@ -19,21 +19,25 @@ import fnmatch
 import math
 # import logging
 
-from lib import inkext
-from lib import inksvg
-from lib import gcode
-from lib import paintcam
-from lib import gcodesvg
-from lib import geomsvg
-from lib import geom
-from lib.geom import transform2d
+import geom
+
+from geom import transform2d
+
+from cam import gcode
+from cam import paintcam
+from cam import gcodesvg
+
+from svg import geomsvg
+
+from inkscape import inkext
+from inkscape import inksvg
 
 __version__ = '0.2'
 
 _ = gettext.gettext
 
 
-class TCnc(inkext.InkscapeExtension):
+class Tcnc(inkext.InkscapeExtension):
     """Inkscape plugin that converts selected SVG elements into gcode
     suitable for a four axis (XYZA) CNC machine with a tangential tool,
     such as a knife or a brush, that rotates about the Z axis.
@@ -41,129 +45,129 @@ class TCnc(inkext.InkscapeExtension):
 
     _OPTIONSPEC = (
         inkext.ExtOption('--origin-ref', default='paper',
-                         help='Lower left origin reference.'),
+                         help=_('Lower left origin reference.')),
         inkext.ExtOption('--path-sort-method', default='none',
-                         help='Path sorting method.'),
+                         help=_('Path sorting method.')),
         inkext.ExtOption('--biarc-tolerance', type='docunits', default=0.01,
-                         help='Biarc approximation fitting tolerance.'),
+                         help=_('Biarc approximation fitting tolerance.')),
         inkext.ExtOption('--biarc-max-depth', type='int', default=4,
-                         help=('Biarc approximation maximum curve '
+                         help=_('Biarc approximation maximum curve '
                                'splitting recursion depth.')),
         inkext.ExtOption('--line-flatness', type='docunits', default=0.001,
-                         help='Curve to line flatness.'),
+                         help=_('Curve to line flatness.')),
         inkext.ExtOption('--min-arc-radius', type='degrees', default=0.01,
-                         help=('All arcs having radius less than minimum '
+                         help=_('All arcs having radius less than minimum '
                                'will be considered as straight line.')),
         inkext.ExtOption('--tolerance', type='float', default=0.00001,
-                         help='Tolerance'),
+                         help=_('Tolerance')),
 
         inkext.ExtOption('--gcode-units', default='in',
-                         help='G code output units (inch or mm).'),
+                         help=_('G code output units (inch or mm).')),
         inkext.ExtOption('--xy-feed', type='float', default=10.0,
-                         help='XY axis feed rate in unit/s'),
+                         help=_('XY axis feed rate in unit/s')),
         inkext.ExtOption('--z-feed', type='float', default=10.0,
-                         help='Z axis feed rate in unit/s'),
+                         help=_('Z axis feed rate in unit/s')),
         inkext.ExtOption('--a-feed', type='float', default=60.0,
-                         help='A axis feed rate in deg/s'),
+                         help=_('A axis feed rate in deg/s')),
         inkext.ExtOption('--z-safe', type='float', default=1.0,
-                         help='Z axis safe height for rapid moves'),
+                         help=_('Z axis safe height for rapid moves')),
         inkext.ExtOption('--z-wait', type='float', default=500,
-                         help='Z axis wait (milliseconds)'),
+                         help=_('Z axis wait (milliseconds)')),
         inkext.ExtOption('--blend-mode', default='',
-                         help='Trajectory blending mode.'),
+                         help=_('Trajectory blending mode.')),
         inkext.ExtOption('--blend-tolerance', type='float', default='0',
-                         help='Trajectory blending tolerance.'),
+                         help=_('Trajectory blending tolerance.')),
 
         inkext.ExtOption('--z-depth', type='float', default=-0.125,
-                         help='Z full depth of cut'),
+                         help=_('Z full depth of cut')),
         inkext.ExtOption('--z-step', type='float', default=-0.125,
-                         help='Z cutting step depth'),
+                         help=_('Z cutting step depth')),
 
         inkext.ExtOption('--tool-width', type='docunits', default=1.0,
-                         help='Tool width'),
+                         help=_('Tool width')),
         inkext.ExtOption('--a-feed-match', type='inkbool', default=False,
-                         help='A axis feed rate match XY feed'),
+                         help=_('A axis feed rate match XY feed')),
         inkext.ExtOption('--tool-trail-offset', type='docunits', default=0.25,
-                         help='Tool trail offset'),
+                         help=_('Tool trail offset')),
         inkext.ExtOption('--a-offset', type='degrees', default=0,
-                         help='Tool offset angle'),
+                         help=_('Tool offset angle')),
         inkext.ExtOption('--allow-tool-reversal', type='inkbool', default=False,
-                         help='Allow tool reversal'),
+                         help=_('Allow tool reversal')),
 
         inkext.ExtOption('--tool-wait', type='float', default=0,
-                         help='Tool up/down wait time in seconds'),
+                         help=_('Tool up/down wait time in seconds')),
 
         inkext.ExtOption('--spindle-mode', default='',
-                         help='Spindle startup mode.'),
+                         help=_('Spindle startup mode.')),
         inkext.ExtOption('--spindle-speed', type='int', default=0,
-                         help='Spindle RPM'),
+                         help=_('Spindle RPM')),
         inkext.ExtOption('--spindle-wait-on', type='float', default=0,
-                         help='Spindle warmup delay'),
+                         help=_('Spindle warmup delay')),
         inkext.ExtOption('--spindle-clockwise', type='inkbool', default=True,
-                         help='Clockwise spindle rotation'),
+                         help=_('Clockwise spindle rotation')),
 
         inkext.ExtOption('--skip-path-count', type='int', default=0,
-                         help='Number of paths to skip.'),
+                         help=_('Number of paths to skip.')),
         inkext.ExtOption('--ignore-segment-angle', type='inkbool',
-                         default=False, help='Ignore segment start angle.'),
+                         default=False, help=_('Ignore segment start angle.')),
         inkext.ExtOption('--path-tool-fillet', type='inkbool', default=False,
-                         help='Fillet paths for tool width'),
+                         help=_('Fillet paths for tool width')),
         inkext.ExtOption('--path-tool-offset', type='inkbool', default=False,
-                         help='Offset paths for tool trail offset'),
+                         help=_('Offset paths for tool trail offset')),
         inkext.ExtOption('--path-preserve-g1', type='inkbool', default=False,
-                         help='Preserve G1 continuity for offset arcs'),
+                         help=_('Preserve G1 continuity for offset arcs')),
         inkext.ExtOption('--path-smooth-fillet', type='inkbool', default=False,
-                         help='Fillets at sharp corners'),
+                         help=_('Fillets at sharp corners')),
         inkext.ExtOption('--path-smooth-radius', type='docunits', default=0.0,
-                         help='Smoothing radius'),
+                         help=_('Smoothing radius')),
         inkext.ExtOption('--path-close-polygons', type='inkbool', default=False,
-                         help='Close polygons with fillet'),
+                         help=_('Close polygons with fillet')),
         inkext.ExtOption('--path-split-cusps', type='inkbool', default=False,
-                         help='Split paths at non-tangent control points'),
+                         help=_('Split paths at non-tangent control points')),
 
         inkext.ExtOption('--brush-flip-stroke', type='inkbool', default=True,
-                         help='Flip brush before every stroke.'),
+                         help=_('Flip brush before every stroke.')),
         inkext.ExtOption('--brush-flip-path', type='inkbool', default=True,
-                         help='Flip after each path.'),
+                         help=_('Flip after each path.')),
         inkext.ExtOption('--brush-flip-reload', type='inkbool', default=True,
-                         help='Flip before reload.'),
+                         help=_('Flip before reload.')),
 
         inkext.ExtOption('--brush-reload-enable', type='inkbool', default=True,
-                         help='Enable brush reload.'),
+                         help=_('Enable brush reload.')),
         inkext.ExtOption('--brush-reload-rotate', type='inkbool', default=True,
-                         help='Rotate brush before reload.'),
+                         help=_('Rotate brush before reload.')),
         inkext.ExtOption('--brush-pause-mode', default='',
-                         help='Brush reload pause mode.'),
+                         help=_('Brush reload pause mode.')),
         inkext.ExtOption('--brush-reload-pause', type='inkbool', default=True,
-                         help='Pause brush for reload.'),
+                         help=_('Pause brush for reload.')),
         inkext.ExtOption('--brush-reload-max-paths', type='int', default=1,
-                         help='Number of paths between reload.'),
+                         help=_('Number of paths between reload.')),
         inkext.ExtOption('--brush-reload-dwell', type='float', default=0.0,
-                         help='Brush reload time (seconds).'),
+                         help=_('Brush reload time (seconds).')),
         inkext.ExtOption('--brush-reload-angle', type='degrees', default=90.0,
-                         help='Brush reload angle (degrees).'),
+                         help=_('Brush reload angle (degrees).')),
         inkext.ExtOption('--brush-overshoot-mode', default='',
-                         help='Brush overshoot mode.'),
+                         help=_('Brush overshoot mode.')),
         inkext.ExtOption('--brush-overshoot-distance', type='docunits',
-                         default=0.0, help='Brush overshoot distance.'),
+                         default=0.0, help=_('Brush overshoot distance.')),
         inkext.ExtOption('--brush-soft-landing', type='inkbool', default=True,
-                         help='Enable soft landing.'),
+                         help=_('Enable soft landing.')),
         inkext.ExtOption('--brush-landing-strip', type='docunits', default=0.0,
-                         help='Landing strip distance.'),
+                         help=_('Landing strip distance.')),
 
         inkext.ExtOption('--brushstroke-max', type='docunits', default=0.0,
-                         help='Max brushstroke distance before reload.'),
+                         help=_('Max brushstroke distance before reload.')),
 
         inkext.ExtOption('--output-path', default='~/output.ngc',
-                         help='Output path name'),
+                         help=_('Output path name')),
         inkext.ExtOption('--append-suffix', type='inkbool', default=True,
-                         help='Append auto-incremented numeric'
-                         ' suffix to filename'),
+                         help=_('Append auto-incremented numeric'
+                         ' suffix to filename')),
         inkext.ExtOption('--separate-layers', type='inkbool', default=True,
-                         help='Seaparate gcode file per layer'),
+                         help=_('Seaparate gcode file per layer')),
 
         inkext.ExtOption('--preview-scale', default='medium',
-                         help='Preview scale.'),
+                         help=_('Preview scale.')),
     )
 
     # Document units that can be expressed as imperial (inches)
@@ -198,13 +202,13 @@ class TCnc(inkext.InkscapeExtension):
 
         try:
             with open(filepath, 'w') as output:
-                gcgen = self.init_gcode(output)
-                cam = self.init_cam(gcgen)
+                gcgen = self._init_gcode(output)
+                cam = self._init_cam(gcgen)
                 cam.generate_gcode(path_list)
         except IOError as error:
             self.errormsg(str(error))
 
-    def init_gcode(self, output):
+    def _init_gcode(self, output):
         """Create and initialize the G code generator with machine details.
         """
         if self.options.a_feed_match:
@@ -267,7 +271,7 @@ class TCnc(inkext.InkscapeExtension):
                                '',))
         return gcgen
 
-    def init_cam(self, gc):
+    def _init_cam(self, gc):
         """Create and initialize the tool path generator."""
         cam = paintcam.PaintCAM(gc)
         cam.debug_svg = self.debug_svg
@@ -400,5 +404,5 @@ class TCnc(inkext.InkscapeExtension):
 # ]
 
 if __name__ == '__main__':
-    plugin = TCnc()
-    plugin.main(optionspec=TCnc._OPTIONSPEC, flip_debug_layer=True)
+    plugin = Tcnc()
+    plugin.main(optionspec=Tcnc._OPTIONSPEC, flip_debug_layer=True)

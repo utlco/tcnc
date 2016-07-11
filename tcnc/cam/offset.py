@@ -13,8 +13,7 @@ from future_builtins import *
 import math
 # import logging
 
-from lib import geom
-
+import geom
 from . import toolpath
 from . import util
 

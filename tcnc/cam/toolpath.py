@@ -9,7 +9,7 @@ from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from future_builtins import *
 
-from lib import geom
+import geom
 
 
 class ToolpathException(Exception):

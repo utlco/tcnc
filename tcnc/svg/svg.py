@@ -4,9 +4,6 @@
 #-----------------------------------------------------------------------------
 """
 A simple library for SVG output.
-
-Requires lxml.etree
-===================
 """
 # Python 3 compatibility boilerplate
 from __future__ import (absolute_import, division,
@@ -23,8 +20,9 @@ import random
 
 from lxml import etree
 
-from lib import css
-from lib.geom import transform2d
+from geom import transform2d
+
+from . import css
 
 # logger = logging.getLogger(__name__)
 

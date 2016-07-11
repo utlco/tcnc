@@ -13,7 +13,7 @@ from __future__ import (absolute_import, division,
 from future_builtins import *
 
 import math
-import logging
+# import logging
 
 from . import const
 from . import util
@@ -23,7 +23,7 @@ from .point import P
 from .line import Line
 from .arc import Arc
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 
 class CubicBezier(tuple):
     """Two dimensional immutable cubic bezier curve.
@@ -417,7 +417,7 @@ class CubicBezier(tuple):
             return []
         # Or if the curve is basically a straight line then return a Line.
         if self.is_straight_line(line_flatness):
-            logger.debug('curve->line: flatness=%f' % self.flatness())
+#             logger.debug('curve->line: flatness=%f' % self.flatness())
             return [Line(self.p1, self.p2),]
 
         if _recurs_depth == 0:
@@ -427,7 +427,7 @@ class CubicBezier(tuple):
             # This should only be required once.
             curves = self.subdivide_inflections()
             if len(curves) > 1:
-                logger.debug('found inflections - subdividing %d' % len(curves))
+#                 logger.debug('found inflections - subdividing %d' % len(curves))
                 biarcs = []
                 for curve in curves:
                     sub_biarcs = curve.biarc_approximation(
