@@ -470,8 +470,8 @@ class QuasiExtension(inkext.InkscapeExtension):
         style = self._styles['polygon_ellipse']
         for poly in polygon_list:
             e = geom.ellipse.ellipse_in_parallelogram(poly)
-            self.svg.create_ellipse(e.center, e.a - inset, e.b - inset,
-                                    e.rotation, style=style, parent=layer)
+            self.svg.create_ellipse(e.center, e.rx - inset, e.ry - inset,
+                                    e.phi, style=style, parent=layer)
 
     def _draw_polygon_segments(self, segment_list):
         fill_lut = self._FILL_LUT[self.options.polyseg_lut]
