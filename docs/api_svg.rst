@@ -1,5 +1,5 @@
-Simple SVG Utility Package
-==========================
+:mod:`svg` - SVG drawing/utility package
+========================================
 
 :mod:`svg.svg`
 --------------

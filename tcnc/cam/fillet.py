@@ -79,9 +79,9 @@ def create_adjusted_fillet(seg1, seg2, radius,
             to mark it to ignore G1. Default is False.
 
     Returns:
-        A tuple containing the adjusted segments and fillet arc:
-        (seg1, fillet_arc, seg2)
-        Returns an empty tuple if the segments cannot be connected
+        A tuple containing the adjusted segments and fillet arc
+        (seg1, fillet_arc, seg2),
+        or an empty tuple if the segments cannot be connected
         with a fillet arc (either they are too small, already G1
         continuous, or are somehow degenerate.)
     """

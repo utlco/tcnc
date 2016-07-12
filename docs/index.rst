@@ -4,14 +4,17 @@ Tcnc
 ====
 
 .. toctree::
-    :maxdepth: 1
+   :caption: Table of Contents
+   :name: toptoc
+   :maxdepth: 1
 
-    usage_tcnc.rst
-    source_code.rst
+   installation
+   usage_tcnc
+   source_code
 
 * :ref:`genindex`
 
-* :ref:`search`
+.. _intro:
 
 Introduction
 ------------
@@ -53,33 +56,5 @@ some of the features may seem weirdly specific.
 
 There is absolutely no warranty for any purpose whatsoever. Use at your own risk.
 
-Installation
-------------
-
-For now installation must be done by hand...
-
-1. `Download <https://github.com/utlco/tcnc/archive/master.zip>`_
-   the latest version.
-
-2. Unzip/extract the downloaded archive file (master.zip).
-
-3. Copy or move the contents of the **tcnc/inkinx** folder
-   to the user Inkscape extension folder.
-
-4. Copy or move the entire **tcnc/tcnc** folder
-   to the user Inkscape extension folder.
-
-5. Restart Inkscape.
-
-**Location of user Inkscape extension folder:**
-
-* MacOS, Linux:
-
-    `~/.config/inkscape/extensions`, where *~* is your home
-    directory (i.e. /Users/YourUserName).
-
-* Windows:
-
-    `C:\\Users\\YourUserName\\.Appdata\\Roaming\\inkscape\\extensions`
 
 

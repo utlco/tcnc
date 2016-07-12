@@ -1,6 +1,6 @@
 
-Inkscape Extension Package
-==========================
+:mod:`inkscape` - Inkscape extension package
+============================================
 
 :mod:`inkscape.inkext`
 ----------------------

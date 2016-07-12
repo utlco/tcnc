@@ -32,8 +32,8 @@ def offset_path(path, offset, g1_tolerance=None):
         A new path
 
     Raises:
-        ToolpathException if the path contains segment types
-        other than Line or Arc.
+        :class:`cam.toolpath.ToolpathException`: if the path contains segment
+            types other than Line or Arc.
     """
     if geom.float_eq(offset, 0.0):
         return path;
@@ -58,7 +58,8 @@ def offset_path(path, offset, g1_tolerance=None):
                 else:
                     # Insert an arc in tool path to rotate the tool to the next
                     # starting tangent when the segments are not G1 continuous.
-                    # TODO: avoid creating tiny segments by extending offset segment.
+                    # TODO: avoid creating tiny segments by extending
+                    # offset segment.
                     p1 = prev_offset_seg.p2
                     p2 = offset_seg.p1
                     angle = prev_seg.p2.angle2(p1, p2)

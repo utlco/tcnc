@@ -318,7 +318,9 @@ class GCodeGenerator(object):
         Angular offsets are always in *degrees*.
 
         Example::
-            gcode.set_axis_offset(x=10, y=10)
+
+            gcode_gen = gcode.GCodeGenerator(...)
+            gcode_gen.set_axis_offset(x=10, y=10)
 
         Args:
             x: X axis offset value (optional)
@@ -334,7 +336,9 @@ class GCodeGenerator(object):
         The scaling is applied before the world/machine unit scaling.
 
         Example::
-            gcode.set_axis_scale(x=10, y=10)
+
+            gcode_gen = gcode.GCodeGenerator(...)
+            gcode_gen.set_axis_scale(x=10, y=10)
 
         Args:
             x: X axis scale value (optional)

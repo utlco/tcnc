@@ -1,6 +1,6 @@
 
-CAM/GCode Package
-=================
+:mod:`cam` - CAM/GCode package
+==============================
 
 :mod:`cam`
 ----------

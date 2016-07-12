@@ -1,6 +1,6 @@
 
-Geometry Package
-================
+:mod:`geom` - Basic 2D geometry package
+=======================================
 
 :mod:`geom.const`
 -----------------

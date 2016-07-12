@@ -16,7 +16,6 @@ import logging
 import geom
 
 from . import util
-from . import toolpath
 from . import fillet
 from . import offset
 
@@ -40,22 +39,24 @@ class SimpleCAM(object):
     to the segment.
 
     Segment attributes:
-        `inline_end_z`: The Z axis value at the end of the segment.
-        `inline_start_a`: The A axis value at the start of the segment.
-        `inline_end_a`: The A axis value at the start of the segment.
-        `inline_ignore_a`: Boolean. True if the A axis is not to be
-            rotated for the length of the segment.
+
+        * `inline_end_z`: The Z axis value at the end of the segment.
+        * `inline_start_a`: The A axis value at the start of the segment.
+        * `inline_end_a`: The A axis value at the start of the segment.
+        * `inline_ignore_a`: Boolean. True if the A axis is not to be
+           rotated for the length of the segment.
 
     """
 
 #     _DEFAULT_INLINE_DELTAS = {'X': 0.0, 'Y': 0.0, 'Z': 0.0, 'A': 0.0}
 #     _DEFAULT_INLINE_OFFSETS = {'X': 0.0, 'Y': 0.0, 'Z': 0.0, 'A': 0.0}
 
-    def __init__(self, gcode):
+    def __init__(self, gcode_gen):
         """
-        :gcode: a GCode instance
+        Args:
+            gcode_gen: a :mod:`cam.gcode.GCodeGenerator` instance
         """
-        self.gc = gcode
+        self.gc = gcode_gen
 
         # SVG context for debug output.
         self.debug_svg = None
@@ -189,10 +190,13 @@ class SimpleCAM(object):
         """Preprocess paths.
         Sort order will be maintained.
 
-        :param path_list: A list of drawing paths.
-            Where a drawing path is a sequential collection of
-            bezier.CubicBezier, geom.Line, or geom.Arc objects.
-        :return: A new list of tool paths.
+        Args:
+            path_list: A list of drawing paths.
+                Where a drawing path is a sequential collection of
+                bezier.CubicBezier, geom.Line, or geom.Arc objects.
+
+        Returns:
+            A new list of tool paths.
         """
         if self.debug_svg is not None:
             biarc_layer = self.debug_svg.create_layer('debug_biarcs',
@@ -316,14 +320,17 @@ class SimpleCAM(object):
         """Convert all cubic bezier curves in the drawing path
         to biarcs (tangentially connected circular arcs).
 
-        :param path: A drawing path; an iterable collection of
+        Args:
+            path: A drawing path; an iterable collection of
             bezier.CubicBezier, geom.Line, or geom.Arc objects.
-        :return: A new drawing path containing only geom.Line and
+
+        Returns:
+            A new drawing path containing only geom.Line and
             geom.Arc objects.
 
         Raises:
             CAMException: If the path contains anything other
-            than CubicBezier, Line, or Arc segments.
+                than CubicBezier, Line, or Arc segments.
         """
         new_path = []
         for segment in path:
@@ -392,8 +399,12 @@ class SimpleCAM(object):
         This will try to sort the tool paths to minimize tool travel
         between the end of one path and the start of the next path.
 
-        :param path_list: A list of tool paths.
-        :param sort_method: Sorting strategy.
+        Args:
+            path_list: A list of tool paths.
+            sort_method: Sorting strategy.
+
+        Returns:
+            A sorted list of paths.
         """
         if sort_method == 'flip':
             # Preserve original path order but flip path directions to
@@ -428,7 +439,8 @@ class SimpleCAM(object):
         return path_list
 
     def generate_segment_gcode(self, segment, depth):
-        """Generate G code for Line and Arc path segments."""
+        """Generate G code for Line and Arc path segments.
+        """
         # Keep track of total tool travel during feeds
         self.feed_distance += segment.length()
         # Amount of Z axis movement along this segment

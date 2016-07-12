@@ -2,21 +2,22 @@
 Source Code
 ===========
 
+Source code can be found at: `<https://github.com/utlco/tcnc>`_
+
+::
+
+   git clone https://github.com/utlco/tcnc.git
+
 Modules
 -------
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 3
 
-    api_extensions.rst
-
-    api_inkscape.rst
-
-    api_svg.rst
-
-    api_geom.rst
-
-    api_cam.rst
+    api_inkscape
+    api_svg
+    api_geom
+    api_cam
 
 * :ref:`modindex`
 
@@ -28,11 +29,11 @@ While performance
 is important, maintainability and clarity has been more of a priority.
 
 My memory is too unreliable to understand some opaque code I wrote
-two months ago, so I've tried to mitigate this somewhat.
-I'm sure there are bugs.
+two months ago, so I've tried to mitigate this somewhat with
+comments and more verbose code.
 
-Why do it
-.........
+Why
+...
 You may be wondering why I didn't just use or extend **gcodetools**,
 which is currently packaged with Inkscape.
 Well, to be honest I found the author's code difficult to follow
@@ -50,8 +51,8 @@ Lots of people use gcodetools and it has many more features
 (such as pocketing and raster fills).
 I highly recommend checking it out.
 
-Unit confusion
-..............
+Unit handling
+.............
 Unit handling in SVG and Inkscape is confusing at best.
 
 The problem mainly stems from SVG's viewbox/viewport handling and
@@ -78,13 +79,13 @@ as well that make writing extensions a little easier.
 
 I suggest also taking a look at clearly written and well documented extensions
 such as the
-[Eggbot](https://github.com/evil-mad/EggBot) extension.
+`Eggbot <https://github.com/evil-mad/EggBot>`_ extension.
 Documentation about Inkscape extensions is fairly poor
 and the best way to learn how to write one is to look at previous attempts.
 
-Feel free to reuse
-..................
-There are also some handy libraries, such as the SVG and geometry modules,
+Reusable packages
+.................
+There are also some handy libraries, such as the SVG and geometry packages,
 that are more generally useful. I rewrote the Inkscape extension classes
 partly because Inkscape version .91 broke my extensions (mainly because of unit
 handling) and I just wanted to
@@ -100,10 +101,10 @@ Apologia
 ........
 I've been slowly converting
 doc strings to the Google python style since it's more readable than
-the standard reStructuredText style. There's currently a mix of the
+the standard reST style. There's currently a mix of the
 two styles... Sphinx handles both just fine.
 
-Testing has been artisinal.
+Testing has been artisinal. There are bugs.
 
 Most modules produce a lot of pylint warnings.
 

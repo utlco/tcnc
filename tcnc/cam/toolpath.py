@@ -43,7 +43,7 @@ class Toolpath(list):
 
         Raises:
             ToolpathException: If the path contains anything other
-            than CubicBezier, Line, or Arc segments.
+                than CubicBezier, Line, or Arc segments.
         """
         for segment in path:
             if isinstance(segment, geom.bezier.CubicBezier):
