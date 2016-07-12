@@ -13,10 +13,13 @@ import math
 import logging
 logger = logging.getLogger(__name__)
 
+import geom.debug
+
 from . import const
 
 from .point import P
 from .line import Line
+
 
 
 class Ellipse(object):
@@ -437,7 +440,10 @@ def intersect_circle(c1_center, c1_radius, c2_center, c2_radius):
     # Distance between the two centers
     dist_c1c2 = line_c1c2.length()
     if dist_c1c2 > (c1_radius + c2_radius):
-        # Circles do not intersect.
+        # Circles too far apart - do not intersect.
+        return ()
+    if dist_c1c2 < (c1_radius - c2_radius):
+        # Circle inside another - do not intersect.
         return ()
     # Check for degenerate cases
     if const.is_zero(dist_c1c2):
