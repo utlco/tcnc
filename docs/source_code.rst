@@ -12,12 +12,13 @@ Modules
 -------
 
 .. toctree::
-    :maxdepth: 3
+   :maxdepth: 3
 
-    api_inkscape
-    api_svg
-    api_geom
-    api_cam
+   api_extensions
+   api_inkscape
+   api_svg
+   api_geom
+   api_cam
 
 * :ref:`modindex`
 
@@ -53,7 +54,7 @@ I highly recommend checking it out.
 
 Unit handling
 .............
-Unit handling in SVG and Inkscape is confusing at best.
+Unit handling in SVG and Inkscape can be confusing.
 
 The problem mainly stems from SVG's viewbox/viewport handling and
 Inkscape's concept of a 'document unit'.
@@ -97,14 +98,14 @@ logging output file is done by the extension base class as well.
 
 If you find any of this useful, great!
 
-Apologia
-........
+Etc.
+....
 I've been slowly converting
 doc strings to the Google python style since it's more readable than
 the standard reST style. There's currently a mix of the
 two styles... Sphinx handles both just fine.
 
-Testing has been artisinal. There are bugs.
+Testing has been artisinal.
 
 Most modules produce a lot of pylint warnings.
 

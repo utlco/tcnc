@@ -10,7 +10,8 @@ Basic 2D affine transform matrix operations.
 # Python 3 compatibility boilerplate
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
-from future_builtins import *
+# Uncomment any builtins used
+# from future_builtins import (ascii, filter, hex, map, oct, zip)
 
 import math
 

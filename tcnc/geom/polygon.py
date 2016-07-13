@@ -21,6 +21,8 @@ import sys
 # import logging
 # logger = logging.getLogger(__name__)
 
+from contrib import clipper
+
 from . import const
 from . import box
 
@@ -362,4 +364,60 @@ def is_closed(vertices):
 #        """
 #        return intersect_line(self.vertices, line)
 #
+
+def offset_polygon(poly, offset, jointype=clipper.JoinType.Square, limit=0.0):
+    """
+    Offset a polygon by *offset* amount.
+    This is also called polygon buffering.
+
+    See:
+        http://www.angusj.com/delphi/clipper.php
+
+    Args:
+        poly: A polygon as a list of 2-tuple vertices.
+        offset: The amount to offset (can be negative).
+        jointype: The type of joins for offset vertices.
+        limit: The max distance to a offset vertice before it
+            will be squared off.
+
+    Returns:
+        An offset polygon.
+    """
+    mult = (10**const.EPSILON_PRECISION)
+    offset *= mult
+    limit *= mult
+    clipper_poly = poly2clipper(poly)
+    clipper_offset_polys = clipper.OffsetPolygons((clipper_poly,), offset,
+                           jointype=jointype, limit=limit)
+    offset_poly = clipper2poly(clipper_offset_polys[0])
+    return offset_poly
+
+def poly2clipper(poly):
+    """
+    Convert a polygon (as a list of float 2-tuple vertices) to
+    a Clipper polygon (a list of integer 2-tuples).
+    """
+    clipper_poly = []
+    mult = (10**const.EPSILON_PRECISION)
+    for p in poly:
+        x = int(p.x * mult)
+        y = int(p.y * mult)
+        clipper_poly.append(clipper.Point(x, y))
+    return clipper_poly
+
+def clipper2poly(clipper_poly):
+    """
+    Convert a Clipper polygon (a list of integer 2-tuples) to
+    a polygon (as a list of float 2-tuple vertices).
+    """
+    poly = []
+    mult = (10**const.EPSILON_PRECISION)
+    for p in clipper_poly:
+        x = float(p.x) / mult
+        y = float(p.y) / mult
+        poly.append(P(x, y))
+    # Close the polygon
+    if len(poly) > 2 and poly[0] != poly[-1]:
+        poly.append(poly[0])
+    return poly
 

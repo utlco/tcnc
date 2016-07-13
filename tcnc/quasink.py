@@ -160,7 +160,7 @@ class QuasiExtension(inkext.InkscapeExtension):
 
     # Scale multiplier. This should be about right to get the whole
     # thing on a A4 size sheet of paper at 1.0 scale.
-    SCALE_SCALE = .1
+    _SCALE_SCALE = .1
 
     def run(self):
         """Main entry point for Inkscape plugins.
@@ -205,7 +205,7 @@ class QuasiExtension(inkext.InkscapeExtension):
             projector = IdentityProjector()
         # Set up plotter transform for rotation, scale, and offset.
         # Origin at document center.
-        scale = self.options.scale * self.SCALE_SCALE
+        scale = self.options.scale * self._SCALE_SCALE
         offset = geom.P(self.doc_center) + geom.P(self.options.offset_x,
                                                   self.options.offset_y)
         transform1 = transform2d.matrix_rotate(self.options.rotate)
@@ -511,7 +511,7 @@ class QuasiExtension(inkext.InkscapeExtension):
 
     def _draw_segment_chains(self, segment_list):
         layer = self.svg.create_layer('q_segment_chains', incr_suffix=True)
-        chain_list = self.create_chains(segment_list)
+        chain_list = self._create_chains(segment_list)
         # Sort segment paths so that the largest are at the bottom of the Z-order
         key = lambda v: abs(polygon.area(v))
         chain_list.sort(key=key, reverse=True)
@@ -525,11 +525,10 @@ class QuasiExtension(inkext.InkscapeExtension):
                                         close_path=True, style=style,
                                         parent=layer)
 
-
-    def create_chains(self, segments):
+    def _create_chains(self, segments):
         chain_list = []
         while segments:
-            chain = SegmentChain()
+            chain = _SegmentChain()
             n = 1
             while n > 0:
                 unchained_segments = []
@@ -543,7 +542,7 @@ class QuasiExtension(inkext.InkscapeExtension):
         return chain_list
 
 
-class SegmentChain(list):
+class _SegmentChain(list):
     """A simple polygonal chain as a series of connected line segments.
     """
     def __init__(self, min_corner_angle=0.0):

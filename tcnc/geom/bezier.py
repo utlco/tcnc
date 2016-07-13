@@ -851,3 +851,36 @@ def smoothing_curve(seg1, seg2, cp1=None, smoothness=0.5, match_arcs=True):
     return (curve, cp1_next)
 
 
+def smooth_path(path, smoothness=.5):
+    """Create a smooth approximation of the path using Bezier curves.
+
+    Args:
+        path: A list of Line/Arc segments.
+        smoothness: Smoothness value (usually between 0 and 1).
+            .5 is a reasonable default.
+
+    Returns:
+        A list of CubicBezier segments.
+    """
+    smooth_path = []
+    if len(path) < 2:
+        return path
+    seg1 = path[0]
+    cp1 = seg1.p1
+    for seg2 in path[1:]:
+        curve, cp1 = smoothing_curve(seg1, seg2, cp1, smoothness=smoothness)
+        smooth_path.append(curve)
+        seg1 = seg2
+    # Process last segment...
+    if (path[-1].p2 == path[0].p1): # Path is closed?
+        seg2 = path[0]
+        curve, cp1 = smoothing_curve(seg1, seg2, cp1, smoothness=smoothness)
+        # Recalculate the first smoothing curve.
+        curve0, cp1 = smoothing_curve(seg2, path[1], cp1, smoothness=smoothness)
+        # Replace first smoothing curve with the recalculated one.
+        smooth_path[0] = curve0
+    else:
+        curve, unused = smoothing_curve(seg1, None, cp1, smoothness=smoothness)
+    smooth_path.append(curve)
+    return smooth_path
+

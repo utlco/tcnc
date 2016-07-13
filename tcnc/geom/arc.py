@@ -11,9 +11,9 @@ Basic 2D arc geometry.
 ====
 """
 # Python 3 compatibility boilerplate
-from __future__ import (absolute_import, division,
-                        print_function, unicode_literals)
-from future_builtins import *
+from __future__ import (absolute_import, division, unicode_literals)
+# Uncomment any builtins used
+# from future_builtins import (ascii, filter, hex, map, oct, zip)
 
 import math
 import logging
@@ -53,9 +53,10 @@ class Arc(tuple):
 #         # Perform a sanity check
 #         d1 = p1.distance(center)
 #         d2 = p2.distance(center)
-#         if not (geometry.float_eq(d1, d2) and geometry.float_eq(d1, radius) and
-#                 -TAU < angle < TAU and
-#                 geometry.float_eq(angle, center.angle2(p1, p2))):
+#         if not (const.float_eq(d1, d2)
+#                 and const.float_eq(d1, radius)
+#                 and -TAU < angle < TAU and
+#                 const.float_eq(angle, center.angle2(p1, p2))):
 #             p1.svg_plot(color='#00ff00')
 #             p2.svg_plot(color='#0000ff')
 # #         assert geometry.float_eq(angle, center.angle2(p1, p2))
@@ -315,6 +316,7 @@ class Arc(tuple):
     def distance_to_point(self, p, segment=True):
         """
         Args:
+            p: The point to measure distance to
             segment: The point normal projection
                 must lie on this the arc segment if True.
                 Default is True.
@@ -595,6 +597,7 @@ class Arc(tuple):
         """
         intersections = list(ellipse.intersect_circle(
             self.center, self.radius, arc.center, arc.radius))
+        # Delete intersections that don't lie on the arc segments.
         if on_arc:
             if (intersections and not (self.point_on_arc(intersections[0]) and
                                        arc.point_on_arc(intersections[0]))):

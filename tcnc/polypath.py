@@ -25,7 +25,6 @@ from geom import polygon
 from geom import fillet
 
 from svg import geomsvg
-from contrib import clipper
 from inkscape import inkext
 
 __version__ = "0.2"
@@ -187,7 +186,7 @@ class PolyPath(inkext.InkscapeExtension):
         layer = self.svg.create_layer('q_cell_polygons', incr_suffix=True)
         faces = graph.get_face_polygons()
         for face_poly in faces:
-            offset_poly = offset_polygon(face_poly, -0.25)
+            offset_poly = polygon.offset_polygon(face_poly, -0.25)
             if offset_poly:
                 if (self.options.polyface_fillet
                         and self.options.polyface_fillet_radius > 0):
@@ -215,7 +214,7 @@ class PolyPath(inkext.InkscapeExtension):
         polyhull = polygon_hulls[0]
 
 #         layer = self.svg.create_layer('q_polyhull2_triangles', incr_suffix=True)
-#         concave_verts, polyhull2 = self.concave_vertices(polyhull, max_angle=math.pi/2)
+#         concave_verts, polyhull2 = self._concave_vertices(polyhull, max_angle=math.pi/2)
 #         for triangle in concave_verts:
 #             self.svg.create_polygon(triangle, style=self._styles['polyhull'], parent=layer)
 #
@@ -224,20 +223,20 @@ class PolyPath(inkext.InkscapeExtension):
 #                                 style=self._styles['polyhull'], parent=layer)
 #
 #         layer = self.svg.create_layer('q_polyhull_rays', incr_suffix=True)
-#         convex_verts = self.convex_vertices(polyhull)
-#         rays = self.get_polygon_rays(convex_verts, self.clip_rect)
+#         convex_verts = self._convex_vertices(polyhull)
+#         rays = self._get_polygon_rays(convex_verts, self.clip_rect)
 #         for ray in rays:
 #             self.svg.create_line(ray.p1, ray.p2, style=self._styles['polyhull'],
 #                                  parent=layer)
 #
 #         layer = self.svg.create_layer('q_polyhull2_rays', incr_suffix=True)
-#         convex_verts = self.convex_vertices(polyhull2)
-#         rays = self.get_polygon_rays(convex_verts, self.clip_rect)
+#         convex_verts = self._convex_vertices(polyhull2)
+#         rays = self._get_polygon_rays(convex_verts, self.clip_rect)
 #         for ray in rays:
 #             self.svg.create_line(ray.p1, ray.p2, style=self._styles['polyhull'],
 #                                  parent=layer)
 
-    def get_polygon_rays(self, vertices, clip_rect):
+    def _get_polygon_rays(self, vertices, clip_rect):
         """Return rays that emanate from convex vertices to the outside
         clipping rectangle.
         """
@@ -289,7 +288,7 @@ class PolyPath(inkext.InkscapeExtension):
             rays.append(geom.Line(bisector.p2, clip_pt))
         return rays
 
-    def convex_vertices(self, vertices):
+    def _convex_vertices(self, vertices):
         """
         :param vertices: the polygon vertices. An iterable of 2-tuple (x, y) points.
         :return: A list of triplet vertices that are pointy towards the outside.
@@ -308,7 +307,7 @@ class PolyPath(inkext.InkscapeExtension):
             vert2 = vert3
         return pointy_verts
 
-    def concave_vertices(self, vertices, max_angle=math.pi):
+    def _concave_vertices(self, vertices, max_angle=math.pi):
         """
         Args:
             vertices: the polygon vertices. An iterable of
@@ -341,37 +340,6 @@ class PolyPath(inkext.InkscapeExtension):
             vert2 = vert3
         return (concave_verts, new_polygon)
 
-
-def offset_polygon(poly, offset, jointype=clipper.JoinType.Square, limit=0.0):
-    mult = (10**geom.const.EPSILON_PRECISION)
-    offset *= mult
-    limit *= mult
-    clipper_poly = poly2clipper(poly)
-    clipper_offset_polys = clipper.OffsetPolygons((clipper_poly,), offset,
-                           jointype=jointype, limit=limit)
-    offset_poly = clipper2poly(clipper_offset_polys[0])
-    return offset_poly
-
-def poly2clipper(poly):
-    clipper_poly = []
-    mult = (10**geom.const.EPSILON_PRECISION)
-    for p in poly:
-        x = int(p.x * mult)
-        y = int(p.y * mult)
-        clipper_poly.append(clipper.Point(x, y))
-    return clipper_poly
-
-def clipper2poly(clipper_poly):
-    poly = []
-    mult = (10**geom.const.EPSILON_PRECISION)
-    for p in clipper_poly:
-        x = float(p.x) / mult
-        y = float(p.y) / mult
-        poly.append(geom.P(x, y))
-    # Close the polygon
-    if len(poly) > 2 and poly[0] != poly[-1]:
-        poly.append(poly[0])
-    return poly
 
 if __name__ == '__main__':
     plugin = PolyPath()

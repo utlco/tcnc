@@ -5,12 +5,13 @@
 #-----------------------------------------------------------------------------#
 """Smooth non-G1 path nodes using Bezier curves and draw it as SVG.
 
+Works for polyline/polygons made of line/arc segments.
+
 This can be invoked as an Inkscape extension or from the command line.
 """
 # Python 3 compatibility boilerplate
-from __future__ import (absolute_import, division,
-                        print_function, unicode_literals)
-from future_builtins import *
+from __future__ import (absolute_import, division, unicode_literals)
+# from future_builtins import (ascii, filter, hex, map, oct, zip)
 
 import gettext
 # import logging
@@ -18,6 +19,7 @@ import gettext
 import geom
 
 from geom import bezier
+from geom import transform2d
 from inkscape import inkext
 from svg import geomsvg
 
@@ -29,7 +31,7 @@ class PolySmooth(inkext.InkscapeExtension):
     """An Inkscape extension that smoothes polygons.
     """
     # Command line options
-    _OPTIONSPEC = (
+    OPTIONSPEC = (
         inkext.ExtOption('--smoothness', '-s', type='int', default=50,
                          help=_('Smoothness in percent')),
         inkext.ExtOption('--new-layer', type='inkbool', default=False,
@@ -53,6 +55,7 @@ class PolySmooth(inkext.InkscapeExtension):
         'polysmooth_stroke_width': '1px',
         'polysmooth_stroke': '#000',
     }
+    # Default layer name for smoothed output
     _LAYER_NAME = 'polysmooth'
 
     def run(self):
@@ -61,87 +64,48 @@ class PolySmooth(inkext.InkscapeExtension):
         # Set up debug SVG output context.
         geom.debug.set_svg_context(self.debug_svg)
 
-        # Update CSS inline styles from templates
+        # Update CSS inline styles from templates and/or options
         self._styles.update(self.svg.styles_from_templates(
             self._styles, self._style_defaults, self.options.__dict__))
 
         # Get a list of selected SVG shape elements and their transforms
-        svg_elements = self.svg.get_shape_elements(self.get_elements())
+        parent_transform = None
+        if not self.options.new_layer:
+            # This will prevent the parent layer transform from being applied
+            # twice when the original element is replaced by the smoothed one.
+            parent_transform = transform2d.IDENTITY_MATRIX
+        svg_elements = self.svg.get_shape_elements(
+            self.get_elements(), parent_transform=parent_transform)
         if not svg_elements:
             # Nothing selected or document is empty
             return
 
         # Create a new layer for the SVG output.
         if self.options.new_layer:
-            new_layer = self.svg.create_layer(self._LAYER_NAME, incr_suffix=True)
+            new_layer = self.svg.create_layer(self._LAYER_NAME,
+                                              incr_suffix=True)
 
+        default_style = self._styles['polysmooth']
         smoothness = self.options.smoothness / 100.0
         for element, element_transform in svg_elements:
+            # Convert the SVG element to Line/Arc/CubicBezier paths
             path = geomsvg.svg_element_to_geometry(
-                       element, element_transform=element_transform)
+                element, element_transform=element_transform)
             if path:
-                new_path = self.smooth_path(path, smoothness)
+                new_path = bezier.smooth_path(path, smoothness)
                 if self.options.new_layer:
                     parent = new_layer
                 else:
+                    # Replace the original element with the smoothed one
                     parent = element.getparent()
                     parent.remove(element)
-                style = None
+                style = default_style
                 if self.options.match_style:
                     style = element.get('style')
-                self._draw_path(new_path, style, parent)
-
-    def smooth_path(self, path, smoothness=.5):
-        """Create a smooth approximation of the path using Bezier curves.
-
-        Args:
-            path: A list of Line/Arc segments.
-            smoothness: Smoothness value (usually between 0 and 1).
-                .5 is a reasonable default.
-
-        Returns:
-            A list of CubicBezier segments.
-        """
-        new_path = []
-        if len(path) < 2:
-            return path
-        seg1 = path[0]
-        cp1 = seg1.p1
-        for seg2 in path[1:]:
-            curve, cp1 = bezier.smoothing_curve(seg1, seg2, cp1,
-                                                smoothness=smoothness)
-            new_path.append(curve)
-            seg1 = seg2
-        # Process last segment...
-        if self._path_is_closed(path):
-            seg2 = path[0]
-            curve, cp1 = bezier.smoothing_curve(seg1, seg2, cp1,
-                                                smoothness=smoothness)
-            # Recalculate the first smoothing curve.
-            curve0, cp1 = bezier.smoothing_curve(seg2, path[1], cp1,
-                                                 smoothness=smoothness)
-            # Replace first smoothing curve with the recalculated one.
-            new_path[0] = curve0
-        else:
-            curve, unused = bezier.smoothing_curve(seg1, None, cp1,
-                                                   smoothness=smoothness)
-        new_path.append(curve)
-        return new_path
-
-    def _path_is_closed(self, path):
-        """Return True if the path is closed."""
-        return path[-1].p2 == path[0].p1
-
-    def _draw_path(self, path, style, parent):
-        """Draw the path as SVG."""
-        if style is None:
-            style = self._styles['polysmooth']
-        _path_is_closed = self._path_is_closed(path)
-        self.svg.create_polypath(path, style=style,
-                                 close_path=_path_is_closed,
-                                 parent=parent)
-
+                path_is_closed = (path[-1].p2 == path[0].p1)
+                self.svg.create_polypath(new_path, style=style,
+                                         close_path=path_is_closed,
+                                         parent=parent)
 
 if __name__ == '__main__':
-    ext = PolySmooth()
-    ext.main(PolySmooth._OPTIONSPEC)
+    PolySmooth().main(PolySmooth.OPTIONSPEC)

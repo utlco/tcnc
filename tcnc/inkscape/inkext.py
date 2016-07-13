@@ -13,7 +13,6 @@ from future_builtins import *
 import os
 import sys
 import optparse
-import copy
 import math
 import datetime
 import gettext
@@ -54,13 +53,19 @@ class ExtOption(optparse.Option):
     Inkscape extensions.
     """
     # TODO: switch to argparse...
-    TYPES = optparse.Option.TYPES + ('inkbool', 'docunits', 'degrees',)
-    TYPE_CHECKER = copy.copy(optparse.Option.TYPE_CHECKER)
-    TYPE_CHECKER['inkbool'] = _check_inkbool
-    TYPE_CHECKER['degrees'] = _check_degrees
-    # This is just a placeholder since the checker needs a
-    # document unit type to convert GUI values to user units.
-    TYPE_CHECKER['docunits'] = TYPE_CHECKER['float']
+    _EXT_TYPES = ('inkbool', 'docunits', 'degrees',)
+    _EXT_TYPE_CHECKER = {'inkbool': _check_inkbool,
+                         'degrees': _check_degrees,
+                         'docunits': optparse.Option.TYPE_CHECKER['float']}
+    optparse.Option.TYPES = optparse.Option.TYPES + _EXT_TYPES
+    optparse.Option.TYPE_CHECKER.update(_EXT_TYPE_CHECKER)
+#     TYPES = optparse.Option.TYPES + ('inkbool', 'docunits', 'degrees',)
+#     TYPE_CHECKER = copy.copy(optparse.Option.TYPE_CHECKER)
+#     TYPE_CHECKER['inkbool'] = _check_inkbool
+#     TYPE_CHECKER['degrees'] = _check_degrees
+#     # This is just a placeholder since the checker needs a
+#     # document unit type to convert GUI values to user units.
+#     TYPE_CHECKER['docunits'] = TYPE_CHECKER['float']
 
 
 class InkscapeExtension(object):
@@ -118,7 +123,7 @@ class InkscapeExtension(object):
         """Main entry point for the extension.
 
         Args:
-            optionspec: An optional list of `optarg.Option`s.
+            optionspec: An optional list of :class:`optarg.Option` objects.
             flip_debug_layer: Flip the Y axis of the debug layer.
                 This is useful if the GUI coordinate origin is at
                 the bottom left. Default is False.
@@ -163,9 +168,9 @@ class InkscapeExtension(object):
             for node_id in self.options.ids:
                 node = self.svg.get_node_by_id(node_id)
                 self._selected_elements.append(node)
-        for opt_str in self.options.docunit_options:
-            value = self.options.docunit_options[opt_str]
-            uvalue = getattr(self.options, opt_str)
+#         for opt_str in self.options.docunit_options:
+#             value = self.options.docunit_options[opt_str]
+#             uvalue = getattr(self.options, opt_str)
         # Run the extension
         self.run()
         # Write the output. Default is stdout.
@@ -242,7 +247,6 @@ class InkscapeExtension(object):
             return value
 
         ExtOption.TYPE_CHECKER['docunits'] = _check_docunits
-
         option_parser = optparse.OptionParser(
             usage='usage: %prog [options] [file]',
             option_list=self._DEFAULT_OPTIONS,

@@ -224,12 +224,12 @@ def fillet_arc_arc(arc1, arc2, fillet_radius):
     arc2_side = arc1.which_side_angle(arc2.start_tangent_angle())
     cw1 = 1 if arc1.is_clockwise() else -1
     cw2 = 1 if arc2.is_clockwise() else -1
-    oarc1 = arc1.offset(fillet_radius * arc2_side * cw1)
-    oarc2 = arc2.offset(fillet_radius * arc2_side * cw2)
+    offset_arc1 = arc1.offset(fillet_radius * arc2_side * cw1)
+    offset_arc2 = arc2.offset(fillet_radius * arc2_side * cw2)
     # The intersection of the two offset arcs is the fillet arc center.
-    ix = oarc1.intersect_arc(oarc2, on_arc=True)
-    if ix:
-        fillet_center = ix[0]
+    offset_intersections = offset_arc1.intersect_arc(offset_arc2, on_arc=True)
+    if offset_intersections:
+        fillet_center = offset_intersections[0]
         # Find points normal from fillet center to arc segments
         fline1 = Line(fillet_center, arc1.center)
         fline2 = Line(fillet_center, arc2.center)

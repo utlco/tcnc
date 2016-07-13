@@ -122,16 +122,16 @@ class InkscapeSVGContext(svg.SVGContext):
                      incr_suffix=False, flipy=False):
         """Create an Inkscape layer or return an existing layer.
 
-        :param name: The name of the layer to create.
-        :param opacity: Layer opacity (0.0 to 1.0).
-        :param clear: If a layer of the same name already exists then
-            erase it first if True otherwise just return it.
-            Default is True.
-        :param incr_suffix: If a layer of the same name already exists and
-            it is non-empty then
-            add an auto-incrementing numeric suffix to the name
-            (overrides :param:`clear`).
-        :param flipy: Add transform to flip Y axis.
+        Args:
+            name: The name of the layer to create.
+            opacity: Layer opacity (0.0 to 1.0).
+            clear: If a layer of the same name already exists then
+                erase it first if True otherwise just return it.
+                Default is True.
+            incr_suffix: If a layer of the same name already exists and
+                it is non-empty then add an auto-incrementing numeric suffix
+                to the name (overrides *clear*).
+            flipy: Add transform to flip Y axis.
         """
         layer_name = name
         layer = self.find_layer(name)
@@ -178,8 +178,11 @@ class InkscapeSVGContext(svg.SVGContext):
     def find(self, path):
         """Find an element in the current document.
 
-        :param path: XPath path.
-        :return: The first matching element or None if not found.
+        Args:
+            path: XPath path.
+
+        Returns:
+            The first matching element or None if not found.
         """
         try:
             node = self.document.xpath(path, namespaces=INKSCAPE_NS)[0]
@@ -190,25 +193,28 @@ class InkscapeSVGContext(svg.SVGContext):
     def get_shape_elements(self, rootnode,
                         shapetags=_DEFAULT_SHAPES,
                         parent_transform=None):
-        """Traverse a tree of SVG nodes and flatten it to a list of
+        """
+        Traverse a tree of SVG nodes and flatten it to a list of
         tuples containing an SVG shape element and its accumulated transform.
 
         This does a depth-first traversal of <g> and <use> elements.
 
         Hidden elements are ignored.
 
-        :param rootnode: The root of the node tree to traverse and flatten.
-            This can be the document root, a layer,
-            or simply a list of element nodes.
-        :param shapetags: List of shape element tags that can be fetched.
-            Default is ('path', 'rect', 'line', 'circle',
-                                   'ellipse', 'polyline', 'polygon').
-            Anything else is ignored.
-        :param parent_transform: Transform matrix to add to each node's
-            transforms. If None the node's parent transform is used.
+        Args:
+            rootnode: The root of the node tree to traverse and flatten.
+                This can be the document root, a layer,
+                or simply a list of element nodes.
+            shapetags: List of shape element tags that can be fetched.
+                Default is ('path', 'rect', 'line', 'circle',
+                'ellipse', 'polyline', 'polygon').
+                Anything else is ignored.
+            parent_transform: Transform matrix to add to each node's
+                transforms. If None the node's parent transform is used.
 
-        Returns a possibly empty list of 2-tuples consisting of
-        SVG element and accumulated transform.
+        Returns:
+            A possibly empty list of 2-tuples consisting of
+            SVG element and accumulated transform.
         """
         if etree.iselement(rootnode):
             if not self.node_is_visible(rootnode):
@@ -242,8 +248,9 @@ class InkscapeSVGContext(svg.SVGContext):
             parent_transform: Transform matrix to add to each node's transforms.
             check_parent: Check parent visibility
 
-        Returns a possibly empty list of 2-tuples consisting of
-        SVG element and transform.
+        Returns:
+            A possibly empty list of 2-tuples consisting of
+            SVG element and transform.
         """
         if not self.node_is_visible(node, check_parent=check_parent):
             return []

@@ -79,6 +79,19 @@ def draw_arc(arc, color='#cccc99', width='1px', verbose=False, parent=None):
             draw_point(arc.p2, color='#99cccc', radius='2px')
 
 
+def draw_circle(center, radius, color='#cccc99', width='1px',
+                verbose=False, parent=None):
+    """Draw an SVG circle."""
+    svg = svg_context()
+    if svg is not None:
+        style = ('fill:none;stroke:%s;stroke-width:%s;'
+                 'stroke-opacity:1') % (color, svg.unit2uu(width))
+        svg.create_circle(center, radius,
+                          style=style, parent=parent)
+        if verbose:
+            draw_point(center, color=color, parent=parent)
+
+
 def draw_ellipse(ellipse, color='#cccc99', width='1px',
                 verbose=False, parent=None):
     """Draw an SVG arc for debugging/testing"""
@@ -86,7 +99,7 @@ def draw_ellipse(ellipse, color='#cccc99', width='1px',
     if svg is not None:
         style = ('fill:none;stroke:%s;stroke-width:%s;'
                  'stroke-opacity:1') % (color, svg.unit2uu(width))
-        svg.create_circle(ellipse.center, ellipse.rx, ellipse.ry,
+        svg.create_ellipse(ellipse.center, ellipse.rx, ellipse.ry,
                           angle=ellipse.phi, style=style, parent=parent)
         if verbose:
             draw_point(ellipse.center, color=color, parent=parent)
