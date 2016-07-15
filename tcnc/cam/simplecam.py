@@ -198,33 +198,33 @@ class SimpleCAM(object):
         Returns:
             A new list of tool paths.
         """
-        if self.debug_svg is not None:
-            biarc_layer = self.debug_svg.create_layer('debug_biarcs',
-                                                      flipy=True)
-            if self.path_tool_fillet and self.tool_width > 0:
-                fillet_layer = self.debug_svg.create_layer('debug_fillets',
-                                                           flipy=True)
-            if self.path_tool_offset and self.tool_trail_offset > 0:
-                offset_layer = self.debug_svg.create_layer('debug_offsets',
-                                                           flipy=True)
-                if self.path_preserve_g1:
-                    smooth_offset_layer = self.debug_svg.create_layer(
-                        'debug_smooth_offsets', flipy=True)
-            if self.path_smooth_fillet and self.path_smooth_radius > 0.0:
-                smooth_layer = self.debug_svg.create_layer('debug_smooth',
-                                                           flipy=True)
+#         if self.debug_svg is not None:
+#             biarc_layer = self.debug_svg.create_layer('debug_biarcs',
+#                                                       flipy=True)
+#             if self.path_tool_fillet and self.tool_width > 0:
+#                 fillet_layer = self.debug_svg.create_layer('debug_fillets',
+#                                                            flipy=True)
+#             if self.path_tool_offset and self.tool_trail_offset > 0:
+#                 offset_layer = self.debug_svg.create_layer('debug_offsets',
+#                                                            flipy=True)
+#                 if self.path_preserve_g1:
+#                     smooth_offset_layer = self.debug_svg.create_layer(
+#                         'debug_smooth_offsets', flipy=True)
+#             if self.path_smooth_fillet and self.path_smooth_radius > 0.0:
+#                 smooth_layer = self.debug_svg.create_layer('debug_smooth',
+#                                                            flipy=True)
 
-        #DEBUG
-        for path in path_list:
-            prev_seg = path[0]
-            for seg in path[1:]:
-                if not geom.segments_are_g1(prev_seg, seg):
-                    geom.debug.draw_point(prev_seg.p2, color='#00ffff')
-                prev_seg = seg
-            if (path[-1].p2 == path[0].p1
-                    and not geom.segments_are_g1(path[-1], path[0])):
-                geom.debug.draw_point(path[-1].p2, color='#00ffff')
-        #DEBUG
+#         #DEBUG
+#         for path in path_list:
+#             prev_seg = path[0]
+#             for seg in path[1:]:
+#                 if not geom.segments_are_g1(prev_seg, seg):
+#                     geom.debug.draw_point(prev_seg.p2, color='#00ffff')
+#                 prev_seg = seg
+#             if (path[-1].p2 == path[0].p1
+#                     and not geom.segments_are_g1(path[-1], path[0])):
+#                 geom.debug.draw_point(path[-1].p2, color='#00ffff')
+#         #DEBUG
 #         if self.path_tool_offset and self.tool_trail_offset > 0:
 #             for path in path_list:
 #                 new_path = cam.offset_path(path, self.tool_trail_offset,
@@ -246,15 +246,15 @@ class SimpleCAM(object):
         for path in path_list:
             # Convert Bezier curves to circular arcs.
             path = self.path_biarc_approximation(path)
-            if self.debug_svg is not None:
-                geom.debug.plot_path(path, '#33cc33', biarc_layer)
+#             if self.debug_svg is not None:
+#                 geom.debug.plot_path(path, '#33cc33', biarc_layer)
             # First, create fillets to compensate for tool width
             if self.path_tool_fillet and self.tool_width > 0:
                 path = fillet.fillet_path(path, self.tool_width / 2,
                                         fillet_close=self.path_close_polygons,
                                         mark_fillet=True)
-                if self.debug_svg is not None:
-                    geom.debug.plot_path(path, '#3333cc', fillet_layer)
+#                 if self.debug_svg is not None:
+#                     geom.debug.plot_path(path, '#3333cc', fillet_layer)
             # Split path at cusps. This may add more than one path.
             if self.path_split_cusps:
                 paths = util.split_path_g1(path)
@@ -271,8 +271,8 @@ class SimpleCAM(object):
             new_path_list = []
             for path in path_list:
                 path = offset.offset_path(path, self.tool_trail_offset)
-                if self.debug_svg is not None:
-                    geom.debug.plot_path(path, '#cc3333', offset_layer)
+#                 if self.debug_svg is not None:
+#                     geom.debug.plot_path(path, '#cc3333', offset_layer)
                 new_path_list.append(path)
             path_list = new_path_list
             # Rebuild paths to fix broken G1 continuity caused by
@@ -283,8 +283,8 @@ class SimpleCAM(object):
                     path = offset.fix_G1_path(path,
                                                 self.biarc_tolerance,
                                                 self.line_flatness)
-                    if self.debug_svg is not None:
-                        geom.debug.plot_path(path, '#cc3333', smooth_offset_layer)
+#                     if self.debug_svg is not None:
+#                         geom.debug.plot_path(path, '#cc3333', smooth_offset_layer)
                     new_path_list.append(path)
                 path_list = new_path_list
 
@@ -295,8 +295,8 @@ class SimpleCAM(object):
                 path = fillet.fillet_path(path, self.path_smooth_radius,
                                           fillet_close=self.path_close_polygons,
                                           adjust_rotation=True)
-                if self.debug_svg is not None:
-                    geom.debug.plot_path(path, '#ff0000', smooth_layer)
+#                 if self.debug_svg is not None:
+#                     geom.debug.plot_path(path, '#ff0000', smooth_layer)
                 new_path_list.append(path)
             path_list = new_path_list
 
@@ -335,6 +335,7 @@ class SimpleCAM(object):
         new_path = []
         for segment in path:
             if isinstance(segment, geom.bezier.CubicBezier):
+#                 geom.debug.draw_bezier(segment, verbose=True)
                 biarcs = segment.biarc_approximation(
                                     tolerance=self.biarc_tolerance,
                                     max_depth=self.biarc_max_depth,
@@ -475,7 +476,7 @@ class SimpleCAM(object):
                 logger = logging.getLogger(__name__)
                 logger.debug('degenerate arc: r1=%f, r2=%f, %s',
                              r, segment.radius, str(segment))
-                geom.debug.draw_arc(segment, color='#ffff00', width='1px')
+#                 geom.debug.draw_arc(segment, color='#ffff00', width='1px')
                 # For now just treat the f*cked up arc as a line...
                 self.gc.feed(segment.p2.x, segment.p2.y, a=end_angle, z=depth)
             else:

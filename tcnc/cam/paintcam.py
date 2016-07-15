@@ -57,8 +57,8 @@ class PaintCAM(simplecam.SimpleCAM):
         """
         path_list = super(PaintCAM, self).preprocess_paths(path_list)
 
-        if self.debug_svg is not None:
-            brush_layer = self.debug_svg.create_layer('debug_brush', flipy=True)
+#         if self.debug_svg is not None:
+#             brush_layer = self.debug_svg.create_layer('debug_brush', flipy=True)
 
         new_path_list = []
         for path in path_list:
@@ -66,9 +66,9 @@ class PaintCAM(simplecam.SimpleCAM):
                 path = self.process_brush_path(path)
             new_path_list.append(path)
 
-        if self.debug_svg is not None:
-            for path in path_list:
-                geom.debug.plot_path(path, color='#ff0066', layer=brush_layer)
+#         if self.debug_svg is not None:
+#             for path in path_list:
+#                 geom.debug.plot_path(path, color='#ff0066', layer=brush_layer)
 
         return new_path_list
 
