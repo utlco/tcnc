@@ -13,7 +13,9 @@ from __future__ import (absolute_import, division,
 from future_builtins import *
 
 import math
-# import logging
+import logging
+
+import geom.debug
 
 from . import const
 from . import util
@@ -23,7 +25,7 @@ from .point import P
 from .line import Line
 from .arc import Arc
 
-# logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 class CubicBezier(tuple):
     """Two dimensional immutable cubic bezier curve.
@@ -109,10 +111,19 @@ class CubicBezier(tuple):
             return self.p1
         elif const.float_eq(t, 1.0):
             return self.p2
-        return (self.p1 * (1 - t)**3 +
-                self.c1 * t * 3 * (1 - t)**2 +
-                self.c2 * t**2 * 3 * (1-t) +
-                self.p2 * t**3)
+        t2 = t * t
+        mt = 1 - t
+        mt2 = mt * mt
+        mt3 = mt2 * mt
+        return (self.p1 * mt3 +
+                self.c1 * 3 * t * mt2 +
+                self.c2 * 3 * t2 * mt +
+                self.p2 * t2 * t)
+# Canonical reference impl:
+#         return (self.p1 * (1 - t)**3 +
+#                 self.c1 * t * 3 * (1 - t)**2 +
+#                 self.c2 * (t * t) * 3 * (1 - t) +
+#                 self.p2 * t**3)
 
     def midpoint(self):
         """
@@ -122,8 +133,10 @@ class CubicBezier(tuple):
         return self.point_at(0.5)
 
     def tangent_at(self, t):
-        """The tangent vector at the point on the curve corresponding to `t`.
+        """The tangent vector at the point
+        on the curve corresponding to `t`.
         """
+        # TODO: return a tangent unit vector
         if const.is_zero(t):
             if self.c1 == self.p1:
                 v = self.c2 - self.p1
@@ -135,10 +148,21 @@ class CubicBezier(tuple):
             else:
                 v = self.c2 - self.p2
         else:
-            v = ((self.c1 - self.p1) * 3 * (1 - t)**2 +
-                    (self.c2 - self.c1) * 6 * t * (1 - t) +
-                    (self.p2 - self.c2) * 3 * t**2)
+            # TODO: This is the first derivative...
+            # replace with derivative1(), but test
+            # See: https://pomax.github.io/bezierinfo/#extremities
+            v = self.derivative1(t)
+#             v = ((self.c1 - self.p1) * 3 * (1 - t)**2 +
+#                  (self.c2 - self.c1) * 6 * t * (1 - t) +
+#                  (self.p2 - self.c2) * 3 * (t * t))
         return v
+
+    def normal_at(self, t):
+        """Unit normal vector at `t`.
+        """
+        x, y = self.derivative1(t)
+        mag = math.hypot(x, y)
+        return P(-y / mag, x / mag)
 
     def is_straight_line(self, flatness=None):
         """Return True if curve is essentially a straight line.
@@ -251,11 +275,16 @@ class CubicBezier(tuple):
         Returns:
             The first derivative at `t` as 2-tuple (dx, dy).
         """
-        t2 = t**2
-        return (self.p1 * ((2 * t - t2 - 1) * 3) +
-                self.c1 * ((3 * t2 - 4 * t + 1) * 3) +
-                self.c2 * (t * (2 - 3 * t) * 3) +
-                self.p2 * (t2 * 3) )
+        t2 = t * t
+        dxdy = (3 * (t2 - (2 * t) + 1) * (self.c1 - self.p1) +
+                6 * (t - t2) * (self.c2 - self.c1) +
+                3 * t2 * (self.p2 - self.c2))
+        return dxdy
+#         t2 = t * t
+#         return (self.p1 * ((2 * t - t2 - 1) * 3) +
+#                 self.c1 * ((3 * t2 - 4 * t + 1) * 3) +
+#                 self.c2 * (t * (2 - 3 * t) * 3) +
+#                 self.p2 * (t2 * 3) )
 
     def derivative2(self, t):
         """Calculate the 2nd derivative of this curve at `t`.
@@ -334,8 +363,26 @@ class CubicBezier(tuple):
                 t1 = 0.0
             if t2 < const.EPSILON or t2 >= (1.0 - const.EPSILON):
                 t2 = 0.0
-
+#         if t1 > 0.0:
+#             geom.debug.draw_point(self.point_at(t1))
+#         if t2 > 0.0:
+#             geom.debug.draw_point(self.point_at(t2))
         return (t1, t2)
+
+    def find_roots(self):
+        """
+        This only works on a curve with no inflections.
+
+        See:
+            https://pomax.github.io/bezierinfo/#extremities
+
+        Returns:
+            The root or None
+        """
+        v_a = 3 * (-self.p1 + (3 * self.c1) - (3 * self.c2) + self.p2)
+        v_b = 6 * (self.p1 - (2 * self.c1) + self.c2)
+        v_c = 3 * (self.c1 - self.p1)
+        #TODO: implement this
 
     def length(self, tolerance=None):
         """Calculate the approximate arc length of this curve
