@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+
+  <name>Bezier Test</name>
+  <id>com.utlco.ext_bezier</id>
+  <dependency type="executable" location="extensions">test/ext_bezier.py</dependency>
+  <effect needs-live-preview="false">
+    <effects-menu>
+      <submenu _name="UTLCoTest"/>
+    </effects-menu>
+    <object-type>path</object-type>
+  </effect>
+  <script>
+    <command reldir="extensions" interpreter="python">test/ext_bezier.py</command>
+  </script>
+
+  <param name="active-tab" type="notebook">
+
+    <page name="bezier" _gui-text="Bezier">
+      <param name="tolerance" type="float" precision="8" min="0" max="1" _gui-text="Floating point tolerance (epsilon)">0.00001</param>
+      <param name="draw-inflections" type="boolean" _gui-text="Draw inflections">false</param>
+      <param name="draw-controlpoints" type="boolean" _gui-text="Draw control points">false</param>
+      <param name="draw-normals" type="boolean" _gui-text="Draw normals">false</param>
+      <param name="draw-biarcs" type="boolean" _gui-text="Draw biarcs">false</param>
+    </page>
+
+    <page name="biarc" _gui-text="Biarc">
+      <param name="biarc-tolerance" type="float" precision="5" min="0.00001" max="10" _gui-text="Curve approximation tolerance">0.01</param>
+      <param name="biarc-max-depth" type="int" min="1" max="8" _gui-text="Maximum Bezier curve subdivisions">4</param>
+      <param name="line-flatness" type="float" precision="5" min="0.00001" max="10" _gui-text="Curve to line flatness">0.001</param>
+    </page>
+
+    <page name="log" _gui-text="Log">
+      <param name="log-create" type="boolean" _gui-text="Generate log file">false</param>
+      <param name="log-level" type="optiongroup" appearance="minimal" _gui-text="Log level:">
+        <_option value="DEBUG">Debug</_option>
+        <_option value="INFO">Info</_option>
+        <_option value="WARNING">Warning</_option>
+        <_option value="ERROR">Error</_option>
+        <_option value="CRITICAL">Critical</_option>
+      </param>
+      <param name="log-filename" type="string" _gui-text="Full path to log file:">~/voronoi.log</param>
+    </page>
+
+    <page name="about" _gui-text="About">
+      <_param name="about-text" type="description">
+Sine Wave Version 0.2
+Test various CubicBezier properties and methods.
+Copyright 2016 Claude Zervas
+      </_param>
+    </page>
+
+  </param>
+
+</inkscape-extension>
