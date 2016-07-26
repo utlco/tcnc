@@ -145,6 +145,11 @@ class P(tuple):#namedtuple('P', 'x, y')):
         else:
             return P(self[1], -self[0])
 
+    def mirror(self):
+        """This vector flipped 180d
+        """
+        return P(-self[0], -self[1])
+
     def dot(self, other):
         """Compute the dot product with another vector.
 
