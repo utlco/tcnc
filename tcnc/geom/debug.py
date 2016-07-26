@@ -39,7 +39,7 @@ def draw_obj(obj, color='#c00000', parent=None):
     elif isinstance(obj, bezier.CubicBezier):
         draw_bezier(obj, color=color, parent=parent)
 
-def draw_point(point, color='#000000', radius=3, parent=None):
+def draw_point(point, radius=3, color='#000000', parent=None):
     """Draw a dot. Useful for debugging and testing."""
     svg = svg_context()
     if svg is not None:
@@ -105,7 +105,7 @@ def draw_ellipse(ellipse, color='#cccc99', width='1px',
             draw_point(ellipse.center, color=color, parent=parent)
 
 
-def draw_bezier(bezier, color='#cccc99', verbose=False, parent=None):
+def draw_bezier(curve, color='#cccc99', verbose=False, parent=None):
     """Draw an SVG version of this curve for debugging/testing.
     Include control points, inflection points, and tangent lines.
     """
@@ -113,28 +113,28 @@ def draw_bezier(bezier, color='#cccc99', verbose=False, parent=None):
     if svg is not None:
         style = ('fill:none;stroke:%s;stroke-width:%f;stroke-opacity:1' %
                  (color, svg_context().unit2uu(1)))
-        attrs = {'d': bezier.to_svg_path(), 'style': style}
+        attrs = {'d': curve.to_svg_path(), 'style': style}
         svg.create_path(attrs, parent=parent)
         if verbose:
             # Draw control points and tangents
-            draw_point(bezier.c1, color='#0000c0', parent=parent)
-            draw_point(bezier.c2, color='#0000c0', parent=parent)
-            tseg1 = line.Line(bezier.p1, bezier.c1)
+            draw_point(curve.c1, color='#0000c0', parent=parent)
+            draw_point(curve.c2, color='#0000c0', parent=parent)
+            tseg1 = line.Line(curve.p1, curve.c1)
             draw_line(tseg1, parent=parent)
-            tseg2 = line.Line(bezier.p2, bezier.c2)
+            tseg2 = line.Line(curve.p2, curve.c2)
             draw_line(tseg2, parent=parent)
             # Draw inflection points if any
-            t1, t2 = bezier.find_inflections()
+            t1, t2 = curve.find_inflections()
             if t1 > 0.0:
-                #ip1 = bezier.controlpoints_at(t1)[2]
-                ip1 = bezier.point_at(t1)
+                #ip1 = curve.controlpoints_at(t1)[2]
+                ip1 = curve.point_at(t1)
                 draw_point(ip1, color='#c00000', parent=parent)
             if t2 > 0.0:
-                #ip2 = bezier.controlpoints_at(t2)[2]
-                ip2 = bezier.point_at(t2)
+                #ip2 = curve.controlpoints_at(t2)[2]
+                ip2 = curve.point_at(t2)
                 draw_point(ip2, color='#c00000', parent=parent)
             # Draw midpoint
-            mp = bezier.point_at(0.5)
+            mp = curve.point_at(0.5)
             draw_point(mp, color='#00ff00', parent=parent)
 
 
