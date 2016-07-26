@@ -36,7 +36,7 @@ _ = gettext.gettext
 class PolyPath(inkext.InkscapeExtension):
     """Inkscape plugin that traces paths on edge connected graphs.
     """
-    _OPTIONSPEC = (
+    OPTIONSPEC = (
         inkext.ExtOption('--epsilon', type='docunits', default=0.00001,
                          help='Epsilon'),
         inkext.ExtOption('--polysegpath-draw', type='inkbool', default=True,
@@ -342,5 +342,4 @@ class PolyPath(inkext.InkscapeExtension):
 
 
 if __name__ == '__main__':
-    plugin = PolyPath()
-    plugin.main(optionspec=PolyPath._OPTIONSPEC)
+    PolyPath().main(optionspec=PolyPath.OPTIONSPEC)
