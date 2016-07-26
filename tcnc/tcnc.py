@@ -9,15 +9,19 @@ selected paths. The G-code is suitable for a CNC machine
 that has a tangential tool (ie a knife or a brush).
 """
 # Python 3 compatibility boilerplate
-from __future__ import (absolute_import, division,
-                        print_function, unicode_literals)
-from future_builtins import *
+from __future__ import (absolute_import, division, unicode_literals)
+# Uncomment this if any of these builtins are used.
+# from future_builtins import (ascii, filter, hex, map, oct, zip)
 
 import os
 import gettext
 import fnmatch
 import math
-# import logging
+
+# For performance measuring and debugging
+import timeit
+from datetime import timedelta
+import logging
 
 import geom
 
@@ -35,7 +39,7 @@ from inkscape import inksvg
 __version__ = '0.2'
 
 _ = gettext.gettext
-
+logger = logging.getLogger(__name__)
 
 class Tcnc(inkext.InkscapeExtension):
     """Inkscape plugin that converts selected SVG elements into gcode
@@ -43,7 +47,7 @@ class Tcnc(inkext.InkscapeExtension):
     such as a knife or a brush, that rotates about the Z axis.
     """
 
-    _OPTIONSPEC = (
+    OPTIONSPEC = (
         inkext.ExtOption('--origin-ref', default='paper',
                          help=_('Lower left origin reference.')),
         inkext.ExtOption('--path-sort-method', default='none',
@@ -166,6 +170,8 @@ class Tcnc(inkext.InkscapeExtension):
         inkext.ExtOption('--separate-layers', type='inkbool', default=True,
                          help=_('Seaparate gcode file per layer')),
 
+        inkext.ExtOption('--preview-toolmarks', type='inkbool', default=False,
+                         help=_('Show tangent tool preview.')),
         inkext.ExtOption('--preview-scale', default='medium',
                          help=_('Preview scale.')),
     )
@@ -185,21 +191,22 @@ class Tcnc(inkext.InkscapeExtension):
         # Initialize the geometry module with tolerances and debug output
         geom.set_epsilon(self.options.tolerance)
         geom.debug.set_svg_context(self.debug_svg)
+
+        # Create a transform to flip the Y axis.
+        page_height = self.svg.get_document_size()[1]
+        flip_transform = transform2d.matrix_scale_translate(1.0, -1.0,
+                                                            0.0, page_height)
+        timer_start = timeit.default_timer()
         # Get a list of selected SVG shape elements and their transforms
         svg_elements = self.svg.get_shape_elements(self.get_elements())
         if not svg_elements:
             # Nothing selected or document is empty
             return
-        # Create a transform to flip the Y axis.
-        page_height = self.svg.get_document_size()[1]
-        flip_transform = transform2d.matrix_scale_translate(1.0, -1.0,
-                                                            0.0, page_height)
         # Convert SVG elements to path geometry
         path_list = geomsvg.svg_to_geometry(svg_elements, flip_transform)
         # Create the output file path name
         filepath = self.create_pathname(
             self.options.output_path, append_suffix=self.options.append_suffix)
-
         try:
             with open(filepath, 'w') as output:
                 gcgen = self._init_gcode(output)
@@ -207,6 +214,9 @@ class Tcnc(inkext.InkscapeExtension):
                 cam.generate_gcode(path_list)
         except IOError as error:
             self.errormsg(str(error))
+        timer_end = timeit.default_timer()
+        total_time = timer_end - timer_start
+        logger.info('Tcnc time: %s', str(timedelta(seconds=total_time)))
 
     def _init_gcode(self, output):
         """Create and initialize the G code generator with machine details.
@@ -223,7 +233,8 @@ class Tcnc(inkext.InkscapeExtension):
         preview_plotter = gcodesvg.SVGPreviewPlotter(
             preview_svg_context, tool_width=self.options.tool_width,
             tool_offset=self.options.tool_trail_offset,
-            style_scale=self.options.preview_scale)
+            style_scale=self.options.preview_scale,
+            show_toolmarks=self.options.preview_toolmarks)
         # Create G-code generator.
         gcgen = gcode.GCodeGenerator(xyfeed=self.options.xy_feed,
                                   zsafe=self.options.z_safe,
@@ -404,5 +415,4 @@ class Tcnc(inkext.InkscapeExtension):
 # ]
 
 if __name__ == '__main__':
-    plugin = Tcnc()
-    plugin.main(optionspec=Tcnc._OPTIONSPEC, flip_debug_layer=True)
+    Tcnc().main(optionspec=Tcnc.OPTIONSPEC, flip_debug_layer=True)
