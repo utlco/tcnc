@@ -58,10 +58,14 @@ class Line(tuple):#namedtuple('Line', 'p1, p2')):
 
     def slope(self):
         """Return the slope of this line."""
-        return (self.p2.x - self.p1.x) / (self.p2.y - self.p1.y)
+        dx = self.p2.x - self.p1.x
+        dy = self.p2.y - self.p1.y
+        if const.is_zero(dy):
+            return 0.0
+        return dy / dx
 
     def slope_intercept(self):
-        """Determine slope-intercept equation for this line.
+        """The slope-intercept equation for this line.
         Where the equation is of the form:
         `y = mx + b`, where `m` is the slope and `b` is the `y` intercept.
 
@@ -75,7 +79,7 @@ class Line(tuple):#namedtuple('Line', 'p1, p2')):
     def general_equation(self):
         """Compute the coefficients of the general equation of this line.
         Where the equation is of the form
-        `ax + bx + c = 0`.
+        `ax + by + c = 0`.
 
         See:
         http://www.cut-the-knot.org/Curriculum/Calculus/StraightLine.shtml
