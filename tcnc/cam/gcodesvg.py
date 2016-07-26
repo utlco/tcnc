@@ -101,6 +101,7 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
     def __init__(self, svg_context, tool_offset=0.0, tool_width=0.0,
                  toolmark_line_interval=None,
                  toolmark_rotation_interval=None, style_scale="medium",
+                 show_toolmarks=False,
                  *args, **kwargs):
         """
         Args:
@@ -114,6 +115,7 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
                 Specified in radians.
             style_scale: Scale of preview lines and glyphs. String.
                 Can be 'small', 'medium', or 'large'. Default is 'medium'.
+            show_toolmarks: Show a preview of the tangent tool if True.
         """
         super(SVGPreviewPlotter, self).__init__(*args, **kwargs)
 
@@ -148,9 +150,8 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
         # Create layers that will contain the G code preview
         self.path_layer = self.svg.create_layer(self.PATH_LAYER_NAME,
                                                 flipy=True)
-        if self.tool_offset == 0.0 and self.tool_width == 0.0:
-            self.tool_layer = None
-        else:
+        self.tool_layer = None
+        if self.tool_offset > 0.0 and self.tool_width > 0.0 and show_toolmarks:
             self.tool_layer = self.svg.create_layer(self.TOOL_LAYER_NAME,
                                                     flipy=True)
         svg_context.set_default_parent(self.path_layer)
