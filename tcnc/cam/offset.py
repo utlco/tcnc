@@ -148,7 +148,7 @@ def smoothing_arcs(seg1, seg2, cp1=None,
         for the next curve.
     """
     curve, cp1 = geom.bezier.smoothing_curve(seg1, seg2, cp1, match_arcs)
-    geom.debug.draw_bezier(curve, color='#00ff44') #DEBUG
+#     geom.debug.draw_bezier(curve, color='#00ff44') #DEBUG
     biarc_segs = curve.biarc_approximation(tolerance=tolerance,
                                            max_depth=max_depth,
                                            line_flatness=line_flatness)
