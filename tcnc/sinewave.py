@@ -9,9 +9,9 @@ Approximate a sine wave using Bezier curves and draw it as SVG.
 This can be invoked as an Inkscape extension or from the command line.
 """
 # Python 3 compatibility boilerplate
-from __future__ import (absolute_import, division,
-                        print_function, unicode_literals)
-from future_builtins import *
+from __future__ import (absolute_import, division, unicode_literals)
+# Uncomment this if any of these builtins are used.
+# from future_builtins import (ascii, filter, hex, map, oct, zip)
 
 import gettext
 
