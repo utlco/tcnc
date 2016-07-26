@@ -16,6 +16,7 @@
   </script>
 
   <param name="active-tab" type="notebook">
+
     <page name="polypath" _gui-text="PolyPath">
       <param name="polysegpath-draw" type="boolean" _gui-text="Draw polygon segment paths">true</param>
       <param name="polysegpath-min-length" type="int" min="0" max="10" _gui-text="Minimum number of path segments">1</param>
@@ -27,9 +28,6 @@
         <_option value="2">Random</_option>
         <_option value="3">Random 2</_option>
       </param>
-  <!--
-      <param name="epsilon" type="float" precision="5" min="0" max="1" _gui-text="Epsilon:">0.0001</param>
-   -->
     </page>
 
     <page name="polyface" _gui-text="PolyFaces">
@@ -68,5 +66,7 @@
       <_param name="" type="description">PolyPath Version 0.1</_param>
       <_param name="" type="description">Copyright 2010-2016 Claude Zervas</_param>
     </page>
+
   </param>
+
 </inkscape-extension>

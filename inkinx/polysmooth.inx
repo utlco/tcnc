@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+
   <name>PolySmooth</name>
   <id>com.utlco.polysmooth</id>
   <dependency type="executable" location="extensions">tcnc/polysmooth.py</dependency>
@@ -15,6 +16,7 @@
   </script>
 
   <param name="active-tab" type="notebook">
+
     <page name="polysmooth" _gui-text="Options">
       <param name="smoothness" type="int" min="0" max="100" _gui-text="Smoothness (percent)">50</param>
       <param name="new-layer" type="boolean" _gui-text="Create new layer for output">false</param>
@@ -41,5 +43,7 @@
         Copyright 2016 Claude Zervas
       </_param>
     </page>
+
   </param>
+
 </inkscape-extension>

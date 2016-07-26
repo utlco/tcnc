@@ -16,6 +16,7 @@
   </script>
 
   <param name="active-tab" type="notebook">
+
     <page name="quasi" _gui-text="Quasi">
       <param name="symmetry" type="int" min="0" max="100" _gui-text="Degrees of symmetry:">5</param>
       <param name="scale" type="float" min="0.0" max="1000.0" _gui-text="Scale:">10</param>
@@ -171,5 +172,7 @@ Based on Eric Weeks quasi.c and quasi_colour.c:
 http://www.physics.emory.edu/~weeks/software/quasic.html
       </_param>
     </page>
+
   </param>
+
 </inkscape-extension>
