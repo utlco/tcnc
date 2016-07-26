@@ -28,7 +28,8 @@ def svg_to_geometry(svg_elements, parent_transform=None):
     respect to the parent container.
 
     Args:
-        svg_elements: An iterable collection of SVG Element nodes.
+        svg_elements: An iterable collection of 2-tuples consisting of
+            SVG Element node and transform matrix.
         parent_transform: An optional parent transform to apply to all
             nodes. Default is None.
 
