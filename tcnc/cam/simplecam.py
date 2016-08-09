@@ -366,12 +366,13 @@ class SimpleCAM(object):
 
         This can be subclassed to generate custom plunge profiles.
         """
-        # Bring the tool down to the work surface.
-        self.gc.tool_down(0.0)
-        # If the first segment has an inline Z axis hint then the
-        # Z axis movement will be determined by that segment.
-        if not hasattr(path[0], 'inline_z'):
-            self.gc.feed(z=depth)
+        # When the first segment has an inline Z axis hint
+        # it means that there is a soft landing, in which case
+        # the tool is just brought to the work surface.
+        if hasattr(path[0], 'inline_z'):
+            depth = 0.0
+        # Bring the tool down to the plunge depth.
+        self.gc.tool_down(depth)
 
 #     def retract(self, depth, path):
 #         """Lift the tool from the current working depth.
