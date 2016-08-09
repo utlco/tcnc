@@ -55,11 +55,11 @@ class PolyPath(inkext.InkscapeExtension):
                          help='Polygon CSS stroke width.'),
         inkext.ExtOption('--polyface-draw', type='inkbool', default=True,
                          help='Create polygon faces.'),
-        inkext.ExtOption('--polyface-offset', type='float', default=True,
+        inkext.ExtOption('--polyface-offset', type='float', default=0,
                          help='Polygon face offset.'),
         inkext.ExtOption('--polyface-fillet', type='inkbool', default=False,
                          help='Fillet polygon faces.'),
-        inkext.ExtOption('--polyface-fillet-radius', type='float', default=True,
+        inkext.ExtOption('--polyface-fillet-radius', type='float', default=0,
                          help='Polygon face fillet radius.'),
         inkext.ExtOption('--convex-hull-draw', type='inkbool', default=True,
                          help='Draw convex hull.'),
@@ -186,7 +186,8 @@ class PolyPath(inkext.InkscapeExtension):
         layer = self.svg.create_layer('q_cell_polygons', incr_suffix=True)
         faces = graph.get_face_polygons()
         for face_poly in faces:
-            offset_poly = polygon.offset_polygon(face_poly, -0.25)
+            offset_poly = polygon.offset_polygon(face_poly,
+                                                 self.options.polyface_offset)
             if offset_poly:
                 if (self.options.polyface_fillet
                         and self.options.polyface_fillet_radius > 0):
