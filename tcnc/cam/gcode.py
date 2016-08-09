@@ -100,6 +100,8 @@ class GCodeGenerator(object):
     _DEFAULT_TOLERANCE = 1e-6
     # Maximum reasonable precision
     _MAX_PRECISION = 15
+    # Minimum reasonable precision
+    _MIN_PRECISION = 2
 
     def __init__(self, xyfeed, zsafe, zfeed=None, afeed=None,
                  output=None, plotter=None):
@@ -172,6 +174,8 @@ class GCodeGenerator(object):
         self.blend_tolerance = None
         #: Naive cam detector tolerance value. Q value for G64 blend directive.
         self.blend_qtolerance = None
+        #: Output code comments
+        self.verbose = False
 
         if self.zfeed is None:
             self.zfeed = self.xyfeed
@@ -246,7 +250,9 @@ class GCodeGenerator(object):
         Args:
             precision: The number of digits after the decimal point.
         """
-        self._fmt_float = '%%.%df' % max(int(precision), self._MAX_PRECISION)
+        ndigits = max(min(int(precision),
+                          self._MAX_PRECISION), self._MIN_PRECISION)
+        self._fmt_float = '%%.%df' % ndigits
 
     def set_units(self, units, unit_scale=1.0):
         """Set G code units and unit scale factor.
@@ -584,7 +590,7 @@ class GCodeGenerator(object):
         if wait > 0.0:
             self.dwell(wait)
 
-    def spindle_off(self, wait=None, comment='Spindle off'):
+    def spindle_off(self, wait=None, comment=None):
         """Turn off the spindle.
 
         Args:
