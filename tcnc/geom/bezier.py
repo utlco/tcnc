@@ -15,10 +15,10 @@ from future_builtins import *
 import math
 import logging
 
-import geom.debug
+# import geom.debug
 
 from . import const
-from . import util
+# from . import util
 from . import transform2d
 
 from .point import P
@@ -92,20 +92,23 @@ class CubicBezier(tuple):
         first control point vector, unless the control point is
         coincident with the first point.
         -PI < angle < PI."""
-        return self.tangent_at(0.0).angle()
+        return self.tangent(0.0).angle()
 
     def end_tangent_angle(self):
         """Return the tangent direction of this curve in radians
         at the end (second) point.
-        This would normally be the angle of the second control point vector
-        plus PI, unless the control point is
-        coincident with the second point.
         -PI < angle < PI."""
-        return util.normalize_angle(self.tangent_at(1.0).angle() + math.pi,
-                                    center=0.0)
+        return self.tangent(1.0).angle()
+#         return util.normalize_angle(self.tangent_at(1.0).angle() + math.pi,
+#                                     center=0.0)
 
     def point_at(self, t):
         """A point on the curve corresponding to <t>.
+
+        This is the parametric function Bezier(t).
+
+        Returns:
+            A point as 2-tuple (x, y).
         """
         if const.is_zero(t):
             return self.p1
@@ -114,8 +117,7 @@ class CubicBezier(tuple):
         t2 = t * t
         mt = 1 - t
         mt2 = mt * mt
-        mt3 = mt2 * mt
-        return (self.p1 * mt3 +
+        return (self.p1 * mt2 * mt +
                 self.c1 * 3 * t * mt2 +
                 self.c2 * 3 * t2 * mt +
                 self.p2 * t2 * t)
@@ -125,18 +127,16 @@ class CubicBezier(tuple):
 #                 self.c2 * (t * t) * 3 * (1 - t) +
 #                 self.p2 * t**3)
 
-    def midpoint(self):
-        """
-        Returns:
-            The point at the middle of the Bezier curve.
-        """
-        return self.point_at(0.5)
+#     def midpoint(self):
+#         """The parametric midpoint of the curve.
+#         """
+#         # TODO: This doesn't do anything interesting - remove?
+#         return self.point_at(0.5)
 
-    def tangent_at(self, t):
-        """The tangent vector at the point
+    def tangent(self, t):
+        """The tangent unit vector at the point
         on the curve corresponding to `t`.
         """
-        # TODO: return a tangent unit vector
         if const.is_zero(t):
             if self.c1 == self.p1:
                 v = self.c2 - self.p1
@@ -144,25 +144,17 @@ class CubicBezier(tuple):
                 v = self.c1 - self.p1
         elif const.float_eq(t, 1.0):
             if self.c2 == self.p2:
-                v = self.c2 - self.p1
+                v = (self.c1 - self.p2).mirror()
             else:
-                v = self.c2 - self.p2
+                v = (self.c2 - self.p2).mirror()
         else:
-            # TODO: This is the first derivative...
-            # replace with derivative1(), but test
-            # See: https://pomax.github.io/bezierinfo/#extremities
             v = self.derivative1(t)
-#             v = ((self.c1 - self.p1) * 3 * (1 - t)**2 +
-#                  (self.c2 - self.c1) * 6 * t * (1 - t) +
-#                  (self.p2 - self.c2) * 3 * (t * t))
-        return v
+        return v.unit()
 
-    def normal_at(self, t):
-        """Unit normal vector at `t`.
+    def normal(self, t):
+        """Normal unit vector at `t`.
         """
-        x, y = self.derivative1(t)
-        mag = math.hypot(x, y)
-        return P(-y / mag, x / mag)
+        return self.tangent(t).normal()
 
     def is_straight_line(self, flatness=None):
         """Return True if curve is essentially a straight line.
@@ -197,13 +189,13 @@ class CubicBezier(tuple):
         Returns:
             A tuple of one or two CubicBezier objects.
         """
-        if t <= const.EPSILON or t >= 1.0:
+        if t <= 0.0 or t >= 1.0:
             return (self, None)
         cp0, cp1, p, cp2, cp3 = self.controlpoints_at(t)
-#         p.svg_plot(color='#ff0000') #DEBUG: shows inflection points...
         curve1 = CubicBezier(self.p1, cp0, cp1, p)
         curve2 = CubicBezier(p, cp2, cp3, self.p2)
         return (curve1, curve2)
+
 
     def subdivide_inflections(self):
         """Subdivide this curve at the inflection points, if any.
@@ -218,10 +210,15 @@ class CubicBezier(tuple):
         elif t1 == 0.0 and t2 > 0.0:
             return self.subdivide(t2)
         elif t1 > 0.0 and t2 > 0.0:
-            curves = []
-            curve1, curve2 = self.subdivide(t1)
             # Two inflection points
-            t1, t2 = curve1.find_inflections()
+            curves = []
+            logger.debug('t1=%f, t2=%f', t1, t2)
+#             if t1 > t2:
+#                 t1, t2 = t2, t1
+            curve1, curve2 = self.subdivide(t1)
+#             curve3, curve4 = curve2.subdivide(t2 - t1)
+#             return (curve1, curve3, curve4)
+            t1, t2 = curve1.find_inflections(imaginary=True)
             t = max(t1, t2)
             if t > 0.0:
                 curves.extend(curve1.subdivide(t))
@@ -234,19 +231,110 @@ class CubicBezier(tuple):
                     curves.extend(curve2.subdivide(t))
                 else:
                     curves.extend((curve1, curve2))
-            #curves[0].svg_plot()
-            #curves[1].svg_plot()
-            #curves[2].svg_plot()
             return curves
         else:
             return [self,]
+
+
+    def find_inflections(self, imaginary=False):
+        """Find (t1, t2) where the curve changes direction,
+        has a cusp, or a loop.
+        There may be none, one, or two inflections on the curve.
+        A loop will have two inflections.
+
+        These inflection points can be used to subdivide the curve.
+
+        See http://www.caffeineowl.com/graphics/2d/vectorial/cubic-inflexion.html
+
+        Args:
+            imaginary: If True find `imaginary` inflection points.
+                These are useful for subdividing curves with loops.
+                Default is False.
+
+        Returns:
+            A tuple containing the parametric locations of the inflections,
+            if any.
+            The location values will be 0 if no inflection.
+        """
+        # TODO: rethink the imaginary
+
+        # Basically the equation to be solved is where the cross product of
+        # the first and second derivatives is zero:
+        # P' X P'' = 0
+        # Where P' and P'' are the first and second derivatives respectively
+
+        # Temporary vectors to simplify the math
+        v1 = self.c1 - self.p1
+
+        # First check for a case where the curve is exactly
+        # symmetrical along the axis defined by the endpoints.
+        # In which case the inflection point is the midpoint.
+        # This case is not handled correctly by the normal method.
+        # TODO: this fix seems a little funky...
+        if v1 == -(self.c2 - self.p2):
+            return (0.5, 0.0)
+
+        v2 = self.c2 - self.c1 - v1
+        v3 = self.p2 - self.c2 - v1 - 2*v2
+
+        # Calculate quadratic coefficients
+        # of the form a*x**2 + b*x + c = 0
+        a = v2.x * v3.y - v2.y * v3.x
+        b = v1.x * v3.y - v1.y * v3.x
+        c = v1.x * v2.y - v1.y * v2.x
+
+        # Get the two roots of the quadratic - if any.
+        # These will be the inflection locations.
+        root1 = 0.0
+        root2 = 0.0
+        a2 = 2 * a
+        if abs(a2) > 0.0: # Avoid div by zero
+            # the discriminant of the quadratic eq.
+            dis = b*b - 4*a*c
+#             if dis < 0 and not imaginary:
+#                 return (0.0, 0.0)
+            # When a curve has a loop the discriminant will be negative
+            # so use the absolute value...
+            # I can't remember how this was determined besides
+            # experimentally.
+            disroot = math.sqrt(abs(dis))
+            root1 = (-b - disroot) / a2
+            root2 = (-b + disroot) / a2
+
+            # Make sure the roots are on the curve segment
+            if root1 < const.EPSILON or root1 >= (1.0 - const.EPSILON):
+                root1 = 0.0
+            if root2 < const.EPSILON or root2 >= (1.0 - const.EPSILON):
+                root2 = 0.0
+#             logger.debug('b=%f, dis=%f, root1=%f, root2=%f', b, dis, root1, root2)
+            # If the discriminant was negative and both imaginary roots
+            # are on the curve segment then the curve has a loop.
+            # Otherwise if there is a single imaginary inflection
+            # then only return it if the imaginary flag is set
+            if not imaginary and dis < 0.0 and (root1 == 0.0 or root2 == 0.0):
+                return (0.0, 0.0)
+        return (root1, root2)
+
+    def find_roots(self):
+        """
+        This only works on a curve with no inflections.
+
+        See:
+            https://pomax.github.io/bezierinfo/#extremities
+
+        Returns:
+            The root or None
+        """
+        v_a = 3 * (-self.p1 + (3 * self.c1) - (3 * self.c2) + self.p2)
+        v_b = 6 * (self.p1 - (2 * self.c1) + self.c2)
+        v_c = 3 * (self.c1 - self.p1)
+        #TODO: implement this
 
     def controlpoints_at(self, t):
         """Get the point on this curve corresponding to `t`
         plus control points.
 
-        Relevant points found using De Casteljaus's algorithm. Useful for
-        subdividing the curve at `t`.
+        Useful for subdividing the curve at `t`.
 
         Args:
             t: location on curve. A value between 0.0 and 1.0
@@ -257,16 +345,16 @@ class CubicBezier(tuple):
             new control points of the endpoints where this curve to be
             subdivided at P.
         """
+        mt = 1 - t
         # First intermediate points
-        d01 = (1. - t) * self.p1 + t * self.c1
-        d12 = (1. - t) * self.c1 + t * self.c2
-        d23 = (1. - t) * self.c2 + t * self.p2
+        d01 = mt * self.p1 + t * self.c1
+        d12 = mt * self.c1 + t * self.c2
+        d23 = mt * self.c2 + t * self.p2
         # Second intermediate points
-        d012 = (1. - t) * d01 + t * d12
-        d123 = (1. - t) * d12 + t * d23
+        d012 = mt * d01 + t * d12
+        d123 = mt * d12 + t * d23
         # Finally, the split point
-        d0123 = (1. - t) * d012 + t * d123
-
+        d0123 = mt * d012 + t * d123
         return (d01, d012, d0123, d123, d23)
 
     def derivative1(self, t):
@@ -292,10 +380,12 @@ class CubicBezier(tuple):
         Returns:
             The second derivative at `t` as 2-tuple (dx, dy).
         """
+        # TODO: confirm this is correct.
+        # See: https://pomax.github.io/bezierinfo/#inflections
         return 6 * ( (1 - t) * self.p1 + (3*t - 2) * self.c1 +
                      (1 - 3*t) * self.c2 + t * self.p2 )
 
-    def curvature(self, t):
+    def curvature_at(self, t):
         """Calculate the curvature at `t`.
 
         See http://www.spaceroots.org/documents/ellipse/node6.html
@@ -305,84 +395,12 @@ class CubicBezier(tuple):
             Negative if curving to the right or positive
             if curving to the left when `t` increases.
         """
+        # TODO: test this
         d1 = self.derivative1(t)
         d2 = self.derivative2(t)
         c = (((d1.x * d2.y) - (d1.y * d2.x)) /
              math.pow((d1.x * d1.x) + (d1.y * d1.y), 3./2))
         return c
-
-    def find_inflections(self):
-        """Find (t1, t2) where the curve has C1 discontinuities
-        (ie from convex to concave or vice versa, or a cusp, or a loop).
-        There may be none, one, or two inflections on the curve.
-
-        See http://www.caffeineowl.com/graphics/2d/vectorial/cubic-inflexion.html
-
-        Returns:
-            A tuple containing the inflection locations.
-            The location values will be 0 if no inflection.
-        """
-        # Basically the equation to be solved is
-        # P' * P'' = 0
-        # Where P' and P'' are the first and second derivatives respectively
-
-        # Temporary vectors to simplify the math
-        v1 = self.c1 - self.p1
-
-        # First check for a case where the curve is exactly
-        # symmetrical along the axis defined by the endpoints.
-        # In which case the inflection point is the midpoint.
-        # This case is not handled correctly by the normal method.
-        # TODO: this fix seems a little funky...
-        if v1 == -(self.c2 - self.p2):
-            return (0.5, 0.0)
-
-        v2 = self.c2 - self.c1 - v1
-        v3 = self.p2 - self.c2 - v1 - 2*v2
-
-        # Calculate quadratic coefficients
-        # of the form a*x**2 + b*x + c = 0
-        a = v2.x * v3.y - v2.y * v3.x
-        b = v1.x * v3.y - v1.y * v3.x
-        c = v1.x * v2.y - v1.y * v2.x
-#        logger.debug('a=%f, b=%f, c=%f' % (a, b, c))
-
-        # Get the two roots of the quadratic - if any.
-        # These will be the inflection locations.
-        t1 = 0.0
-        t2 = 0.0
-        aa = 2 * a
-        if abs(aa) > 0.0: # Avoid div by zero
-            # the discriminant of the quadratic eq.
-            dis = math.sqrt(abs(b*b - 4*a*c))
-            t1 = (-b - dis) / aa
-            t2 = (-b + dis) / aa
-#            logger.debug('t1=%f, t2=%f' % (t1, t2))
-
-            if t1 < const.EPSILON or t1 >= (1.0 - const.EPSILON):
-                t1 = 0.0
-            if t2 < const.EPSILON or t2 >= (1.0 - const.EPSILON):
-                t2 = 0.0
-#         if t1 > 0.0:
-#             geom.debug.draw_point(self.point_at(t1))
-#         if t2 > 0.0:
-#             geom.debug.draw_point(self.point_at(t2))
-        return (t1, t2)
-
-    def find_roots(self):
-        """
-        This only works on a curve with no inflections.
-
-        See:
-            https://pomax.github.io/bezierinfo/#extremities
-
-        Returns:
-            The root or None
-        """
-        v_a = 3 * (-self.p1 + (3 * self.c1) - (3 * self.c2) + self.p2)
-        v_b = 6 * (self.p1 - (2 * self.c1) + self.c2)
-        v_c = 3 * (self.c1 - self.p1)
-        #TODO: implement this
 
     def length(self, tolerance=None):
         """Calculate the approximate arc length of this curve
@@ -433,8 +451,8 @@ class CubicBezier(tuple):
                 self._arc_length = 0.5 * L0 + 0.5 * L1
         return self._arc_length
 
-    def biarc_approximation(self, tolerance=0.01, max_depth=4,
-                            line_flatness=0.01, _recurs_depth=0):
+    def biarc_approximation(self, tolerance=0.001, max_depth=4,
+                            line_flatness=0.001, _recurs_depth=0):
         """Approximate this curve using biarcs.
 
         This will recursively subdivide the curve into a series of
@@ -860,7 +878,7 @@ def smoothing_curve(seg1, seg2, cp1=None, smoothness=0.5, match_arcs=True):
     seg1_len = seg1.length()
     seg_ratio = seg1_len / (seg1_len + seg2.length())
     line_midp = Line(seg1.midpoint(), seg2.midpoint())
-    # TODO: Handle CubicBezier curve segments.
+    # TODO: Handle non-C1 connected CubicBezier curve segments.
     # Calculate magnitude of second control point
     if match_arcs and isinstance(seg1, Arc):
         cp2_mag = seg1.radius * math.tan(abs(seg1.angle) / 2) * K_ARC
@@ -909,6 +927,7 @@ def smooth_path(path, smoothness=.5):
     Returns:
         A list of CubicBezier segments.
     """
+    # TODO: add support for cubic Bezier segments
     smooth_path = []
     if len(path) < 2:
         return path
