@@ -120,7 +120,7 @@ class PaintCAM(simplecam.SimpleCAM):
 #             seg1, seg2 = first_segment.subdivide(d / first_segment.length())
 #             path[0] = seg1
 #             path.insert(1, seg2)
-        path[0].inline_z = self.z_step
+            path[0].inline_z = self.z_step
 
         # Append overshoot segments if brush overshoot is enabled
         if self.brush_overshoot_enable:
