@@ -381,7 +381,9 @@ def offset_polygon(poly, offset, jointype=clipper.JoinType.Square, limit=0.0):
             will be squared off.
 
     Returns:
-        An offset polygon.
+        An offset polygon as a list of 2-tuple vertices.
+        If the specified offset cannot be performed for the input polygon
+        an empty polygon will be retured.
     """
     mult = (10**const.EPSILON_PRECISION)
     offset *= mult
@@ -389,7 +391,10 @@ def offset_polygon(poly, offset, jointype=clipper.JoinType.Square, limit=0.0):
     clipper_poly = poly2clipper(poly)
     clipper_offset_polys = clipper.OffsetPolygons((clipper_poly,), offset,
                            jointype=jointype, limit=limit)
-    offset_poly = clipper2poly(clipper_offset_polys[0])
+    if clipper_offset_polys:
+        offset_poly = clipper2poly(clipper_offset_polys[0])
+    else:
+        offset_poly = ()
     return offset_poly
 
 def poly2clipper(poly):
