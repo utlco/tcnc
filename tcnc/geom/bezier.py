@@ -212,7 +212,7 @@ class CubicBezier(tuple):
         elif t1 > 0.0 and t2 > 0.0:
             # Two inflection points
             curves = []
-            logger.debug('t1=%f, t2=%f', t1, t2)
+#             logger.debug('t1=%f, t2=%f', t1, t2)
 #             if t1 > t2:
 #                 t1, t2 = t2, t1
             curve1, curve2 = self.subdivide(t1)
