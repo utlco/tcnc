@@ -192,9 +192,14 @@ class QuasiExtension(inkext.InkscapeExtension):
         # The clipping region can be a circle or a rectangle
         if clip_rect is not None and self.options.clip_to_circle:
             radius = min(clip_rect.width(), clip_rect.height()) / 2.0
-            self.clip_region = geom.ellipse.Ellipse(self.doc_center, radius)
+            self.clip_region = geom.ellipse.Ellipse(clip_rect.center(), radius)
         else:
             self.clip_region = clip_rect
+
+        if self.options.clip_offset_center:
+            clip_offset = clip_rect.center() - self.doc_center
+            self.options.offset_x += clip_offset.x
+            self.options.offset_y += clip_offset.y
 
         # Optionally insert spherical point projection
         if self.options.project_sphere:
@@ -771,7 +776,8 @@ _OPTIONSPEC = (
     inkext.ExtOption('--clip-to-doc', type='inkbool', default=True, help='Clip to document.'),
     inkext.ExtOption('--clip-to-circle', type='inkbool', default=False, help='Circular clip region.'),
     inkext.ExtOption('--clip-to-margins', '-C', type='inkbool', default=True, help='Clip to document margins.'),
-    inkext.ExtOption('--clip-recenter', type='inkbool', default=False, help='Re-center to clip region.'),
+    inkext.ExtOption('--clip-offset-center', type='inkbool', default=False, help='Offset center to clip region.'),
+    inkext.ExtOption('--clip-recenter', type='inkbool', default=False, help='Re-center bounding box to clip region.'),
 
     inkext.ExtOption('--margin-left', type='docunits', default=0.0, help='Left margin'),
     inkext.ExtOption('--margin-right', type='docunits', default=0.0, help='Right margin'),

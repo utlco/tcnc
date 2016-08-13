@@ -130,7 +130,9 @@
     <page name="margins" _gui-text="Margins">
       <param name="clip-to-doc" type="boolean" _gui-text="Clip to document">True</param>
       <param name="clip-to-margins" type="boolean" _gui-text="Clip to margins">True</param>
-      <param name="clip-to-circle" type="boolean" _gui-text="Circular clip region:">False</param>
+      <param name="clip-to-circle" type="boolean" _gui-text="Circular clip region">False</param>
+      <param name="clip-offset-center" type="boolean" _gui-text="Offset center to clip region">False</param>
+      <param name="clip-recenter" type="boolean" _gui-text="Re-center bounding box to clip region">False</param>
       <param name="margin-top" type="float" precision="3" min="-999" max="1000" _gui-text="Top margin:">0</param>
       <param name="margin-left" type="float" precision="3" min="-999" max="1000" _gui-text="Left margin:">0</param>
       <param name="margin-right" type="float" precision="3" min="-999" max="1000" _gui-text="Right margin:">0</param>
