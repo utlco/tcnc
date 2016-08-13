@@ -82,7 +82,6 @@ class Box(tuple):
         """Maximum X value of bounding box."""
         return self[1][1]
 
-    @property
     def center(self):
         """Return the center point of this rectangle."""
         return self.p1 + ((self.p2 - self.p1) / 2)
