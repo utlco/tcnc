@@ -265,10 +265,9 @@ class Tcnc(inkext.InkscapeExtension):
 #         logger.debug('view_scale: %f' % self.svg.view_scale)
 #         logger.debug('unit_scale: %f' % unit_scale)
         gcgen.set_units(units, unit_scale)
-        gcgen.set_tolerance(self.options.tolerance)
+        gcgen.set_tolerance(geom.const.EPSILON)
         # For simplicity the output precision is the same as epsilon
-        precision = int(round(abs(math.log(self.options.tolerance, 10))))
-        gcgen.set_output_precision(precision)
+        gcgen.set_output_precision(geom.const.EPSILON_PRECISION)
         if self.options.blend_mode:
             gcgen.set_path_blending(self.options.blend_mode,
                                  self.options.blend_tolerance)
