@@ -2,68 +2,71 @@
 
 <inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
 
-    <name>Line Patterns</name>
-    
-    <id>com.utlco.lines</id>
-    
-	<dependency type="executable" location="extensions">tcnc/lines.py</dependency>
-	
-	<param name="active-tab" type="notebook">
+  <name>Line Patterns</name>
+  <id>com.utlco.lines</id>
+  <dependency type="executable" location="extensions">tcnc/lines.py</dependency>
+  <effect needs-live-preview="false">
+    <effects-menu>
+      <submenu _name="UTLCo"/>
+    </effects-menu>
+    <object-type>path</object-type>
+  </effect>
+  <script>
+    <command reldir="extensions" interpreter="python">tcnc/lines.py</command>
+  </script>
 
-        <page name="lines" _gui-text="Lines">
-            <param name="line-orient" type="optiongroup" appearance="minimal" _gui-text="Line type:">
-                <_option value="h">Horizontal lines</_option>
-                <_option value="v">Vertical lines</_option>
-            </param>
-            <param name="line-spacing" type="float" precision="2" min="0.0001" max="1000" _gui-text="Line spacing:">1</param>
-            <param name="line-left2right" type="boolean" _gui-text="Draw left to right:">True</param>
-            <param name="line-top2bottom" type="boolean" _gui-text="Draw top to bottom:">True</param>
-            <param name="line-skip" type="int" min="0" max="1000" _gui-text="Skip lines:">0</param>
-            <param name="line-start" type="int" min="1" max="1000" _gui-text="Start at line:">1</param>
-            <param name="line-alt" type="boolean" _gui-text="Alternate line drawing:">False</param>
-            <param name="line-alt-rev" type="boolean" _gui-text="Draw alternate lines in reverse:">False</param>
-            <param name="line-angle" type="float" precision="2" min="0.0" max="90" _gui-text="Line angle:">0</param>
-        </page>
+  <param name="active-tab" type="notebook">
 
-        <page name="brush" _gui-text="Brush">
-            <param name="brush-size" type="float" precision="2" min="0" max="1000" _gui-text="Brush size:">0</param>
-            <param name="brush-overlap" type="float" precision="2" min="-999" max="999" _gui-text="Brushstroke overlap:">0</param>
-		</page>
+    <page name="lines" _gui-text="Lines">
+      <param name="line-orient" type="optiongroup" appearance="minimal" _gui-text="Line type:">
+        <_option value="h">Horizontal lines</_option>
+        <_option value="v">Vertical lines</_option>
+      </param>
+      <param name="line-spacing" type="float" precision="2" min="0.0001" max="1000" _gui-text="Line spacing">1</param>
+      <param name="line-left2right" type="boolean" _gui-text="Draw left to right">True</param>
+      <param name="line-top2bottom" type="boolean" _gui-text="Draw top to bottom">True</param>
+      <param name="line-double" type="boolean" _gui-text="Draw line both directions">True</param>
+      <param name="line-skip" type="int" min="0" max="1000" _gui-text="Skip lines">0</param>
+      <param name="line-start" type="int" min="1" max="1000" _gui-text="Start at line">1</param>
+      <param name="line-alt" type="boolean" _gui-text="Alternate line direction">False</param>
+      <param name="line-angle" type="float" precision="2" min="0.0" max="90" _gui-text="Line angle">0</param>
+    </page>
 
-        <page name="margins" _gui-text="Margins">
-            <param name="margin-top" type="float" precision="2" min="-999" max="1000" _gui-text="Top margin:">0</param>
-            <param name="margin-left" type="float" precision="2" min="-999" max="1000" _gui-text="Left margin:">0</param>
-            <param name="margin-right" type="float" precision="2" min="-999" max="1000" _gui-text="Right margin:">0</param>
-            <param name="margin-bottom" type="float" precision="2" min="-999" max="1000" _gui-text="Bottom margin:">0</param>
-        </page>
-		
-        <page name="debug" _gui-text="Debug">
-            <param name="create-log" type="boolean" _gui-text="Generate log file:">false</param>            
-            <param name="log-level" type="optiongroup" appearance="minimal" _gui-text="Log level:">
-                <_option value="DEBUG">Debug</_option>
-                <_option value="INFO">Info</_option>
-                <_option value="WARNING">Warning</_option>
-                <_option value="ERROR">Error</_option>
-                <_option value="CRITICAL">Critical</_option>
-            </param>
-            <param name="log-filename" type="string" _gui-text="Full path to log file:">tcnc-wash.log</param>
-        </page>
-        
-		<page name="about" _gui-text="About">
-			<_param name="about-text" type="description">
+    <page name="brush" _gui-text="Brush">
+      <param name="" type="description">
+Brush size and overlap settings override previous line spacing value.
+      </param>
+      <param name="brush-size" type="float" precision="2" min="0" max="1000" _gui-text="Brush size">0</param>
+      <param name="brush-overlap" type="float" precision="2" min="-999" max="999" _gui-text="Brushstroke overlap">0</param>
+    </page>
+
+    <page name="margins" _gui-text="Margins">
+      <param name="margin-top" type="float" precision="2" min="-999" max="1000" _gui-text="Top margin">0</param>
+      <param name="margin-left" type="float" precision="2" min="-999" max="1000" _gui-text="Left margin">0</param>
+      <param name="margin-right" type="float" precision="2" min="-999" max="1000" _gui-text="Right margin">0</param>
+      <param name="margin-bottom" type="float" precision="2" min="-999" max="1000" _gui-text="Bottom margin">0</param>
+    </page>
+
+    <page name="debug" _gui-text="Debug">
+      <param name="create-debug-layer" type="boolean" _gui-text="Create debug layer">false</param>
+      <param name="log-create" type="boolean" _gui-text="Create log file">false</param>
+      <param name="log-level" type="optiongroup" appearance="minimal" _gui-text="Log level">
+        <_option value="DEBUG">Debug</_option>
+        <_option value="INFO">Info</_option>
+        <_option value="WARNING">Warning</_option>
+        <_option value="ERROR">Error</_option>
+        <_option value="CRITICAL">Critical</_option>
+      </param>
+      <param name="log-filename" type="string" _gui-text="Full path of log file">~/tcnc.log</param>
+    </page>
+
+    <page name="about" _gui-text="About">
+      <_param name="" type="description">
 Lines Version 0.1
 Create vertical or horizontal line patterns.
-			</_param>
-		</page>
-		
-	</param>	
-    <effect needs-live-preview="false">
-		<effects-menu>
-			<submenu _name="TCNC"/>
-		</effects-menu>
-		<object-type>path</object-type>
-    </effect>
-    <script>
-        <command reldir="extensions" interpreter="python">tcnc/lines.py</command>
-    </script>
+      </_param>
+    </page>
+
+  </param>
+
 </inkscape-extension>
