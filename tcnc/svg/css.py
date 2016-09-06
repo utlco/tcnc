@@ -10,6 +10,8 @@ from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from future_builtins import *
 
+import string
+
 CSS_COLORS = {
     'aliceblue': (240, 248, 255),
     'antiquewhite': (250, 235, 215),
@@ -216,17 +218,23 @@ def csscolor_to_rgb(css_color):
         https://developer.mozilla.org/en-US/docs/Web/CSS/color
     """
     # Normalize the property string
+    rgb = None
     css_color = css_color.strip().lower()
-    # First see if it's a named color
-    rgb = CSS_COLORS.get(css_color)
-    if rgb is None:
-        if css_color.starts_with('#'):
+    if css_color.startswith('#'):
+        rgb = csshex_to_rgb(css_color)
+    elif css_color.startswith('rgb'):
+        rgb = cssrgb_to_rgb(css_color)
+    elif css_color.startswith('hsl'):
+        # TODO: implement hsl conversion
+        raise NotImplementedError
+    else:
+        rgb = CSS_COLORS.get(css_color)
+        # If it's not a named color then as a last ditch effort
+        # see if it might just be missing a '#' prefix. This is
+        # not really part of the SVG spec but makes things a little
+        # more forgiving...
+        if rgb is None and all(c in string.hexdigits for c in css_color):
             rgb = csshex_to_rgb(css_color)
-        elif css_color.starts_with('rgb'):
-            rgb = cssrgb_to_rgb(css_color)
-        elif css_color.starts_with('hsl'):
-            # TODO: implement hsl conversion
-            raise NotImplementedError
     if rgb is None or not rgb:
         rgb = (0, 0, 0)
     return rgb
@@ -242,18 +250,22 @@ def csshex_to_rgb(hex_color):
         The RGB value as a tuple of three integers: (r, g, b).
         Returns (0, 0, 0) by default if the hex value can't be parsed.
     """
+    rgb = None
     hex_color = hex_color.strip().lstrip('#')
-    if len(hex_color) == 6:
-        rgb = (int(hex_color[0:2], 16),
-               int(hex_color[2:4], 16),
-               int(hex_color[4:], 16))
-    elif len(hex_color) == 3:
-        red = int(hex_color[0], 16)
-        green = int(hex_color[1], 16)
-        blue = int(hex_color[2], 16)
-        rgb = (red * 16 + red, green * 16 + green, blue * 16 + blue)
-    else:
-        rgb(0, 0, 0)
+    try:
+        if len(hex_color) == 6:
+            rgb = (int(hex_color[0:2], 16),
+                   int(hex_color[2:4], 16),
+                   int(hex_color[4:], 16))
+        elif len(hex_color) == 3:
+            red = int(hex_color[0], 16)
+            green = int(hex_color[1], 16)
+            blue = int(hex_color[2], 16)
+            rgb = (red * 16 + red, green * 16 + green, blue * 16 + blue)
+    except ValueError:
+        pass
+    if rgb is None:
+        rgb = (0, 0, 0)
     return rgb
 
 
@@ -269,12 +281,12 @@ def cssrgb_to_rgb(rgb_color):
         Returns (0, 0, 0) by default if the hex value can't be parsed.
     """
     rgb = []
-    numbers = rgb_color.strip().strip('rgba()').split(',')
-    for num in numbers[:3]:
+    numbers = rgb_color.strip().strip('rgba() ').split(',')
+    for num in numbers[:4]:
         n = parse_channel_value(num)
         rgb.append(n)
-    if len(numbers) > 3:
-        rgb.append(float(numbers[3]))
+    for unused in range(3 - len(rgb)):
+        rgb.append(0)
     if not rgb:
         return (0, 0, 0)
     return rgb
@@ -289,10 +301,15 @@ def parse_channel_value(value):
 
     Returns:
         An integer value between 0 and 255.
+        Default is 0 if the value isn't a valid channel value.
     """
+    n = 0
     value = value.strip()
-    if value[-1] == '%':
-        n = int((float(value[:-1]) / 100.0) * 255)
-    elif value.isnumeric():
-        n = int(value)
+    try:
+        if value.endswith('%'):
+            n = int((float(value.rstrip('%')) / 100.0) * 255)
+        elif value.isnumeric():
+            n = int(value)
+    except ValueError:
+        pass
     return max(min(n, 255), 0)
