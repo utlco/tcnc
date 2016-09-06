@@ -224,7 +224,8 @@ class Quasi(object):
         # The dot product of the two vectors.
         # A measure of how 'skinny' the rhombus is.
         dotp = v1.x * v2.x + v1.y * v2.y
-        if not self.plotter.plot_polygon(vertices, self._round(abs(dotp))):
+        color = self._round(abs(dotp))
+        if not self.plotter.plot_polygon(vertices, color):
             return
         if self.segtype_skinny > 0 or self.segtype_fat > 0:
             # Determine if the polygon is fat or skinny
