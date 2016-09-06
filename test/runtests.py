@@ -11,7 +11,6 @@ import unittest
 # since they in turn import modules from the target package.
 sys.path.append('../tcnc')
 
-import svgtest
 
 # suite = unittest.TestLoader().loadTestsFromTestCase(svgtest.TestSVGMethods)
 suite = unittest.TestLoader().discover('.')
