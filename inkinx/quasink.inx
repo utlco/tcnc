@@ -79,6 +79,7 @@
         <_option value="red">Red</_option>
         <_option value="red05">Red 5&#37; incr</_option>
         <_option value="red10">Red 10&#37; incr</_option>
+        <_option value="green10">Green 10&#37; incr</_option>
         <_option value="yellow">Yellow</_option>
         <_option value="yellow05">Yellow 5&#37; incr</_option>
         <_option value="yellow10">Yellow 10&#37; incr</_option>

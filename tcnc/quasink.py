@@ -17,7 +17,7 @@ import sys
 import math
 import random
 import gettext
-# import logging
+import logging
 
 import geom
 from geom import quasi
@@ -30,7 +30,7 @@ from inkscape import inkext
 __version__ = "0.2"
 
 _ = gettext.gettext
-# logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 class IdentityProjector(object):
     """Identity projection. No distortion."""
@@ -74,9 +74,9 @@ class QuasiExtension(inkext.InkscapeExtension):
             'fill:none;stroke-width:.1;stroke:#30f090;',
         'polygon':
             'stroke-opacity:1.0;stroke-linejoin:round;'
-            'fill:%s;stroke-width:$polygon_stroke_width;stroke:$polygon_stroke;',
-        'polygon_nostroke':
-            'fill:%s;stroke:none;',
+            'stroke-width:$polygon_stroke_width;stroke:$polygon_stroke;',
+        'polygon_filled':
+            'fill:%s;stroke:%s;stroke-width:$polygon_fill_stroke_width;',
         'polygon_circle':
             'stroke-opacity:1.0;stroke-linejoin:round;'
             'fill:none;stroke-width:.1;stroke:#903030;',
@@ -100,6 +100,7 @@ class QuasiExtension(inkext.InkscapeExtension):
         'infotext_size': '12pt',
         'margin_stroke_width': '.1in',
         'margin_stroke': '#000000',
+        'polygon_fill_stroke_width': '1px',
         'polygon_stroke_width': '3pt',
         'polygon_stroke': '#00ff00',
         'polyseg_stroke_width': '.1in',
@@ -136,6 +137,11 @@ class QuasiExtension(inkext.InkscapeExtension):
                 'red10': ('#ffcccc', '#ff9999', '#ff6666', '#ff3333',
                           '#ff0000', '#cc0000', '#990000', '#660000',
                           '#330000', '#000000'),
+
+                'green10': ('#ccffcc', '#99ff99', '#66ff66', '#45ff45',
+                            '#00ff00', '#00ee20', '#00dd00', '#00bb00',
+                            '#009900', '#007700', '#006600',
+                            '#003300', '#000000'),
 
                 'yellow05': ('#fffde5', '#fffacc', '#fff8b3', '#fff599',
                              '#fff380', '#fff166', '#ffee4d', '#ffec33',
@@ -289,6 +295,10 @@ class QuasiExtension(inkext.InkscapeExtension):
                                                           self._style_defaults,
                                                           self.options.__dict__))
 
+        logger.debug('colors: %d' % len(plotter.color_count))
+        for color in sorted(plotter.color_count.keys()):
+            logger.debug('[%.5f]: %d' % (color, plotter.color_count[color]))
+
         if self.options.create_info_layer:
             self._draw_info_layer()
 
@@ -392,37 +402,36 @@ class QuasiExtension(inkext.InkscapeExtension):
         polygon_list = plotter.polygons
         layer1_name = 'q_polygons_%d' % self.options.symmetry
         layer1 = self.svg.create_layer(layer1_name, incr_suffix=True)
-        if self.options.create_culledrhombus_layer:
-            layer2_name = 'q_polygons_x_%d' % self.options.symmetry
-            layer2 = self.svg.create_layer(layer2_name, incr_suffix=True)
-        fill_lut = self._FILL_LUT[self.options.polygon_fill_lut]
-        fill_lut_offset = self.options.polygon_fill_lut_offset
+#         if self.options.create_culledrhombus_layer:
+#             layer2_name = 'q_polygons_x_%d' % self.options.symmetry
+#             layer2 = self.svg.create_layer(layer2_name, incr_suffix=True)
 #         if self.options.polygon_fill and self.options.polygon_stroke == 'none':
         if self.options.polygon_fill:
-            style_template = self._styles['polygon_nostroke']
+            fill_lut = self._FILL_LUT[self.options.polygon_fill_lut]
+            fill_lut_offset = self.options.polygon_fill_lut_offset
+            fill_style_template = self._styles['polygon_filled']
+            fill_colors = sorted(plotter.color_count.keys())
         else:
-            style_template = self._styles['polygon']
-#         if not self.options.polygon_fill:
-            style = style_template % 'none'
+            style = self._styles['polygon']
         color_index = 0
         for i, vertices in enumerate(polygon_list):
             if self.options.polygon_fill:
                 if self.options.polygon_zfill:
-#                     color_index = plotter.polygon_colors[i]
                     color = plotter.polygon_colors[i]
-                    color_index = int(len(fill_lut) * color / 2)
+                    color_index = fill_colors.index(color)
+#                     color_index = int(len(fill_lut) * color / 2)
                 else:
                     color_index = (color_index + 1)
-                    color_index %= len(fill_lut)
-                css_color = fill_lut[color_index + fill_lut_offset]
-                style = style_template % css_color
+                color_index = (color_index + fill_lut_offset) % len(fill_lut)
+                css_color = fill_lut[color_index]
+                style = fill_style_template % (css_color, css_color)
             self.svg.create_polygon(vertices, style=style, parent=layer1)
-            if self.options.create_culledrhombus_layer:
-                d1 = vertices[0].distance(vertices[2])
-                d2 = vertices[1].distance(vertices[3])
-                if self.options.min_rhombus_width < min(d1, d2):
-                    style = self._styles['polygon'] % (fill_lut[color_index],)
-                    self.svg.create_polygon(vertices, style=style, parent=layer2)
+#             if self.options.create_culledrhombus_layer:
+#                 d1 = vertices[0].distance(vertices[2])
+#                 d2 = vertices[1].distance(vertices[3])
+#                 if self.options.min_rhombus_width < min(d1, d2):
+#                     style = self._styles['polygon'] % (fill_lut[color_index],)
+#                     self.svg.create_polygon(vertices, style=style, parent=layer2)
 
     def _draw_inset_polygons(self, polygon_list, offset, nmax=1):
         style = self._styles['polygon'] % ('none',)
@@ -641,6 +650,7 @@ class _QuasiPlotter(quasi.QuasiPlotter):
     def plot_polygon(self, vertices, color):
         """
         """
+        assert(0.0 <= color <= 1.0)
         xvertices = []
         clip_count = 0
         for vertex in vertices:
