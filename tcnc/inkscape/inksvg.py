@@ -175,6 +175,14 @@ class InkscapeSVGContext(svg.SVGContext):
                 return layer
         return None
 
+    def layer_is_locked(self, layer):
+        """
+        Returns:
+            True if the layer is locked, otherwise False.
+        """
+        val = layer.get(sodipodi_ns('insensitive'))
+        return val is not None and val.lower() == 'true'
+
     def find(self, path):
         """Find an element in the current document.
 
