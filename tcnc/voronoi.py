@@ -47,7 +47,7 @@ class Voronoi(inkext.InkscapeExtension):
                          help='Delaunay triangles.'),
         inkext.ExtOption('--delaunay-edges', type='inkbool', default=False,
                          help='Delaunay edges.'),
-        inkext.ExtOption('--clip-to-polygon', type='inkbool', default=True,
+        inkext.ExtOption('--clip-to-polygon', type='inkbool', default=False,
                          help='Clip to hull polygon.'),
     )
 
@@ -81,6 +81,7 @@ class Voronoi(inkext.InkscapeExtension):
         """Main entry point for Inkscape plugins.
         """
         geom.set_epsilon(_GEOM_EPSILON)
+        geom.debug.set_svg_context(self.debug_svg)
 
         self._styles.update(self.svg.styles_from_templates(self._styles,
                                                           self._STYLE_DEFAULTS,
@@ -128,14 +129,14 @@ class Voronoi(inkext.InkscapeExtension):
         delaunay_segments = self._clipped_delaunay_segments(voronoi_diagram,
                                                             clipping_hull)
 
-        layer = self.svg.create_layer('voronoi_diagram')
+        layer = self.svg.create_layer('voronoi_diagram', incr_suffix=True)
         style = self._styles['voronoi']
         for segment in voronoi_segments:
             self.svg.create_line(segment.p1, segment.p2, style=style,
                                  parent=layer)
 
         if clipping_hull is not None:
-            layer = self.svg.create_layer('voronoi_clipped')
+            layer = self.svg.create_layer('voronoi_clipped', incr_suffix=True)
             style = self._styles['voronoi']
             for segment in voronoi_clipped_segments:
                 self.svg.create_line(segment.p1, segment.p2, style=style,
@@ -143,23 +144,25 @@ class Voronoi(inkext.InkscapeExtension):
             voronoi_graph = planargraph.Graph(voronoi_clipped_segments)
             voronoi_graph.cull_open_edges()
 
-            layer = self.svg.create_layer('voronoi_closed')
+            layer = self.svg.create_layer('voronoi_closed', incr_suffix=True)
             style = self._styles['voronoi']
             for segment in voronoi_graph.edges:
                 self.svg.create_line(segment.p1, segment.p2, style=style,
                                      parent=layer)
 
-        layer = self.svg.create_layer('delaunay_edges')
-        style = self._styles['delaunay_triangle']
-        for segment in delaunay_segments:
-            self.svg.create_line(segment.p1, segment.p2, style=style,
-                                 parent=layer)
+        if self.options.delaunay_edges:
+            layer = self.svg.create_layer('delaunay_edges', incr_suffix=True)
+            style = self._styles['delaunay_triangle']
+            for segment in delaunay_segments:
+                self.svg.create_line(segment.p1, segment.p2, style=style,
+                                     parent=layer)
 
-        layer = self.svg.create_layer('delaunay_triangles')
-        for triangle in voronoi_diagram.triangles:
-            self.svg.create_polygon(triangle, close_polygon=True,
-                                style=self._styles['delaunay_triangle'],
-                                parent=layer)
+        if self.options.delaunay_triangles:
+            layer = self.svg.create_layer('delaunay_triangles', incr_suffix=True)
+            for triangle in voronoi_diagram.triangles:
+                self.svg.create_polygon(triangle, close_polygon=True,
+                                    style=self._styles['delaunay_triangle'],
+                                    parent=layer)
 
     def _clipped_voronoi_segments(self, diagram, clip_rect):
         """Clip a voronoi diagram to a clipping rectangle.
