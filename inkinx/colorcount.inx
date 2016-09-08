@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+
+  <name>ColorCount</name>
+  <id>com.utlco.tcnc</id>
+  <dependency type="executable" location="extensions">tcnc/colorcount.py</dependency>
+  <effect needs-live-preview="false">
+    <effects-menu>
+      <submenu _name="UTLCo"/>
+    </effects-menu>
+    <object-type>path</object-type>
+  </effect>
+  <script>
+    <command reldir="extensions" interpreter="python">tcnc/colorcount.py</command>
+  </script>
+
+  <param name="active-tab" type="notebook">
+
+    <page name="options" _gui-text="Options">
+      <param name="separate-layers" type="boolean"
+        _gui-text="Copy colored elements to separate layers">false</param>
+    </page>
+
+    <page name="debug" _gui-text="Debug">
+      <param name="create-debug-layer" type="boolean"
+        _gui-text="Create debug layer">false</param>
+      <param name="log-create" type="boolean"
+        _gui-text="Generate log file">false</param>
+      <param name="log-level" type="optiongroup" appearance="minimal"
+        _gui-text="Log level">
+        <_option value="DEBUG">Debug</_option>
+        <_option value="INFO">Info</_option>
+        <_option value="WARNING">Warning</_option>
+        <_option value="ERROR">Error</_option>
+        <_option value="CRITICAL">Critical</_option>
+      </param>
+      <param name="log-filename" type="string"
+        _gui-text="Full path to log file">~/colorcount_debug.log</param>
+    </page>
+
+    <!-- Optional but recommended About tab -->
+    <page name="about" _gui-text="About">
+      <_param name="" type="description">ColorCount Version 0.1</_param>
+      <_param name="" type="description">Count SVG element fill colors.</_param>
+    </page>
+
+  </param>
+
+</inkscape-extension>
