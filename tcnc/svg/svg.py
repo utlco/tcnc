@@ -131,7 +131,7 @@ class SVGContext(object):
         return etree.ElementTree(docroot)
 
     @classmethod
-    def parse(cls, filename=None):
+    def parse(cls, filename=None, huge_tree=True):
         """Parse an SVG file (or stdin) and return an SVGContext.
 
         Args:
@@ -141,11 +141,12 @@ class SVGContext(object):
         Returns:
             An SVGContext
         """
+        parser = etree.XMLParser(huge_tree=huge_tree)
         if filename is None:
-            document = etree.parse(sys.stdin)
+            document = etree.parse(sys.stdin, parser=parser)
         else:
             with open(filename, 'r') as stream:
-                document = etree.parse(stream)
+                document = etree.parse(stream, parser=parser)
         return cls(document)
 
     def __init__(self, document, font_size=None, x_height=None):
@@ -501,6 +502,18 @@ class SVGContext(object):
     def node_is_group(self, node):
         """Return True if the node is an SVG group."""
         return node.tag == svg_ns('g') or node.tag == 'g'
+
+    def create_rect(self, position, width, height, style=None, parent=None):
+        """Create an SVG rect element."""
+        if parent is None:
+            parent = self.current_parent
+        attrs = {'x': str(self._scale(position[0])),
+                 'y': str(self._scale(position[1])),
+                 'width': str(self._scale(width)),
+                 'height': str(self._scale(height))}
+        if style:
+            attrs['style'] = style
+        return etree.SubElement(parent, svg_ns('rect'), attrs)
 
     def create_circle(self, center, radius, style=None, parent=None):
         """Create an SVG circle element."""
