@@ -30,7 +30,8 @@ logger = logging.getLogger(__name__)
 
 
 class ExtBezier(inkext.InkscapeExtension):
-    """An Inkscape extension that draws a sine wave using Bezier curves.
+    """An Inkscape extension that tests various CubicBezier
+    properties and methods.
     """
     # Command line options
     OPTIONSPEC = (
