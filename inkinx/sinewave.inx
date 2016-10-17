@@ -21,8 +21,8 @@
       <param name="amplitude" type="float" precision="5" min="0" max="10000" _gui-text="Amplitude">1</param>
       <param name="wavelength" type="float" precision="5" min="0" max="10000" _gui-text="Wavelength">1</param>
       <param name="cycles" type="int" _gui-text="Cycles">1</param>
-      <param name="origin_x" type="float" precision="5" min="0" max="10000" _gui-text="Origin X">0</param>
-      <param name="origin_y" type="float" precision="5" min="0" max="10000" _gui-text="Origin Y">0</param>
+      <param name="origin_x" type="float" precision="5" min="-10000" max="10000" _gui-text="Origin X">0</param>
+      <param name="origin_y" type="float" precision="5" min="-10000" max="10000" _gui-text="Origin Y">0</param>
     </page>
 
     <page name="about" _gui-text="About">
