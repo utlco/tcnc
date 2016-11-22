@@ -389,11 +389,12 @@ class SimpleCAM(object):
     def generate_rapid_move(self, path):
         """Generate G code for a rapid move to the beginning of the tool path.
         """
-        start_segment = path[0]
-        start_angle = util.seg_start_angle(start_segment)
-        rotation = geom.calc_rotation(self.current_angle, start_angle)
+        # TODO: Unwind large rotations
+        first_segment = path[0]
+        segment_start_angle = util.seg_start_angle(first_segment)
+        rotation = geom.calc_rotation(self.current_angle, segment_start_angle)
         self.current_angle += rotation
-        self.gc.rapid_move(start_segment.p1.x, start_segment.p1.y,
+        self.gc.rapid_move(first_segment.p1.x, first_segment.p1.y,
                            a=self.current_angle)
 
     def sort_paths(self, path_list, sort_method='optimize'):

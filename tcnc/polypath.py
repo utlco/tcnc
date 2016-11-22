@@ -120,9 +120,10 @@ class PolyPath(inkext.InkscapeExtension):
         geom.set_epsilon(self.options.epsilon)
         geom.debug.set_svg_context(self.debug_svg)
 
-        self._styles.update(self.svg.styles_from_templates(self._styles,
-                                                          self._style_defaults,
-                                                          self.options.__dict__))
+        styles = self.svg.styles_from_templates(self._styles,
+                                                self._style_defaults,
+                                                self.options.__dict__)
+        self._styles.update(styles)
 
         # Get a list of selected SVG shape elements and their transforms
         svg_elements = self.svg.get_shape_elements(self.get_elements())
