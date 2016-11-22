@@ -132,6 +132,9 @@ class InkscapeSVGContext(svg.SVGContext):
                 it is non-empty then add an auto-incrementing numeric suffix
                 to the name (overrides *clear*).
             flipy: Add transform to flip Y axis.
+
+        Returns:
+            A new layer or an existing layer of the same name.
         """
         layer_name = name
         layer = self.find_layer(name)
@@ -151,15 +154,52 @@ class InkscapeSVGContext(svg.SVGContext):
 #             layer.set(inkscape_ns('groupmode'), 'layer')
 #             layer.set(inkscape_ns('label'), layer_name)
         elif clear:
-            # TODO: del transform and style attributes also?
+            # Remove subelements and transform
             del layer[:]
+            if 'transform' in layer.attrib:
+                del layer.attrib['transform']
         if flipy:
             layer.set('transform',
                       'translate(0, %f) scale(1, -1)' % self.view_height)
         return layer
 
+#     def _find_auto_incr_layer_name(self, name, force_new=False):
+#         """
+#         """
+#         layer_name = name
+#         layer = self.find_layer(layer_name)
+#         suffix_n = 0
+#         while layer is not None and (len(layer) > 0 or force_new):
+#             layer_name = '%s %02d' % (name, suffix_n)
+#             suffix_n += 1
+#             layer = self.find_layer(layer_name)
+#         return layer_name
+#
+#     def duplicate_layer(self, layer, new_name=None):
+#         """Create a copy of an Inkscape layer and all of its sub-elements.
+#
+#         Args:
+#             layer: The layer to copy
+#             new_name: Name of the copy.
+#                 By default the name will be the name of the source layer
+#                 followed by an auto-incremented suffix.
+#
+#         Returns:
+#             A copy of the specified layer.
+#         """
+#         raise NotImplementedError()
+#         src_name = self.get_layer_name(layer)
+#         if new_name is None:
+#             new_name = src_name
+
+
+    def set_layer_name(self, layer, name):
+        """Rename an Inkscape layer.
+        """
+        layer.set(inkscape_ns('label'), name)
+
     def get_layer_name(self, layer):
-        """Return the name of the layer.
+        """Return the name of the Inkscape layer.
         """
         return layer.get(inkscape_ns('label'))
 
@@ -167,6 +207,8 @@ class InkscapeSVGContext(svg.SVGContext):
         """Return the layer that the node resides in.
         Returns None if the node is not in a layer.
         """
+        # TODO: it's probably better/faster to recursively climb
+        # the parent chain until docroot or layer is found.
         # This assumes that Inkscape still doesn't support sub-layers
         layers = self.document.xpath('//svg:g[@inkscape:groupmode="layer"]',
                                      namespaces=INKSCAPE_NS)
