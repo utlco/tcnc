@@ -194,7 +194,7 @@ class GCodeGenerator(object):
         # GCode output units
         self._units = 'in'
         # Last value for G code parameters
-        self._last_val = {}
+        self._last_val = {} #{'X': 0.0, 'Y': 0.0, 'Z': 0.0, 'A': 0.0, 'F': 0.0}
         for param in self._GCODE_ORDERED_PARAMS:
             self._last_val[param] = None
         # True if the tool is above the Z axis safe height for rapid moves
@@ -225,9 +225,28 @@ class GCodeGenerator(object):
             raise GCodeException('Units must be "in" or "mm".')
         self._units = value
 
+    @property
+    def X(self):
+        """The current X axis value or none if unknown."""
+        return self._last_val['X']
+
+    @property
+    def Y(self):
+        """The current Y axis value or none if unknown."""
+        return self._last_val['Y']
+
+    @property
+    def Z(self):
+        """The current Z axis value or none if unknown."""
+        return self._last_val['Z']
+
+    @property
+    def A(self):
+        """The current A axis value or none if unknown."""
+        return self._last_val['A']
+
     def set_tolerance(self, tolerance, angle_tolerance=None):
-        """Set tolerance (epsilon) for floating point comparisons and
-        G code output precision.
+        """Set tolerance (epsilon) for floating point comparisons.
 
         Args:
             tolerance: The tolerance for scalar floating point comparisons
@@ -239,13 +258,14 @@ class GCodeGenerator(object):
         if angle_tolerance is None:
             angle_tolerance = tolerance
         self.angle_tolerance = angle_tolerance
-#         # Calculate the number of digits after the decimal point
-#         precision = int(round(abs(math.log(tolerance, 10))))
-#         self._fmt_float = '%%.%df' % precision
 
     def set_output_precision(self, precision):
         """Set numeric output precision. This determines the
         number of digits after the decimal point.
+
+        This can be different from the precision implied
+        by the `tolerance` value. The default is derived
+        from the `tolerance` value.
 
         Args:
             precision: The number of digits after the decimal point.
@@ -322,6 +342,10 @@ class GCodeGenerator(object):
 
         Axis offsets are always specified in *machine units*.
         Angular offsets are always in *degrees*.
+
+        This is a 'soft' offset, not a G92 offset. The offset
+        value will be added to the current axis value when
+        a move is performed.
 
         Example::
 
@@ -460,7 +484,7 @@ class GCodeGenerator(object):
             feed_rate: The feed rate in machine units per minute.
         """
         if self._last_val['F'] is None \
-        or abs(feed_rate - self._last_val['F']) > self._DEFAULT_TOLERANCE:
+        or not self.float_eq(feed_rate - self._last_val['F']):
             self._write_line('F%s' % (self._fmt_float % feed_rate))
             self._last_val['F'] = feed_rate
 
@@ -746,7 +770,10 @@ class GCodeGenerator(object):
         Returns:
             The current position of the named axis as a float value.
         """
-        return self._last_val[axis.upper()]
+        axis = axis.upper()
+        if axis not in self._last_val:
+            raise GCodeException('Undefined axis %s' % axis)
+        return self._last_val[axis]
 
     def gcode_command(self, command, **kwargs):
         """Output a line of gcode.
