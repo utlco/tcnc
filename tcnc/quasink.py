@@ -434,7 +434,7 @@ class QuasiExtension(inkext.InkscapeExtension):
 #                     self.svg.create_polygon(vertices, style=style, parent=layer2)
 
     def _draw_inset_polygons(self, polygon_list, offset, nmax=1):
-        style = self._styles['polygon'] % ('none',)
+        style = self._styles['polygon']
         offset_total = offset
         for n in range(nmax):
             layer = self.svg.create_layer('q_insetpolygons_%d' % (n+1,),
