@@ -3,7 +3,7 @@
 <inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
 
   <name>ColorCount</name>
-  <id>com.utlco.tcnc</id>
+  <id>com.utlco.colorcount</id>
   <dependency type="executable" location="extensions">tcnc/colorcount.py</dependency>
   <effect needs-live-preview="false">
     <effects-menu>
