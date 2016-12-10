@@ -18,18 +18,31 @@
   <param name="active-tab" type="notebook">
 
     <page name="lines" _gui-text="Lines">
-      <param name="line-orient" type="optiongroup" appearance="minimal" _gui-text="Line type:">
-        <_option value="h">Horizontal lines</_option>
-        <_option value="v">Vertical lines</_option>
-      </param>
       <param name="line-spacing" type="float" precision="2" min="0.0001" max="1000" _gui-text="Line spacing">1</param>
       <param name="line-left2right" type="boolean" _gui-text="Draw left to right">True</param>
-      <param name="line-top2bottom" type="boolean" _gui-text="Draw top to bottom">True</param>
       <param name="line-double" type="boolean" _gui-text="Draw line both directions">True</param>
+      <param name="line-top2bottom" type="boolean" _gui-text="Order top to bottom">True</param>
+      <param name="line-alt" type="boolean" _gui-text="Alternate line direction">False</param>
       <param name="line-skip" type="int" min="0" max="1000" _gui-text="Skip lines">0</param>
       <param name="line-start" type="int" min="1" max="1000" _gui-text="Start at line">1</param>
-      <param name="line-alt" type="boolean" _gui-text="Alternate line direction">False</param>
       <param name="line-angle" type="float" precision="2" min="0.0" max="90" _gui-text="Line angle">0</param>
+    </page>
+
+    <page name="sine" _gui-text="Sine">
+      <param name="sine-line" type="boolean"
+             _gui-text="Draw lines as sine waves">False</param>
+      <param name="sine-start-wavelength" type="float"
+             precision="2" min="0.01" max="1000"
+             _gui-text="Starting wavelength">1</param>
+      <param name="sine-end-wavelength" type="float"
+             precision="2" min="0.01" max="1000"
+             _gui-text="Ending wavelength">1</param>
+      <param name="sine-start-amplitude" type="float"
+             precision="2" min="0.01" max="1000"
+             _gui-text="Starting amplitude">0</param>
+      <param name="sine-end-amplitude" type="float"
+             precision="2" min="0.01" max="1000"
+             _gui-text="Ending amplitude">0</param>
     </page>
 
     <page name="brush" _gui-text="Brush">
