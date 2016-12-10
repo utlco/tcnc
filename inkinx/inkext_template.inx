@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+
+  <name>ExtensionName</name>
+  <id>com.domain.subdomain</id>
+  <dependency type="executable" location="extensions">path/to/extension.py</dependency>
+  <effect needs-live-preview="false">
+    <!-- Remove this element if the extension should be at the top level menu -->
+    <effects-menu>
+      <submenu _name="OptionalSubMenuName"/>
+    </effects-menu>
+    <object-type>path</object-type>
+  </effect>
+  <script>
+    <command reldir="extensions" interpreter="python">path/to/extension.py</command>
+  </script>
+
+  <param name="active-tab" type="notebook">
+
+    <page name="first_tab_id" _gui-text="TabName">
+    </page>
+
+    <!-- Optional Debug tab - remove/disable for release -->
+    <page name="debug" _gui-text="Debug">
+      <param name="create-debug-layer" type="boolean" _gui-text="Create debug layer">false</param>
+      <param name="log-create" type="boolean" _gui-text="Generate log file">false</param>
+      <param name="log-level" type="optiongroup" appearance="minimal" _gui-text="Log level">
+        <_option value="DEBUG">Debug</_option>
+        <_option value="INFO">Info</_option>
+        <_option value="WARNING">Warning</_option>
+        <_option value="ERROR">Error</_option>
+        <_option value="CRITICAL">Critical</_option>
+      </param>
+      <param name="log-filename" type="string" _gui-text="Full path to log file">~/inkext_debug.log</param>
+    </page>
+
+    <!-- Optional but recommended About tab -->
+    <page name="about" _gui-text="About">
+      <_param name="" type="description">ExtensionName Version x.x</_param>
+      <_param name="" type="description">Description etc...</_param>
+    </page>
+
+  </param>
+
+</inkscape-extension>
