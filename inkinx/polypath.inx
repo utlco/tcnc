@@ -32,9 +32,9 @@
 
     <page name="polyface" _gui-text="PolyFaces">
       <param name="polyface-draw" type="boolean" _gui-text="Create face polygons">false</param>
-      <param name="polyface-offset" type="float" precision="2" min="-1000" max="1000" _gui-text="Offset">0</param>
+      <param name="polyface-offset" type="float" precision="6" min="-1000" max="1000" _gui-text="Offset">0</param>
       <param name="polyface-fillet" type="boolean" _gui-text="Fillet face polygons">false</param>
-      <param name="polyface-fillet-radius" type="float" precision="2" min="-1000" max="1000" _gui-text="Fillet radius">0</param>
+      <param name="polyface-fillet-radius" type="float" precision="6" min="-1000" max="1000" _gui-text="Fillet radius">0</param>
     </page>
 
     <page name="polyhull" _gui-text="PolyHull">
