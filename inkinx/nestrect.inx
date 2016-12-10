@@ -3,12 +3,12 @@
 <inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
 
     <name>Nested Rectangles</name>
-    
+
     <id>com.utlco.wash</id>
-    
-	<dependency type="executable" location="extensions">tcnc/nestrect.py</dependency>
-	
-	<param name="active-tab" type="notebook">
+
+  <dependency type="executable" location="extensions">tcnc/nestrect.py</dependency>
+
+  <param name="active-tab" type="notebook">
 
         <page name="nestrect" _gui-text="Nesting Rectangles">
             <param name="spacing" type="float" precision="4" min="0.0001" max="1000" _gui-text="Line spacing:">1</param>
@@ -29,16 +29,16 @@
             <param name="create-ellipses" type="boolean" _gui-text="Create ellipses">True</param>
             <param name="create-ellipse-spiral" type="boolean" _gui-text="Create ellipse spiral:">True</param>
         </page>
-                
+
         <page name="margins" _gui-text="Margins">
             <param name="margin-top" type="float" precision="2" min="-999" max="1000" _gui-text="Top margin:">0</param>
             <param name="margin-left" type="float" precision="2" min="-999" max="1000" _gui-text="Left margin:">0</param>
             <param name="margin-right" type="float" precision="2" min="-999" max="1000" _gui-text="Right margin:">0</param>
             <param name="margin-bottom" type="float" precision="2" min="-999" max="1000" _gui-text="Bottom margin:">0</param>
         </page>
-		
+
         <page name="debug" _gui-text="Debug">
-            <param name="create-log" type="boolean" _gui-text="Generate log file:">false</param>            
+            <param name="create-log" type="boolean" _gui-text="Generate log file:">false</param>
             <param name="log-level" type="optiongroup" appearance="minimal" _gui-text="Log level:">
                 <_option value="DEBUG">Debug</_option>
                 <_option value="INFO">Info</_option>
@@ -48,19 +48,19 @@
             </param>
             <param name="log-filename" type="string" _gui-text="Full path to log file:">tcnc-nestrect.log</param>
         </page>
-        
-		<page name="about" _gui-text="About">
-			<_param name="about-text" type="description">
+
+    <page name="about" _gui-text="About">
+      <_param name="about-text" type="description">
 NestRect Version 0.1
-			</_param>
-		</page>
-		
-	</param>	
+      </_param>
+    </page>
+
+  </param>
     <effect needs-live-preview="false">
-		<effects-menu>
-			<submenu _name="TCNC"/>
-		</effects-menu>
-		<object-type>path</object-type>
+    <effects-menu>
+      <submenu _name="UTLCo"/>
+    </effects-menu>
+    <object-type>path</object-type>
     </effect>
     <script>
         <command reldir="extensions" interpreter="python">tcnc/nestrect.py</command>
