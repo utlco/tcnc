@@ -39,11 +39,11 @@ def svg_to_geometry(svg_elements, parent_transform=None):
     """
     path_list = []
     for element, element_transform in svg_elements:
-        transformed_path = svg_element_to_geometry(element,
+        transformed_paths = svg_element_to_geometry(element,
                                                    element_transform,
                                                    parent_transform)
-        if transformed_path:
-            path_list.append(transformed_path)
+        if transformed_paths:
+            path_list.extend(transformed_paths)
     return path_list
 
 
@@ -63,24 +63,54 @@ def svg_element_to_geometry(element, element_transform=None,
             Default is None.
 
     Returns:
-        A list of zero or more segments made of
-        Line, Arc, or CubicBezier objects.
+        A list of zero or more subpaths.
+        A subpath being a list of zero or more Line, Arc, EllipticalArc,
+        or CubicBezier objects.
     """
-    # Create a transform matrix that is composed of the
-    # parent transform and the element transform
-    # so that control points are in absolute coordinates.
-    if parent_transform is not None:
-        element_transform = transform2d.compose_transform(
-                                                parent_transform,
-                                                element_transform)
-    transformed_path = []
-    path = element_to_geom(element)
-    for segment in path:
-        segment = segment.transform(element_transform)
-        # Skip zero-length segments.
-        if not segment.p1 == segment.p2:
-            transformed_path.append(segment)
-    return transformed_path
+    # Convert the element to a list of subpaths
+    subpath_list = []
+    tag = svg.strip_ns(element.tag) # tag stripped of namespace part
+    if tag == 'path':
+        d = element.get('d')
+        if d is not None and d:
+            subpath_list = parse_path_geom(d, ellipse_to_bezier=True)
+    else:
+        subpath = []
+        if tag == 'line':
+            subpath = convert_line(element)
+        elif tag == 'ellipse':
+            ellipse = convert_ellipse(element)
+            subpath = geom.bezier.bezier_ellipse(ellipse)
+        elif tag == 'rect':
+            subpath = convert_rect(element)
+        elif tag == 'circle':
+            subpath = convert_circle(element)
+        elif tag == 'polyline':
+            subpath = convert_polyline(element)
+        elif tag == 'polygon':
+            subpath = convert_polygon(element)
+        if subpath:
+            subpath_list = [subpath,]
+    if subpath_list:
+        # Create a transform matrix that is composed of the
+        # parent transform and the element transform
+        # so that control points are in absolute coordinates.
+        if parent_transform is not None:
+            element_transform = transform2d.compose_transform(
+                                                    parent_transform,
+                                                    element_transform)
+        if element_transform is not None:
+            x_subpath_list = []
+            for subpath in subpath_list:
+                x_subpath = []
+                for segment in subpath:
+                    # Skip zero-length segments.
+                    if not segment.p1 == segment.p2:
+                        segment = segment.transform(element_transform)
+                        x_subpath.append(segment)
+                x_subpath_list.append(x_subpath)
+            return x_subpath_list
+    return subpath_list
 
 
 def element_to_geom(element):
@@ -97,34 +127,38 @@ def element_to_geom(element):
         element: An SVG element node.
 
     Returns:
-        A list of zero or more Line, Arc,
+        A list of zero or more subpaths.
+        A subpath being a list of zero or more Line, Arc, EllipticalArc,
         or CubicBezier objects.
     """
     tag = svg.strip_ns(element.tag) # tag stripped of namespace part
-
     if tag == 'path':
         d = element.get('d')
         if d is not None and d:
             return parse_path_geom(d, ellipse_to_bezier=True)
-    elif tag == 'line':
-        return convert_line(element)
-    elif tag == 'ellipse':
-        ellipse = convert_ellipse(element)
-        return geom.bezier.bezier_ellipse(ellipse)
-    elif tag == 'rect':
-        return convert_rect(element)
-    elif tag == 'circle':
-        return convert_circle(element)
-    elif tag == 'polyline':
-        return convert_polyline(element)
-    elif tag == 'polygon':
-        return convert_polygon(element)
+    else:
+        subpath = []
+        if tag == 'line':
+            subpath = convert_line(element)
+        elif tag == 'ellipse':
+            ellipse = convert_ellipse(element)
+            subpath = geom.bezier.bezier_ellipse(ellipse)
+        elif tag == 'rect':
+            subpath = convert_rect(element)
+        elif tag == 'circle':
+            subpath = convert_circle(element)
+        elif tag == 'polyline':
+            subpath = convert_polyline(element)
+        elif tag == 'polygon':
+            subpath = convert_polygon(element)
+        if subpath:
+            return [subpath,]
     return []
 
 
 def parse_path_geom(path_data, ellipse_to_bezier=False):
     """
-    Parse SVG path data and convert to a list of geometry objects.
+    Parse SVG path data and convert to geometry objects.
 
     Args:
         path_data: The `d` attribute value of an SVG path element.
@@ -132,15 +166,21 @@ def parse_path_geom(path_data, ellipse_to_bezier=False):
             if True. Default is False.
 
     Returns:
-        A list of zero or more Line, Arc, EllipticalArc,
+        A list of zero or more subpaths.
+        A subpath being a list of zero or more Line, Arc, EllipticalArc,
         or CubicBezier objects.
     """
-    path = []
+    subpath = []
+    subpath_list = []
     p1 = (0.0, 0.0)
     for cmd, params in svg.parse_path(path_data):
         p2 = (params[-2], params[-1])
-        if cmd == 'L':
-            path.append(geom.Line(p1, p2))
+        if cmd == 'M':
+            if subpath:
+                subpath_list.append(subpath)
+                subpath = []
+        elif cmd == 'L':
+            subpath.append(geom.Line(p1, p2))
         elif cmd == 'A':
             rx = params[0]
             ry = params[1]
@@ -154,27 +194,29 @@ def parse_path_geom(path_data, ellipse_to_bezier=False):
                 # Try just making a line
                 logger = logging.getLogger(__name__)
                 logger.debug('Degenerate arc...')
-                path.append(geom.Line(p1, p2))
+                subpath.append(geom.Line(p1, p2))
             elif geom.float_eq(rx, ry):
                 # If it's a circular arc then create one using
                 # the previously computed ellipse parameters.
                 segment = geom.Arc(p1, p2, rx, elliptical_arc.sweep_angle,
                                    elliptical_arc.center)
-                path.append(segment)
+                subpath.append(segment)
             elif ellipse_to_bezier:
                 # Convert the elliptical arc to cubic Beziers
-                path.extend(geom.bezier.bezier_ellipse(elliptical_arc))
+                subpath.extend(geom.bezier.bezier_ellipse(elliptical_arc))
             else:
-                path.append(elliptical_arc)
+                subpath.append(elliptical_arc)
         elif cmd == 'C':
             c1 = (params[0], params[1])
             c2 = (params[2], params[3])
-            path.append(geom.bezier.CubicBezier(p1, c1, c2, p2))
+            subpath.append(geom.bezier.CubicBezier(p1, c1, c2, p2))
         elif cmd == 'Q':
             c1 = (params[0], params[1])
-            path.append(geom.bezier.CubicBezier.from_quadratic(p1, c1, p2))
+            subpath.append(geom.bezier.CubicBezier.from_quadratic(p1, c1, p2))
         p1 = p2
-    return path
+    if subpath:
+        subpath_list.append(subpath)
+    return subpath_list
 
 
 def convert_rect(element):

@@ -89,9 +89,9 @@ class PolySmooth(inkext.InkscapeExtension):
         smoothness = self.options.smoothness / 100.0
         for element, element_transform in svg_elements:
             # Convert the SVG element to Line/Arc/CubicBezier paths
-            path = geomsvg.svg_element_to_geometry(
+            pathlist = geomsvg.svg_element_to_geometry(
                 element, element_transform=element_transform)
-            if path:
+            for path in pathlist:
                 new_path = bezier.smooth_path(path, smoothness)
                 if self.options.new_layer:
                     parent = new_layer
