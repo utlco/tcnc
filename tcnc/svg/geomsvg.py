@@ -3,7 +3,7 @@
 # email: claude@utlco.com
 #-----------------------------------------------------------------------------
 """
-Methods for converting SVG shape elements to objects.
+Methods for converting SVG shape elements to geometry objects.
 """
 # Python 3 compatibility boilerplate
 from __future__ import (absolute_import, division,
@@ -16,6 +16,7 @@ import logging
 import geom
 
 from geom import transform2d
+from geom import bezier
 
 from . import svg
 
@@ -56,15 +57,15 @@ def svg_element_to_geometry(element, element_transform=None,
     respect to the parent container.
 
     Args:
-        element: An SVG Element node.
-        parent_transform: An optional transform to apply to the element.
+        element: An SVG Element shape node.
+        element_transform: An optional transform to apply to the element.
             Default is None.
         parent_transform: An optional parent transform to apply to the element.
             Default is None.
 
     Returns:
-        A list of zero or more subpaths.
-        A subpath being a list of zero or more Line, Arc, EllipticalArc,
+        A list of zero or more paths.
+        A path being a list of zero or more Line, Arc, EllipticalArc,
         or CubicBezier objects.
     """
     # Convert the element to a list of subpaths
@@ -80,7 +81,7 @@ def svg_element_to_geometry(element, element_transform=None,
             subpath = convert_line(element)
         elif tag == 'ellipse':
             ellipse = convert_ellipse(element)
-            subpath = geom.bezier.bezier_ellipse(ellipse)
+            subpath = bezier.bezier_ellipse(ellipse)
         elif tag == 'rect':
             subpath = convert_rect(element)
         elif tag == 'circle':
@@ -91,6 +92,7 @@ def svg_element_to_geometry(element, element_transform=None,
             subpath = convert_polygon(element)
         if subpath:
             subpath_list = [subpath,]
+
     if subpath_list:
         # Create a transform matrix that is composed of the
         # parent transform and the element transform
@@ -111,49 +113,6 @@ def svg_element_to_geometry(element, element_transform=None,
                 x_subpath_list.append(x_subpath)
             return x_subpath_list
     return subpath_list
-
-
-def element_to_geom(element):
-    """Convert an SVG element to corresponding geometric object(s).
-
-    This handles paths, rectangles, circles, ellipses, lines,
-    polygons, and polylines.
-    Anything else is ignored.
-
-    SVG shape elements are converted to either lines, circular arcs, or
-    cubic beziers.
-
-    Args:
-        element: An SVG element node.
-
-    Returns:
-        A list of zero or more subpaths.
-        A subpath being a list of zero or more Line, Arc, EllipticalArc,
-        or CubicBezier objects.
-    """
-    tag = svg.strip_ns(element.tag) # tag stripped of namespace part
-    if tag == 'path':
-        d = element.get('d')
-        if d is not None and d:
-            return parse_path_geom(d, ellipse_to_bezier=True)
-    else:
-        subpath = []
-        if tag == 'line':
-            subpath = convert_line(element)
-        elif tag == 'ellipse':
-            ellipse = convert_ellipse(element)
-            subpath = geom.bezier.bezier_ellipse(ellipse)
-        elif tag == 'rect':
-            subpath = convert_rect(element)
-        elif tag == 'circle':
-            subpath = convert_circle(element)
-        elif tag == 'polyline':
-            subpath = convert_polyline(element)
-        elif tag == 'polygon':
-            subpath = convert_polygon(element)
-        if subpath:
-            return [subpath,]
-    return []
 
 
 def parse_path_geom(path_data, ellipse_to_bezier=False):
@@ -203,16 +162,16 @@ def parse_path_geom(path_data, ellipse_to_bezier=False):
                 subpath.append(segment)
             elif ellipse_to_bezier:
                 # Convert the elliptical arc to cubic Beziers
-                subpath.extend(geom.bezier.bezier_ellipse(elliptical_arc))
+                subpath.extend(bezier.bezier_ellipse(elliptical_arc))
             else:
                 subpath.append(elliptical_arc)
         elif cmd == 'C':
             c1 = (params[0], params[1])
             c2 = (params[2], params[3])
-            subpath.append(geom.bezier.CubicBezier(p1, c1, c2, p2))
+            subpath.append(bezier.CubicBezier(p1, c1, c2, p2))
         elif cmd == 'Q':
             c1 = (params[0], params[1])
-            subpath.append(geom.bezier.CubicBezier.from_quadratic(p1, c1, p2))
+            subpath.append(bezier.CubicBezier.from_quadratic(p1, c1, p2))
         p1 = p2
     if subpath:
         subpath_list.append(subpath)
