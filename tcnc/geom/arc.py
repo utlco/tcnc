@@ -16,7 +16,11 @@ from __future__ import (absolute_import, division, unicode_literals)
 # from future_builtins import (ascii, filter, hex, map, oct, zip)
 
 import math
+
+# For debugging:
 import logging
+# from . import debug
+logger = logging.getLogger(__name__)
 
 from . import const
 from . import util
@@ -514,7 +518,6 @@ class Arc(tuple):
         Returns:
             True if the point lies on this arc, otherwise False.
         """
-        # TODO: test this...
         # Distance from center to point
         distance_c2p = self.center.distance(p)
         # First test if the point lies on a circle defined by this arc.
@@ -598,9 +601,9 @@ class Arc(tuple):
         intersections = list(ellipse.intersect_circle(
             self.center, self.radius, arc.center, arc.radius))
         # Delete intersections that don't lie on the arc segments.
-        if on_arc:
-            if (intersections and not (self.point_on_arc(intersections[0]) and
-                                       arc.point_on_arc(intersections[0]))):
+        if on_arc and intersections:
+            if (not (self.point_on_arc(intersections[0]) and
+                    arc.point_on_arc(intersections[0]))):
                 del intersections[0]
             if (intersections and not (self.point_on_arc(intersections[-1]) and
                                        arc.point_on_arc(intersections[-1]))):
