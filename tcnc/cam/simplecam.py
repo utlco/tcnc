@@ -90,6 +90,8 @@ class SimpleCAM(object):
 #         self.ignore_segment_angle = False
         #: Allow tool reversal at sharp corners
         self.allow_tool_reversal = False
+        #: Enable tangent rotation. Default is True.
+        self.enable_tangent = True
         #: Fillet paths to compensate for tool width
         self.path_tool_fillet = False
         #: Offset paths to compensate for tool trail offset
@@ -392,8 +394,9 @@ class SimpleCAM(object):
         # TODO: Unwind large rotations
         first_segment = path[0]
         segment_start_angle = util.seg_start_angle(first_segment)
-        rotation = geom.calc_rotation(self.current_angle, segment_start_angle)
-        self.current_angle += rotation
+        if self.enable_tangent:
+            rotation = geom.calc_rotation(self.current_angle, segment_start_angle)
+            self.current_angle += rotation
         self.gc.rapid_move(first_segment.p1.x, first_segment.p1.y,
                            a=self.current_angle)
 
@@ -450,9 +453,10 @@ class SimpleCAM(object):
         depth = getattr(segment, 'inline_z', depth)
         # Ignore the a axis tangent rotation for this segment if True
         inline_ignore_a = getattr(segment, 'inline_ignore_a', False)
-        if inline_ignore_a:
+        if inline_ignore_a or not self.enable_tangent:
             start_angle = self.current_angle
             end_angle = self.current_angle
+            rotation = 0
         else:
             start_angle = util.seg_start_angle(segment)
             end_angle = util.seg_end_angle(segment)
@@ -461,11 +465,11 @@ class SimpleCAM(object):
             if not geom.is_zero(rotation):
                 self.current_angle += rotation
                 self.gc.feed(a=self.current_angle)
-        # Amount of A axis rotation needed to get to end_angle.
-        # The sign of the angle will determine the direction of rotation.
-        rotation = geom.calc_rotation(self.current_angle, end_angle)
-        # The final angle at the end of this segment
-        end_angle = self.current_angle + rotation
+            # Amount of A axis rotation needed to get to end_angle.
+            # The sign of the angle will determine the direction of rotation.
+            rotation = geom.calc_rotation(self.current_angle, end_angle)
+            # The final angle at the end of this segment
+            end_angle = self.current_angle + rotation
 #             logger.debug('current angle=%f' % self.current_angle)
 #             logger.debug('start_angle=%f' % start_angle)
 #             logger.debug('end_angle=%f' % end_angle)

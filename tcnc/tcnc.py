@@ -48,7 +48,7 @@ class Tcnc(inkext.InkscapeExtension):
     """
 
     OPTIONSPEC = (
-        inkext.ExtOption('--origin-ref', default='paper',
+        inkext.ExtOption('--origin-ref', default='doc',
                          help=_('Lower left origin reference.')),
         inkext.ExtOption('--path-sort-method', default='none',
                          help=_('Path sorting method.')),
@@ -82,6 +82,8 @@ class Tcnc(inkext.InkscapeExtension):
         inkext.ExtOption('--blend-tolerance', type='float', default='0',
                          help=_('Trajectory blending tolerance.')),
 
+        inkext.ExtOption('--disable-tangent', type='inkbool', default=False,
+                         help=_('Disable tangent rotation')),
         inkext.ExtOption('--z-depth', type='float', default=-0.125,
                          help=_('Z full depth of cut')),
         inkext.ExtOption('--z-step', type='float', default=-0.125,
@@ -168,7 +170,7 @@ class Tcnc(inkext.InkscapeExtension):
                          help=_('Append auto-incremented numeric'
                          ' suffix to filename')),
         inkext.ExtOption('--separate-layers', type='inkbool', default=True,
-                         help=_('Seaparate gcode file per layer')),
+                         help=_('Separate gcode file per layer')),
 
         inkext.ExtOption('--preview-toolmarks', type='inkbool', default=False,
                          help=_('Show tangent tool preview.')),
@@ -283,6 +285,7 @@ class Tcnc(inkext.InkscapeExtension):
 
     def _init_cam(self, gc):
         """Create and initialize the tool path generator."""
+        enable_tangent = not self.options.disable_tangent
         cam = paintcam.PaintCAM(gc)
         cam.debug_svg = self.debug_svg
         cam.z_step = self.options.z_step
@@ -295,10 +298,11 @@ class Tcnc(inkext.InkscapeExtension):
         cam.biarc_max_depth = self.options.biarc_max_depth
         cam.line_flatness = self.options.line_flatness
         cam.skip_path_count = self.options.skip_path_count
-        cam.path_tool_fillet = self.options.path_tool_fillet
-        cam.path_tool_offset = self.options.path_tool_offset
-        cam.path_preserve_g1 = self.options.path_preserve_g1
-        cam.path_close_polygons = self.options.path_close_polygons
+        cam.enable_tangent = enable_tangent
+        cam.path_tool_fillet = self.options.path_tool_fillet and enable_tangent
+        cam.path_tool_offset = self.options.path_tool_offset and enable_tangent
+        cam.path_preserve_g1 = self.options.path_preserve_g1 and enable_tangent
+        cam.path_close_polygons = self.options.path_close_polygons and enable_tangent
         cam.path_smooth_fillet = self.options.path_smooth_fillet
         cam.path_smooth_radius = self.options.path_smooth_radius
         cam.path_split_cusps = self.options.path_split_cusps
