@@ -13,7 +13,7 @@ import math
 import logging
 logger = logging.getLogger(__name__)
 
-import geom.debug
+# import geom.debug
 
 from . import const
 
@@ -437,6 +437,7 @@ def intersect_circle(c1_center, c1_radius, c2_center, c2_radius):
         do not intersect or if they are coincident (infinite intersections).
     """
     line_c1c2 = Line(c1_center, c2_center)
+
     # Distance between the two centers
     dist_c1c2 = line_c1c2.length()
     if dist_c1c2 > (c1_radius + c2_radius):
@@ -462,8 +463,13 @@ def intersect_circle(c1_center, c1_radius, c2_center, c2_radius):
     # I.e. half the distance between the two intersections.
     # This is the Y distance from C1 to the intersections.
     half_rad = math.sqrt(rr1 - (dist_c1rad * dist_c1rad))
-    # Intersection points
-    p1 = c1_center + (dist_c1rad, half_rad)
-    p2 = c1_center + (dist_c1rad, -half_rad)
+    # Intersection points.
+    # Rotate the points so that they are normal to c1->c2
+    # TODO: optimize this...
+    angle_c1c2 = line_c1c2.angle()
+    ip1 = P(dist_c1rad, half_rad).rotate(angle_c1c2)
+    ip2 = P(dist_c1rad, -half_rad).rotate(angle_c1c2)
+    p1 = c1_center + ip1
+    p2 = c1_center + ip2
     return (p1, p2)
 
