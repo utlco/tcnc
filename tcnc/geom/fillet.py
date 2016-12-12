@@ -11,13 +11,16 @@ from __future__ import (absolute_import, division,
 from future_builtins import *
 
 import math
-# import logging
 
+# For debugging:
+import logging
+logger = logging.getLogger(__name__)
+
+from . import debug
 from . import const
-from . import util
 from .line import Line
 from .arc import Arc
-from .point import P
+
 
 
 def fillet_path(path, radius, fillet_close=True):
@@ -237,7 +240,7 @@ def fillet_arc_arc(arc1, arc2, fillet_radius):
         ix2 = arc2.intersect_line(fline2, on_arc=True)
         if ix1 and ix2:
             fillet_arc = Arc.from_two_points_and_center(ix1[0], ix2[0],
-                                                             fillet_center)
+                                                        fillet_center)
     return fillet_arc
 
 
@@ -255,6 +258,7 @@ def fillet_line_arc(line, arc, fillet_radius):
         or None if the fillet radius is too big to fit or
         if the two segments are not connected.
     """
+    debug.draw_arc(arc, verbose=True)
     # TODO: Maybe replace this novel approach with the more usual
     # offset intersection method..
     fillet_arc = None # default return value
