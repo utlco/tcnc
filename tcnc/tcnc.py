@@ -14,6 +14,7 @@ from __future__ import (absolute_import, division, unicode_literals)
 # from future_builtins import (ascii, filter, hex, map, oct, zip)
 
 import os
+import io
 import gettext
 import fnmatch
 import math
@@ -210,7 +211,7 @@ class Tcnc(inkext.InkscapeExtension):
         filepath = self.create_pathname(
             self.options.output_path, append_suffix=self.options.append_suffix)
         try:
-            with open(filepath, 'w') as output:
+            with io.open(filepath, 'w') as output:
                 gcgen = self._init_gcode(output)
                 cam = self._init_cam(gcgen)
                 cam.generate_gcode(path_list)
