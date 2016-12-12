@@ -184,7 +184,7 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
 #         assert(self.gcgen.float_eq(center.distance(endp), radius))
         if not self.gcgen.float_eq(center.distance(endp), radius):
             logging.getLogger(__name__).debug(
-                'Degenrate arc: d1=%f, d2=%f', center.distance(endp), radius)
+                'Degenerate arc: d1=%f, d2=%f', center.distance(endp), radius)
         sweep_flag = 0 if clockwise else 1
 #         style = self._styles['feedarc' + str(sweep_flag)]
         style = self._styles['feedarc']
