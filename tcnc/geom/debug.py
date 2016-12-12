@@ -10,8 +10,6 @@ from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from future_builtins import *
 
-from . import (point, line, arc, ellipse, bezier)
-
 
 # svg.SVGContext for drawing debug output. Default is None.
 _SVG_CONTEXT = None
@@ -25,19 +23,6 @@ def set_svg_context(svg_context):
     for debug output by draw...() methods."""
     global _SVG_CONTEXT
     _SVG_CONTEXT = svg_context
-
-def draw_obj(obj, color='#c00000', parent=None):
-    """Draw a geom object."""
-    if isinstance(obj, point.P):
-        draw_point(obj, color=color, parent=parent)
-    elif isinstance(obj, line.Line):
-        draw_line(obj, color=color, parent=parent)
-    elif isinstance(obj, arc.Arc):
-        draw_arc(obj, color=color, parent=parent)
-    elif isinstance(obj, ellipse.Ellipse):
-        draw_ellipse(obj, color=color, parent=parent)
-    elif isinstance(obj, bezier.CubicBezier):
-        draw_bezier(obj, color=color, parent=parent)
 
 def draw_point(point, radius=3, color='#000000', parent=None):
     """Draw a dot. Useful for debugging and testing."""
@@ -54,10 +39,10 @@ def draw_line(line, color='#c00000', width='1px', verbose=False, parent=None):
     if svg is not None:
         style = ('fill:none;stroke:%s;stroke-width:%f;stroke-opacity:1' %
                  (color, svg.unit2uu(width)))
-        svg.create_line(line.p1, line.p2, style, parent=parent)
+        svg.create_line(line[0], line[1], style, parent=parent)
         if verbose:
-            draw_point(line.p1, color=color)
-            draw_point(line.p2, color=color)
+            draw_point(line[0], color=color)
+            draw_point(line[1], color=color)
 
 
 def draw_arc(arc, color='#cccc99', width='1px', verbose=False, parent=None):
@@ -70,11 +55,9 @@ def draw_arc(arc, color='#cccc99', width='1px', verbose=False, parent=None):
         svg.create_path(attrs, parent=parent)
         if verbose:
             # Draw the center-arc wedge
-            seg1 = line.Line(arc.center, arc.p1)
-            seg2 = line.Line(arc.center, arc.p2)
             draw_point(arc.center, color=color, radius='2px')
-            draw_line(seg1, color=color, parent=parent)
-            draw_line(seg2, color=color, parent=parent)
+            draw_line((arc.center, arc.p1), color=color, parent=parent)
+            draw_line((arc.center, arc.p2), color=color, parent=parent)
             draw_point(arc.p1, color='#cc99cc', radius='2px')
             draw_point(arc.p2, color='#99cccc', radius='2px')
 
@@ -119,10 +102,8 @@ def draw_bezier(curve, color='#cccc99', verbose=False, parent=None):
             # Draw control points and tangents
             draw_point(curve.c1, color='#0000c0', parent=parent)
             draw_point(curve.c2, color='#0000c0', parent=parent)
-            tseg1 = line.Line(curve.p1, curve.c1)
-            draw_line(tseg1, parent=parent)
-            tseg2 = line.Line(curve.p2, curve.c2)
-            draw_line(tseg2, parent=parent)
+            draw_line((curve.p1, curve.c1), parent=parent)
+            draw_line((curve.p2, curve.c2), parent=parent)
             # Draw inflection points if any
             t1, t2 = curve.find_inflections()
             if t1 > 0.0:
@@ -136,22 +117,5 @@ def draw_bezier(curve, color='#cccc99', verbose=False, parent=None):
             # Draw midpoint
             mp = curve.point_at(0.5)
             draw_point(mp, color='#00ff00', parent=parent)
-
-
-def plot_path(path, color, layer):
-    """Debug output for paths."""
-#     prev_seg = None
-    segnum = 1
-    for seg in path:
-#         logger.debug('\nSegment %d: %s' % (segnum, str(seg)))
-#         if prev_seg is not None and prev_seg.p2 != seg.p1:
-#             logger.debug('path not continuous: p1=%s, p2=%s' % (str(prev_seg.p2), str(seg.p1)))
-#             prev_seg.p2.svg_plot(color='#0000ff')
-#             seg.p1.svg_plot(color='#0000ff')
-#         for name in inline_hint_attrs(seg):
-#             logger.debug('%s=%s' % str(getattr(seg, name)))
-        draw_obj(seg, color=color, parent=layer)
-#         prev_seg = seg
-        segnum += 1
 
 
