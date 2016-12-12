@@ -157,9 +157,9 @@ class InkscapeExtension(object):
                             getattr(self.options, 'log_level'))
         # Create debug layer and context if specified
         if getattr(self.options, 'create_debug_layer', False):
-            debug_layer = self.svg.create_layer(self._DEBUG_LAYER_NAME,
-                                                flipy=flip_debug_layer)
             self.debug_svg = inksvg.InkscapeSVGContext(self.svg.document)
+            debug_layer = self.debug_svg.create_layer(self._DEBUG_LAYER_NAME,
+                                                      flipy=flip_debug_layer)
             self.debug_svg.current_parent = debug_layer
         # Create a list of selected elements.
         # Inkscape passes a list of element node ids via the '--ids'
