@@ -462,7 +462,12 @@ def intersect_circle(c1_center, c1_radius, c2_center, c2_radius):
     # Half the length of the radical line segment.
     # I.e. half the distance between the two intersections.
     # This is the Y distance from C1 to the intersections.
-    half_rad = math.sqrt(rr1 - (dist_c1rad * dist_c1rad))
+    hr2 = rr1 - (dist_c1rad * dist_c1rad)
+    if hr2 < 0:
+        # TODO: handle this correctly - find the cases that cause this
+        logging.debug('WTF? rr1 %f  dist_c1rad %f' % (rr1, dist_c1rad))
+        return ()
+    half_rad = math.sqrt(hr2)
     # Intersection points.
     # Rotate the points so that they are normal to c1->c2
     # TODO: optimize this...
