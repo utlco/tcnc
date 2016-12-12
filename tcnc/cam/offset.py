@@ -41,6 +41,9 @@ def offset_path(path, offset, g1_tolerance=None):
     prev_seg = None
     prev_offset_seg = None
     for seg in path:
+        if seg.p1 == seg.p2:
+            # Skip zero length segments
+            continue
         if isinstance(seg, geom.Line):
             # Line segments are easy - just shift them forward by offset
             offset_seg = seg.shift(offset)
