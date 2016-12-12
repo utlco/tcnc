@@ -17,11 +17,28 @@
 
   <param name="active-tab" type="notebook">
 
-    <page name="options" _gui-text="Options">
+    <page name="options" _gui-text="Path Options">
+<!--
       <param name="origin-ref" type="optiongroup" appearance="minimal" _gui-text="Origin reference">
-        <_option value="paper">Bottom left corner of document</_option>
-        <_option value="bbox">Bounding box of selected paths</_option>
+        <_option value="doc">Bottom left corner of document</_option>
+        <_option value="box">Bounding box of selected paths</_option>
       </param>
+      <param name="skip-path-count" type="int" min="0" max="1000000" _gui-text="Number of paths to skip">0</param>
+      <param name="" type="description">-----------------------------------------------------</param>
+-->
+      <param name="disable-tangent" type="boolean" _gui-text="Disable tangent rotation">false</param>
+      <param name="" type="description">Disabling the tangent follow rotation will also disable the tool compensation path options.</param>
+      <param name="" type="description">-----------------------------------------------------</param>
+
+      <param name="path-split-cusps" type="boolean" _gui-text="Split paths at non-tangent control points">false</param>
+      <param name="path-tool-fillet" type="boolean" _gui-text="Fillet paths for tangent tool width compensation">false</param>
+      <param name="path-close-polygons" type="boolean" _gui-text="Close polygons with fillet">false</param>
+      <param name="path-tool-offset" type="boolean" _gui-text="Offset paths for tool trail offset compensation">false</param>
+      <param name="path-preserve-g1" type="boolean" _gui-text="Smooth offsets to preserve tangent (G1) continuity">false</param>
+      <param name="" type="description">-----------------------------------------------------</param>
+      <param name="path-smooth-fillet" type="boolean" _gui-text="Add final smoothing fillets">false</param>
+      <param name="path-smooth-radius" type="float" precision="4" min="0" max="9999" _gui-text="Smoothing fillet radius">0</param>
+      <param name="" type="description">-----------------------------------------------------</param>
       <param name="path-sort-method" type="optiongroup" appearance="minimal" _gui-text="Path sorting method">
         <_option value="">None</_option>
         <_option value="flip">Flip paths</_option>
@@ -37,19 +54,6 @@
         <_option value="ccw_in">CCW to center</_option>
 -->
       </param>
-<!--
-      <param name="skip-path-count" type="int" min="0" max="1000000" _gui-text="Number of paths to skip">0</param>
--->
-
-      <param name="" type="description">-----------------------------------------------------</param>
-
-      <param name="path-split-cusps" type="boolean" _gui-text="Split paths at non-tangent control points">false</param>
-      <param name="path-tool-fillet" type="boolean" _gui-text="Fillet paths for tool width compensation">false</param>
-      <param name="path-close-polygons" type="boolean" _gui-text="Close polygons with fillet">false</param>
-      <param name="path-tool-offset" type="boolean" _gui-text="Offset paths for tool trail offset compensation">false</param>
-      <param name="path-preserve-g1" type="boolean" _gui-text="Smooth offsets to preserve tangent (G1) continuity">false</param>
-      <param name="path-smooth-fillet" type="boolean" _gui-text="Add final smoothing fillets">false</param>
-      <param name="path-smooth-radius" type="float" precision="4" min="0" max="9999" _gui-text="Smoothing fillet radius">0</param>
     </page>
 
     <page name="tool" _gui-text="Tool">
@@ -58,7 +62,7 @@
 
       <param name="" type="description">-----------------------------------------------------</param>
 
-      <param name="tool-width" type="float" precision="4" min="0" max="9999" _gui-text="Tool width">0</param>
+      <param name="tool-width" type="float" precision="4" min="0" max="9999" _gui-text="Tangent tool width">0</param>
       <param name="a-feed-match" type="boolean" _gui-text="Match tool rotation edge velocity to XY feed rate">false</param>
       <param name="tool-trail-offset" type="float" precision="4" min="-999" max="9999" _gui-text="Trail offset">0</param>
       <param name="a-offset" type="float" precision="2" min="-360" max="360" _gui-text="Tool angle offset (deg)">0.0</param>
@@ -165,27 +169,32 @@
 
       <param name="biarc-tolerance" type="float" precision="5" min="0.00001" max="10" _gui-text="Curve approximation tolerance">0.01</param>
       <param name="biarc-max-depth" type="int" min="1" max="8" _gui-text="Maximum Bezier curve subdivisions">4</param>
-      <param name="line-flatness" type="float" precision="5" min="0.00001" max="10" _gui-text="Curve to line flatness">0.001</param>
+      <param name="line-flatness" type="float" precision="5" min="0.00001" max="10" _gui-text="Minimum curve flatness for conversion to line">0.001</param>
       <param name="min-arc-radius" type="float" precision="5" min="0.00001" max="10"  _gui-text="Minimum arc radius">0.001</param>
 <!--
       <param name="angle-tolerance" type="float" precision="5" min="0" max="1" _gui-text="Angle tolerance:">0.0001</param>
 -->
     </page>
 
+<!--
     <page name="preview" _gui-text="Preview">
-      <param name="preview-toolmarks" type="boolean" _gui-text="Show tangent tool preview">false</param>
-      <param name="preview-scale" type="optiongroup" appearance="minimal" _gui-text="Preview line scale">
-        <_option value="medium">Default</_option>
-        <_option value="small">Small</_option>
-        <_option value="medium">Medium</_option>
-        <_option value="large">Large</_option>
-      </param>
     </page>
+-->
 
     <page name="output" _gui-text="Output">
       <param name="output-path" type="string" _gui-text="Full path of G code output file">~/output.ngc</param>
       <param name="append-suffix" type="boolean" _gui-text="Add numeric suffix to filename">false</param>
       <param name="separate-layers" type="boolean" _gui-text="Create separate gcode file per Inkscape layer">false</param>
+
+      <param name="" type="description">-----------------------------------------------------</param>
+
+      <param name="preview-toolmarks" type="boolean" _gui-text="Show tangent tool preview">false</param>
+      <param name="preview-scale" type="optiongroup" appearance="minimal" _gui-text="Line scale of preview marks">
+        <_option value="small">Default</_option>
+        <_option value="small">Small</_option>
+        <_option value="medium">Medium</_option>
+        <_option value="large">Large</_option>
+      </param>
 
       <param name="" type="description">-----------------------------------------------------</param>
 
