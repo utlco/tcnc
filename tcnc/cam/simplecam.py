@@ -156,6 +156,7 @@ class SimpleCAM(object):
             for path in path_list:
                 if not path:
                     # Skip empty paths...
+                    logging.getLogger(__name__).debug('Empty path...')
                     continue
                 self._path_count += 1
                 if self._path_count >= self.path_count_start:
