@@ -9,7 +9,7 @@ Parts of this library where inspired by planar, a 2D geometry library for
 python gaming:
     https://bitbucket.org/caseman/planar/
 """
-from . import debug
+#from . import debug
 
 # Expose package-wide constants and functions
 from .const import TAU, set_epsilon, is_zero, float_eq, float_round
