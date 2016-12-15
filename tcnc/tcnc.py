@@ -37,7 +37,7 @@ from svg import geomsvg
 from inkscape import inkext
 from inkscape import inksvg
 
-__version__ = '0.2'
+__version__ = '0.2.1'
 
 _ = gettext.gettext
 logger = logging.getLogger(__name__)
