@@ -185,6 +185,7 @@
       <param name="output-path" type="string" _gui-text="Full path of G code output file">~/output.ngc</param>
       <param name="append-suffix" type="boolean" _gui-text="Add numeric suffix to filename">false</param>
       <param name="separate-layers" type="boolean" _gui-text="Create separate gcode file per Inkscape layer">false</param>
+      <param name="write-settings" type="boolean" _gui-text="Write Tcnc settings in header">true</param>
 
       <param name="" type="description">-----------------------------------------------------</param>
 
