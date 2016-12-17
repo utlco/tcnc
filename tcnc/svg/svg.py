@@ -488,7 +488,10 @@ class SVGContext(object):
             if value is None:
                 value = default_map[key]
             if value is not None:
-                if key.endswith(('width', 'height', 'size')):
+                # If the value is a numeric type then it is assumed
+                # to already be in user units...
+                if (key.endswith(('width', 'height', 'size'))
+                        and not isinstance(value, numbers.Number)):
                     # Automatically convert unit values
                     mapping[key] = self.unit2uu(value)
                 else:
