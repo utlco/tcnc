@@ -54,12 +54,12 @@ class Box(tuple):
 
     @property
     def p1(self):
-        """The first corner of rectangle."""
+        """The lower left corner of the box rectangle."""
         return self[0]
 
     @property
     def p2(self):
-        """The second corner of rectangle."""
+        """The upper right corner of the box rectangle."""
         return self[1]
 
     @property
@@ -93,6 +93,10 @@ class Box(tuple):
     def width(self):
         """Width of rectangle. (along X axis)"""
         return self[1][0] - self[0][0]
+
+    def diagonal(self):
+        """Length of diagonal"""
+        return (self.p2 - self.p1).length()
 
     def point_inside(self, p):
         """Return True if the point is inside this rectangle."""
@@ -145,8 +149,8 @@ class Box(tuple):
             line: The line segment to clip.
 
         Returns:
-            A new clipped line segment or None if the segment does
-            not intersect.
+            A new clipped line segment or None if the segment
+            is outside this clipping rectangle.
         """
         if self.line_inside(line):
             return line
