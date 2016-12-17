@@ -11,6 +11,7 @@ from __future__ import (absolute_import, division,
 from future_builtins import *
 
 import string
+import numbers
 
 CSS_COLORS = {
     'aliceblue': (240, 248, 255),
@@ -226,7 +227,7 @@ def csscolor_to_rgb(css_color):
         rgb = cssrgb_to_rgb(css_color)
     elif css_color.startswith('hsl'):
         # TODO: implement hsl conversion
-        raise NotImplementedError
+        pass
     else:
         rgb = CSS_COLORS.get(css_color)
         # If it's not a named color then as a last ditch effort
@@ -313,3 +314,32 @@ def parse_channel_value(value):
     except ValueError:
         pass
     return max(min(n, 255), 0)
+
+
+def csscolor_to_cssrgb(color):
+    """
+    Returns a CSS color in the form #rrggbb.
+    If `color` is a numeric value then it is converted to
+    a grayscale number. If the number is a floating point value
+    between zero and one then it is scaled up to 0-255 grayscale.
+    If the CSS color can't be parsed then #000000 is returned.
+
+    Args:
+        A possibly malformed CSS color string or number.
+
+    Returns:
+        A CSS color in the form #rrggbb.
+    """
+    rgb = None
+    if isinstance(color, numbers.Number):
+        gray = 0
+        if color > 0.0 and color < 1.0:
+            gray = int(color * 255)
+        elif color < 256:
+            gray = int(color)
+        rgb = (gray, gray, gray)
+    else:
+        rgb = csscolor_to_rgb(color)
+    if rgb is None:
+        return '#000000'
+    return '#%02x%02x%02x' % rgb
