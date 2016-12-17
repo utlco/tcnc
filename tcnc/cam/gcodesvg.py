@@ -65,22 +65,22 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
     }
     _style_scale_defaults = {
         'small': {
-            'feedline_stroke_width': '1px',
-            'moveline_stroke_width': '1px',
-            'toolmark_stroke_width': '2px',
-            'tooloffset_stroke_width': '1px',
+            'feedline_stroke_width': '1pt',
+            'moveline_stroke_width': '1pt',
+            'toolmark_stroke_width': '2pt',
+            'tooloffset_stroke_width': '1pt',
             'end_marker_scale': '0.38'},
         'medium': {
             'feedline_stroke_width': '2pt',
             'moveline_stroke_width': '2pt',
             'toolmark_stroke_width': '3pt',
-            'tooloffset_stroke_width': '2px',
+            'tooloffset_stroke_width': '1pt',
             'end_marker_scale': '0.38'},
         'large': {
             'feedline_stroke_width': '3.5pt',
             'moveline_stroke_width': '3.5pt',
             'toolmark_stroke_width': '.2in',
-            'tooloffset_stroke_width': '2px',
+            'tooloffset_stroke_width': '1pt',
             'end_marker_scale': '0.38'},
     }
     _line_end_markers = (
@@ -92,8 +92,8 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
          'movepath_end_marker', 'scale(%s) translate(-4.5,0)'),
     )
 
-    PATH_LAYER_NAME = 'tcnc path preview'
-    TOOL_LAYER_NAME = 'tcnc tool preview'
+    PATH_LAYER_NAME = 'Tcnc tool path preview'
+    TOOL_LAYER_NAME = 'Tcnc tangent tool preview'
 
     _DEFAULT_TOOLMARK_INTERVAL_LINE = '10px'
     _DEFAULT_TOOLMARK_INTERVAL_ANGLE = math.pi / 10
