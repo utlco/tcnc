@@ -192,7 +192,7 @@ class GCodeGenerator(object):
             self.preview_plotter.gcgen = self
 
         # GCode output units
-        self._units = 'in'
+        self.gc_unit = 'in'
         # Last value for G code parameters
         self._last_val = {} #{'X': 0.0, 'Y': 0.0, 'Z': 0.0, 'A': 0.0, 'F': 0.0}
         for param in self._GCODE_ORDERED_PARAMS:
@@ -217,13 +217,13 @@ class GCodeGenerator(object):
     @property
     def units(self):
         """GCode output units. Can be 'in' or 'mm'."""
-        return self._units
+        return self.gc_unit
 
     @units.setter
     def units(self, value):
         if not value in ('in', 'mm'):
             raise GCodeException('Units must be "in" or "mm".')
-        self._units = value
+        self.gc_unit = value
 
     @property
     def X(self):
@@ -401,25 +401,26 @@ class GCodeGenerator(object):
         """
         self.header_comments.append(comment)
 
-    def comment(self, comment=None):
+    def comment(self, comment=None, use_semi=True):
         """Write a G code comment line.
 
-        Encloses the comment string in parentheses.
         Outputs a newline if the comment string is None (default).
 
         Args:
             comment: A comment string or a list (or tuple) of comment strings.
                 In the case of multiple comments, each one will be
                 on a separate line.
+            use_semi: Use the semicolon as a comment start character if True.
+                Otherwise enclose the comment in parentheses.
         """
-        if comment is None:
-            self._write('\n')
-        elif self.show_comments:
-            if not hasattr(comment, 'strip') and hasattr(comment, '__iter__'):
+        if self.show_comments:
+            if (comment is not None and not hasattr(comment, 'strip')
+                    and hasattr(comment, '__iter__')):
+                # An iterable collection of comment strings. One per line.
                 for comment_line in comment:
-                    self._write_comment(comment_line)
+                    self._write_comment(comment_line, use_semi)
             else:
-                self._write_comment(comment)
+                self._write_comment(comment, use_semi)
 
     def header(self, comment=None):
         """Output a pretty standard G code file header.
@@ -884,12 +885,17 @@ class GCodeGenerator(object):
             self._write('(%s)' % comment)
         self._write('\n')
 
-    def _write_comment(self, comment):
+    def _write_comment(self, comment, use_semi):
         """Write a comment string and newline to the gcode output stream."""
         if comment is None:
             self._write('\n')
+        elif not comment:
+            self._write(';\n')
         else:
-            self._write('(%s)\n' % comment)
+            if use_semi:
+                self._write('; %s\n' % comment)
+            else:
+                self._write('(%s)\n' % comment)
 
     def _write(self, text):
         """Write the string to the gcode output stream."""
