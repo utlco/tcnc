@@ -472,6 +472,21 @@ class Line(tuple):#namedtuple('Line', 'p1, p2')):
         """Return a Line segment with start and end points reversed."""
         return Line(self.p2, self.p1)
 
+    def __add__(self, other):
+        """Add a scalar or another vector to this line.
+        This effectively translates the line.
+
+
+        Args:
+            other: The vector or scalar to add.
+
+        Returns:
+            A line.
+        """
+        return Line(self.p1 + other, self.p2 + other)
+
+    __iadd__ = __add__
+
     def __eq__(self, other):
         """Compare for segment equality in a geometric sense.
 
