@@ -33,13 +33,19 @@ Options
 .. figure:: _images/tcnc_options.png
    :width: 4in
 
-Origin reference
-''''''''''''''''
-There are two options for selecting the G code origin:
+Disable tangent rotation
+''''''''''''''''''''''''
+Normally the A axis is automatically rotated during a feed so that the tool is
+always tangent to the direction of the XY movement. The A axis is assumed to
+rotate about the Z axis.
 
-- Lower left corner of paper
-   Default
-- Bounding box of selected paths
+If this option is selected the tangent following behaviour will be disabled.
+The A axis will rotate to the initial
+A axis offset (if any) and stay at that angle.
+
+Selecting this option will also disable the path fillet and offset
+options since they only make sense for a tangent tool of non-zero width
+and trail.
 
 Path sorting method
 '''''''''''''''''''
