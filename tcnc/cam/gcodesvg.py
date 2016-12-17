@@ -92,8 +92,8 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
          'movepath_end_marker', 'scale(%s) translate(-4.5,0)'),
     )
 
-    PATH_LAYER_NAME = 'tcnc-path-preview'
-    TOOL_LAYER_NAME = 'tcnc-tool-preview'
+    PATH_LAYER_NAME = 'tcnc path preview'
+    TOOL_LAYER_NAME = 'tcnc tool preview'
 
     _DEFAULT_TOOLMARK_INTERVAL_LINE = '10px'
     _DEFAULT_TOOLMARK_INTERVAL_ANGLE = math.pi / 10
