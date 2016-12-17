@@ -123,8 +123,6 @@ class SimpleCAM(object):
         self._tinyseg_accumulation = 0.0
         # Keep track of tool flip state
         self._tool_flip_toggle = -1
-        # Current count of output tool path
-        self._path_count = 0
 
     def generate_gcode(self, path_list):
         """Generate G code from tool paths.
@@ -137,8 +135,7 @@ class SimpleCAM(object):
         # Make sure the z step is canonical
         if self.z_step == 0.0:
             self.z_step = self.z_depth
-        if self.z_step > 0:
-            self.z_step = -self.z_step
+        self.z_step = abs(self.z_step)
         # Sort paths to optimize rapid moves
         if self.path_sort_method is not None:
             path_list = self.sort_paths(path_list, self.path_sort_method)
@@ -151,38 +148,47 @@ class SimpleCAM(object):
         # Generate G code from paths. If the Z step is less than
         # the final tool depth then do several passes until final
         # depth is reached.
-        current_depth = self.z_step
-        while current_depth >= self.z_depth:
-            for path in path_list:
+        # If the final tool depth is > 0 then just ignore the step
+        # value since the tool won't reach the work surface anyway.
+        if self.z_depth > 0 or self.z_step > -self.z_depth:
+            tool_depth = self.z_depth
+        else:
+            tool_depth = -self.z_step
+        depth_pass = 1
+        while tool_depth >= self.z_depth:
+            for path_count, path in enumerate(path_list, 1):
                 if not path:
                     # Skip empty paths...
                     logging.getLogger(__name__).debug('Empty path...')
                     continue
-                self._path_count += 1
-                if self._path_count >= self.path_count_start:
+                if path_count >= self.path_count_start:
                     self.gc.comment()
-                    self.gc.comment('Path %d' % self._path_count)
+                    self.gc.comment('Path: %d, pass: %d, depth: %g%s' %
+                                    (path_count, depth_pass,
+                                     tool_depth * self.gc.unit_scale,
+                                     self.gc.gc_unit))
                     # Rapidly move to the beginning of the tool path
                     self.generate_rapid_move(path)
                     # Plunge the tool to current cutting depth
-                    self.plunge(current_depth, path)
+                    self.plunge(tool_depth, path)
                     # Create G-code for each segment of the path
                     self.gc.comment('Start tool path')
                     for segment in path:
-                        self.generate_segment_gcode(segment, current_depth)
+                        self.generate_segment_gcode(segment, tool_depth)
                     # Bring the tool back up to the safe height
-#                     self.retract(current_depth, path)
+#                     self.retract(tool_depth, path)
 #                     # Do a fast unwind if angle is > 360deg.
 #                     # Useful if the A axis gets wound up after spirals.
 #                     if abs(self.current_angle) > (math.pi * 2):
 #                         self.gc.rehome_rotational_axis()
 #                         self.current_angle = 0.0
             # remaining z distance
-            rdist = abs(self.z_depth - current_depth)
-            if rdist > self.gc.tolerance and rdist < abs(self.z_step):
-                current_depth = self.z_depth
+            rdist = abs(self.z_depth - tool_depth)
+            if rdist > self.gc.tolerance and rdist < self.z_step:
+                tool_depth = self.z_depth
             else:
-                current_depth += self.z_step
+                tool_depth -= self.z_step
+            depth_pass += 1
         # Do a rapid move back to the home position if specified
         if self.home_when_done:
             self.gc.rapid_move(x=0, y=0, a=0)
@@ -356,11 +362,7 @@ class SimpleCAM(object):
         """Output header boilerplate and comments.
         """
         self.gc.add_header_comment((
-            'Tool width: %.4f %s' % (self.tool_width * self.gc.unit_scale,
-                                     self.gc.units),
-            'Tool trail offset: %.4f %s' % (
-                                    self.tool_trail_offset * self.gc.unit_scale,
-                                    self.gc.units),
+            '',
             'Path count: %d' % len(path_list)),)
         self.gc.header()
 
