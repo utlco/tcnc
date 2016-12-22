@@ -16,8 +16,7 @@ from __future__ import (absolute_import, division, unicode_literals)
 import gettext
 # import logging
 
-import geom
-
+import geom.debug
 from geom import bezier
 from geom import transform2d
 from inkscape import inkext

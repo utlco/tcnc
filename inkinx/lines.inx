@@ -2,7 +2,7 @@
 
 <inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
 
-  <name>Line Patterns</name>
+  <name>Lines and Grids</name>
   <id>com.utlco.lines</id>
   <dependency type="executable" location="extensions">tcnc/lines.py</dependency>
   <effect needs-live-preview="false">
@@ -17,15 +17,83 @@
 
   <param name="active-tab" type="notebook">
 
-    <page name="lines" _gui-text="Lines">
-      <param name="line-spacing" type="float" precision="2" min="0.0001" max="1000" _gui-text="Line spacing">1</param>
-      <param name="line-left2right" type="boolean" _gui-text="Draw left to right">True</param>
-      <param name="line-double" type="boolean" _gui-text="Draw line both directions">True</param>
-      <param name="line-top2bottom" type="boolean" _gui-text="Order top to bottom">True</param>
-      <param name="line-alt" type="boolean" _gui-text="Alternate line direction">False</param>
-      <param name="line-skip" type="int" min="0" max="1000" _gui-text="Skip lines">0</param>
-      <param name="line-start" type="int" min="1" max="1000" _gui-text="Start at line">1</param>
-      <param name="line-angle" type="float" precision="2" min="0.0" max="90" _gui-text="Line angle">0</param>
+    <page name="lines1" _gui-text="Horizontal Lines">
+      <param name="hline-draw" type="boolean"
+          _gui-text="Draw horizontal lines">False</param>
+      <param name="" type="description">-----------------------------------------------------</param>
+      <param name="hline-spacing" type="float" precision="2" min="0.0001" max="1000"
+          _gui-text="Line spacing center to center">1</param>
+      <param name="hline-rotation" type="float" precision="2" min="-90" max="90"
+          _gui-text="Line rotation (degrees)">0</param>
+      <param name="hline-right2left" type="boolean"
+          _gui-text="Draw right to left">False</param>
+      <param name="hline-double" type="boolean"
+          _gui-text="Draw line both directions (double line)">False</param>
+      <param name="hline-top2bottom" type="boolean"
+          _gui-text="Order top to bottom">True</param>
+      <param name="hline-alt" type="boolean"
+          _gui-text="Alternate line direction">False</param>
+      <param name="hline-skip" type="int" min="0" max="1000"
+          _gui-text="Skip interval">0</param>
+      <param name="hline-start" type="int" min="1" max="1000"
+          _gui-text="Start at line">1</param>
+      <param name="" type="description">-----------------------------------------------------</param>
+      <param name="h-stroke-width" type="float" precision="3" min="0" max="1000"
+          _gui-text="Line stroke width">0</param>
+      <param name="h-stroke-opacity" type="float" precision="2" min="0" max="1"
+          _gui-text="Line stroke opacity">.75</param>
+      <param name="h-stroke" type="string"
+          _gui-text="Line CSS stroke color">#000000</param>
+    </page>
+
+    <page name="lines2" _gui-text="Vertical Lines">
+      <param name="vline-draw" type="boolean"
+          _gui-text="Draw vertical lines">False</param>
+      <param name="" type="description">-----------------------------------------------------</param>
+      <param name="vline-spacing" type="float" precision="2" min="0.0001" max="1000"
+          _gui-text="Line spacing center to center">1</param>
+      <param name="vline-rotation" type="float" precision="2" min="-90" max="90"
+          _gui-text="Line rotation">0</param>
+      <param name="vline-top2bottom" type="boolean"
+          _gui-text="Draw top to bottom">True</param>
+      <param name="vline-double" type="boolean"
+          _gui-text="Draw line both directions (double line)">False</param>
+      <param name="vline-right2left" type="boolean"
+          _gui-text="Order right to left">False</param>
+      <param name="vline-alt" type="boolean"
+          _gui-text="Alternate line direction">False</param>
+      <param name="vline-skip" type="int" min="0" max="1000"
+          _gui-text="Skip interval">0</param>
+      <param name="vline-start" type="int" min="1" max="1000"
+          _gui-text="Start at line">1</param>
+      <param name="" type="description">-----------------------------------------------------</param>
+      <param name="vline-copycss" type="boolean"
+          _gui-text="Use same CSS settings as horizontal lines">False</param>
+      <param name="v-stroke-width" type="float" precision="3" min="0" max="1000"
+          _gui-text="Line stroke width">0</param>
+      <param name="v-stroke-opacity" type="float" precision="0" min="0" max="100"
+          _gui-text="Line stroke opacity">.75</param>
+      <param name="v-stroke" type="string"
+          _gui-text="Line CSS stroke color">0</param>
+    </page>
+
+    <page name="options2" _gui-text="Render Options">
+      <param name="grid-layers" type="boolean"
+          _gui-text="One layer per grid part (horizontal, vertical)">False</param>
+      <param name="hline-vline" type="boolean"
+          _gui-text="Alternate horizontal and vertical lines">False</param>
+      <param name="interval-jitter" type="float" precision="0" min="0" max="100"
+          _gui-text="Amount of random jitter added to line intervals.">0</param>
+      <param name="angle-jitter" type="float" precision="0" min="0" max="100"
+          _gui-text="Amount of random jitter added to line angles.">0</param>
+      <param name="line-connect" type="boolean"
+          _gui-text="Connect lines">True</param>
+      <param name="line-connect-type" type="optiongroup" appearance="minimal"
+          _gui-text="Line connection type">
+        <_option value="0">None</_option>
+        <_option value="1">Square</_option>
+        <_option value="2">Rounded</_option>
+      </param>
     </page>
 
     <page name="sine" _gui-text="Sine">
@@ -43,14 +111,6 @@
       <param name="sine-end-amplitude" type="float"
              precision="2" min="0.01" max="1000"
              _gui-text="Ending amplitude">0</param>
-    </page>
-
-    <page name="brush" _gui-text="Brush">
-      <param name="" type="description">
-Brush size and overlap settings override previous line spacing value.
-      </param>
-      <param name="brush-size" type="float" precision="2" min="0" max="1000" _gui-text="Brush size">0</param>
-      <param name="brush-overlap" type="float" precision="2" min="-999" max="999" _gui-text="Brushstroke overlap">0</param>
     </page>
 
     <page name="margins" _gui-text="Margins">

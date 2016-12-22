@@ -18,7 +18,7 @@ from future_builtins import *
 import gettext
 import logging
 
-import geom
+import geom.debug
 
 from geom import planargraph
 from geom import polygon

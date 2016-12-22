@@ -24,7 +24,7 @@ import timeit
 from datetime import timedelta
 import logging
 
-import geom
+import geom.debug
 
 from geom import transform2d
 

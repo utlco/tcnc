@@ -15,7 +15,7 @@ from future_builtins import *
 import gettext
 # import logging
 
-import geom
+import geom.debug
 from svg import geomsvg
 from inkscape import inkext
 

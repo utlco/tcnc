@@ -18,8 +18,7 @@ import gettext
 
 from copy import deepcopy
 
-import geom
-
+# import geom.debug
 from svg import css
 from inkscape import inkext
 
@@ -57,7 +56,7 @@ class ColorCount(inkext.InkscapeExtension):
     def run(self):
         """Main entry point for Inkscape extension.
         """
-        geom.debug.set_svg_context(self.debug_svg)
+#         geom.debug.set_svg_context(self.debug_svg)
 
         styles = self.svg.styles_from_templates(self._styles,
                                                 self._style_defaults,

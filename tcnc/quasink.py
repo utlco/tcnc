@@ -19,7 +19,7 @@ import random
 import gettext
 import logging
 
-import geom
+import geom.debug
 from geom import quasi
 from geom import planargraph
 from geom import transform2d
@@ -291,9 +291,9 @@ class QuasiExtension(inkext.InkscapeExtension):
 #             polygon_segments.sort(key=angle_key)
 
 
-        self._styles.update(self.svg.styles_from_templates(self._styles,
-                                                          self._style_defaults,
-                                                          self.options.__dict__))
+        # Update styles with any command line option values
+        self._styles.update(self.svg.styles_from_templates(
+            self._styles, self._style_defaults, vars(self.options)))
 
         logger.debug('colors: %d' % len(plotter.color_count))
         for color in sorted(plotter.color_count.keys()):
