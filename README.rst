@@ -17,7 +17,7 @@ G-code suitable for a
 The rotational axis (A) is assumed to rotate about
 the Z axis and is kept tangent to movement along the X and Y axis.
 
-It is currenty used to produce output for a painting apparatus based on
+It is currently used to produce output for a painting apparatus based on
 a modified Fletcher 6100 CNC mat cutter controlled by LinuxCNC. A stepper
 controlled Z axis was added. The original pneumatic tool pusher was left on
 and is triggered by **spindle_on**. This allows for fast brush lifts along
@@ -30,11 +30,11 @@ is very accurate.
 
 Machine-specific Behavior
 -------------------------
-You can specify a tool width in tcnc to compensate for tool trail.
+You can specify a tool width in Tcnc to compensate for tool trail.
 Tool trail is the distance between the center of rotation around the Z axis
 and the tool contact point. This is a property of flexible brushes.
 This minimizes weird looking brush strokes
-during relatively sharp changes in direction and produces a much more accurate
+during relatively sharp changes in direction and produces a better looking
 brush path.
 
 Other Inkscape Extensions in This Package
@@ -43,7 +43,7 @@ Other Inkscape Extensions in This Package
 Quasink
 .......
 Quasink is an Inkscape extension that produces
-quasicrystal/Penrose tesselations.
+quasicrystal/Penrose tessellations.
 Even and odd degrees of symmetry are supported.
 This extension has a lot of obscure options
 that are probably only useful to me...
@@ -69,7 +69,7 @@ Sinewave
 Create a nice sine wave using cubic Bezier approximation.
 
 
-Installing tcnc
+Installing Tcnc
 ---------------
 
 1. `Download <https://github.com/utlco/tcnc/archive/master.zip>`_
