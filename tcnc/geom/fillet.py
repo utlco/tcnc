@@ -69,7 +69,7 @@ def fillet_polygon(poly, radius, fillet_close=True):
         poly: A list of polygon vertices.
         radius: The radius of the fillet arc.
         fillet_close: If True and the path is closed then
-            add a terminating fillet. Default is False.
+            add a terminating fillet. Default is True.
 
     Returns:
         A new path with fillet arcs as a list of Line and Arc segments.

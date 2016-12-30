@@ -403,7 +403,7 @@ class P(tuple):#namedtuple('P', 'x, y')):
         return P(-self[0], -self[1])
 
     def __add__(self, other):
-        """Add the vector to a scalar or another vector.
+        """Add a scalar or another vector to this vector.
 
         Args:
             other: The vector or scalar to add.
