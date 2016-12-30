@@ -78,21 +78,32 @@ class InkscapeSVGContext(svg.SVGContext):
         """
         return (self.view_width, self.view_height)
 
-    def margin_cliprect(self, mleft, mright, mtop, mbottom):
+    def margin_cliprect(self, mtop, *args):
         """
         Create a clipping rectangle based on document bounds with
         the specified margins.
+        Margin argument order follows CSS margin property rules.
 
         Args:
-            mleft: Left margin (user units)
-            mright: Right margin (user units)
             mtop: Top margin (user units)
+            mright: Right margin (user units)
             mbottom: Bottom margin (user units)
+            mleft: Left margin (user units)
 
         Returns:
             A geom.Box clipping rectangle
         """
         doc_size = self.get_document_size()
+        mright = mtop
+        mbottom = mtop
+        mleft = mtop
+        if len(args) > 0:
+            mright = args[0]
+            mleft = args[0]
+        if len(args) > 1:
+            mbottom = args[1]
+        if len(args) > 2:
+            mleft = args[2]   
         return geom.Box((mleft, mbottom),
                         (doc_size[0] - mright, doc_size[1] - mtop))
 
