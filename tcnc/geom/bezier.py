@@ -329,6 +329,7 @@ class CubicBezier(tuple):
         v_b = 6 * (self.p1 - (2 * self.c1) + self.c2)
         v_c = 3 * (self.c1 - self.p1)
         #TODO: implement this
+        raise NotImplementedError
 
     def controlpoints_at(self, t):
         """Get the point on this curve corresponding to `t`
@@ -771,27 +772,30 @@ def bezier_sine_wave(amplitude, wavelength, cycles=1, origin=(0.0,0.0)):
         Each curve will be one quarter of a sine wave, so one cycle
         will return a list four BezierCurves, two cycle will be eight, etc...
     """
-    # Control points that will match slope of sine wave.
-    # These are derived to match sine curvature at
-    # boundary points. See http://mathb.in/1447
-    # _T0 = (3.0/2.0*math.pi - 3)
+    # Control points that will match sine curvature and slope at
+    # quadrant end points. See http://mathb.in/1447
+    # _T0 = 3.0 / 2.0 * math.pi - 3 #1.7123889803846897
     # _T1 = (6.0 - (_T0 * _T0)) / 6.0 #0.5112873299761805
     # P0 = (0.0, 0.0)
-    # P1 = (_T1, _T1)
+    # P1 = (_T1, _T1) #(0.511287, 0.511287)
     # P2 = (1.0, 1.0)
-    # P3 = (math.pi / 2.0, 1.0)
+    # P3 = (math.pi / 2.0, 1.0) #(1.570796, 1.0)
 
-    # Apparently these constants produce a more accurate
-    # sine wave approximation:
+    # These numerically derived constants produce a more accurate
+    # sine wave approximation.They are optimized to produce
+    # an error of less than 0.000058442
     # See: https://stackoverflow.com/questions/13932704/how-to-draw-sine-waves-with-svg-js
+    # (See answer comment by NominalAnimal)
+    # See: https://codepen.io/Sphinxxxx/pen/LpzNzb
     P0 = (0.0, 0.0)
     P1 = (0.512286623256592433, 0.512286623256592433)
     P2 = (1.002313685767898599, 1.0)
     P3 = (1.570796326794896619, 1.0)
 
     # According to Gernot Hoffmann these numerically derived
-    # constants work even better. I couldn't find
-    # a reference to numbers with better precision but
+    # constants work well. I haven't verified this.
+    # See http://docs-hoffmann.de/bezier18122002.pdf
+    # I couldn't find a reference to numbers with better precision but
     # it may not be required:
 #     P0 = (0.0, 0.0)
 #     P1 = (0.5600, 0.5600)
