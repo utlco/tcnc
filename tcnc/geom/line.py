@@ -278,7 +278,7 @@ class Line(tuple):#namedtuple('Line', 'p1, p2')):
 #        return d
         return self.normal_projection_point(p, segment).distance(p)
 
-    def intersection_mu(self, other, segment=False):
+    def intersection_mu(self, other, segment=False, seg_a=False, seg_b=False):
         """Line intersection.
 
         http://paulbourke.net/geometry/pointlineplane/
@@ -289,12 +289,20 @@ class Line(tuple):#namedtuple('Line', 'p1, p2')):
                 line endpoints.
             segment: if True then the intersection point must lie on both
                 segments.
+            seg_a: If True the intersection point must lie on this
+                line segment.
+            seg_b: If True the intersection point must lie on the other
+                line segment.
 
         Returns:
             The unit distance from the segment starting point to the
             point of intersection if they intersect. Otherwise None
             if the lines or segments do not intersect.
         """
+        if segment:
+            seg_a = True
+            seg_b = True
+            
         x1, y1 = self[0]
         x2, y2 = self[1]
         x3, y3 = other[0]
@@ -310,18 +318,20 @@ class Line(tuple):#namedtuple('Line', 'p1, p2')):
 #                return self.midpoint()
             return None
 
-        mua = a / denom
-        mub = b / denom
+        mu_a = a / denom
+        mu_b = b / denom
 #        if segment and (mua < 0.0 or mua > 1.0 or mub < 0.0 or mub > 1.0):
-        if segment and (mua < -const.EPSILON or mua > 1.0 + const.EPSILON
-                        or mub < -const.EPSILON or mub > 1.0 + const.EPSILON):
+#         if segment and (mua < -const.EPSILON or mua > 1.0 + const.EPSILON
+#                         or mub < -const.EPSILON or mub > 1.0 + const.EPSILON):
+        mu_min = -const.EPSILON
+        mu_max = 1.0 + const.EPSILON
+        if ((seg_a and (mu_a < mu_min or mu_a > mu_max))
+            or (seg_b and (mu_b < mu_min or mu_b > mu_max))):
             # The intersection lies outside the line segments
-#            logger.debug('mua: %f, mub=%f' % (mua, mub))
             return None
+        return mu_a
 
-        return mua
-
-    def intersection(self, other, segment=False):
+    def intersection(self, other, segment=False, seg_a=False, seg_b=False):
         """Return the intersection point (if any) of this line and another line.
 
         See:
@@ -333,35 +343,50 @@ class Line(tuple):#namedtuple('Line', 'p1, p2')):
                 line endpoints.
             segment: if True then the intersection point must lie on both
                 segments.
+            seg_a: If True the intersection point must lie on this
+                line segment.
+            seg_b: If True the intersection point must lie on the other
+                line segment.
 
         Returns:
             A point if they intersect otherwise None.
         """
-#        mu = self.intersection_mu(other, segment)
-#        return self.point_at(mu)
+#         mu = self.intersection_mu(other, segment, seg_a, seg_b)
+#         if mu is None:
+#             return None
+#         return self.point_at(mu)
+        if segment:
+            seg_a = True
+            seg_b = True
         x1, y1 = self[0]
         x2, y2 = self[1]
         x3, y3 = other[0]
         x4, y4 = other[1]
-
+ 
         a = (x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)
         b = (x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)
         denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
-
+ 
         if abs(denom) < const.EPSILON: # Lines are parallel ?
             if abs(a) < const.EPSILON and abs(b) < const.EPSILON: # Lines are coincident ?
                 return self.midpoint()
             else:
                 return None
-
-        mua = a / denom
-        mub = b / denom
+ 
+        mu_a = a / denom
+        mu_b = b / denom
 #        if segment and (mua < 0.0 or mua > 1.0 or mub < 0.0 or mub > 1.0):
-        if segment and (mua < -const.EPSILON or mua > 1.0 + const.EPSILON or mub < -const.EPSILON or mub > 1.0 + const.EPSILON):
+#         if segment and (mua < -const.EPSILON or mua > 1.0 + const.EPSILON or mub < -const.EPSILON or mub > 1.0 + const.EPSILON):
+        mu_min = -const.EPSILON
+        mu_max = 1.0 + const.EPSILON
+        if ((seg_a and (mu_a < mu_min or mu_a > mu_max))
+            or (seg_b and (mu_b < mu_min or mu_b > mu_max))):
             # The intersection lies outside the line segments
             return None
-        x = x1 + mua * (x2 - x1)
-        y = y1 + mua * (y2 - y1)
+            # The intersection lies outside the line segments
+            return None
+        x = x1 + mu_a * (x2 - x1)
+        y = y1 + mu_a * (y2 - y1)
         return P(x, y)
 
     def extend(self, amount, from_midpoint=False):
@@ -522,6 +547,3 @@ class Line(tuple):#namedtuple('Line', 'p1, p2')):
         that corresponds with this line.
         """
         return 'M %f %f L %f %f' % (self.p1.x, self.p1.y, self.p2.x, self.p2.y)
-
-
-
