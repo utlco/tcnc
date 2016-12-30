@@ -61,6 +61,16 @@ class Box(tuple):
     def p2(self):
         """The upper right corner of the box rectangle."""
         return self[1]
+    
+    @property
+    def topleft(self):
+        """The upper left corner of the box recangle."""
+        return P(self[0][0], self[1][1])
+
+    @property
+    def bottomright(self):
+        """The bottom right corner of the box recangle."""
+        return P(self[1][0], self[0][1])
 
     @property
     def xmin(self):
@@ -142,7 +152,7 @@ class Box(tuple):
         If the line segment is entirely outside the rectangle this
         returns None.
 
-        Uses the Liang-Barsky line clipping algorithm and translates C++ code
+        Uses the Liang-Barsky line clipping algorithm. Translated C++ code
         from: http://hinjang.com/articles/04.html
 
         Args:
@@ -193,10 +203,33 @@ class Box(tuple):
             elif u < u_minmax[1]:
                 u_minmax[1] = u
         return True
+    
+    def clip_arc(self, arc):
+        """If the given circular arc is clipped by this rectangle then
+        return a new arc with clipped end-points.
+        
+        This only returns a single clipped arc even if the arc could
+        be clipped into two sub-arcs... For now this is considered
+        a pathological condition.
+
+        Args:
+            arc: The arc segment to clip.
+
+        Returns:
+            A new clipped arc or None if the arc segment
+            is entirely outside this clipping rectangle.
+            If the arc segment is entirely within the rectangle this
+            returns the same (unclipped) arc segment.
+        """
+        # TODO: implement clip_arc...
+        return NotImplementedError
 
     def start_tangent_angle(self):
         """Return the angle in radians of a line tangent to this shape
-        beginning at the first point.
+        beginning at the first point. It's pretty obvious this will
+        always be PI/2...
+        
+        This is just to provide an orthogonal interface for geometric shapes...
 
         The corner point order for rectangles is clockwise from lower left.
         """
