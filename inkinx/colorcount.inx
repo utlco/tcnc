@@ -20,6 +20,20 @@
     <page name="options" _gui-text="Options">
       <param name="separate-layers" type="boolean"
         _gui-text="Copy colored elements to separate layers">false</param>
+      <param name="use-shape-key" type="boolean"
+        _gui-text="Use first shape as key">false</param>
+    </page>
+
+    <page name="options" _gui-text="Annotations">
+      <param name="tag-shapes" type="boolean"
+        _gui-text="Annotate filled shapes">false</param>
+      <param name="" type="description">-----------------------------------------------------</param>
+      <param name="tag-font-size" type="string"
+          _gui-text="Font size">9pt</param>
+      <param name="tag-prefix" type="string"
+          _gui-text="Annotation prefix">C</param>
+      <param name="tag-enum-start" type="int" min="0" max="10000"
+          _gui-text="Enumeration start">1</param>
     </page>
 
     <page name="debug" _gui-text="Debug">
