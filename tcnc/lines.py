@@ -448,7 +448,7 @@ class Lines(inkext.InkscapeExtension):
     def _rotate_line(self, line, _linenum, _maxlines):
         """
         """
-        if self.options.disable_jitter or self.options.angle_jitter > 0:
+        if self.options.disable_jitter or self.options.angle_jitter == 0:
             return line
         # This produces a random angle between -pi and pi
         kappa = self.options.angle_kappa
