@@ -31,7 +31,7 @@ is important, maintainability and clarity has been more of a priority.
 
 My memory is too unreliable to understand some opaque code I wrote
 two months ago, so I've tried to mitigate this somewhat with
-comments and more verbose code.
+comments and avoiding magical python.
 
 Why
 ...
@@ -66,7 +66,7 @@ which further confuses things.
 Weirdly, the default document unit is pixels
 even when using a document template specified in inches or mm.
 
-Anyway for the purposes of using tcnc as an Inkscape extension,
+Anyway, for the purposes of using tcnc as an Inkscape extension,
 the simplest way to deal with this
 is in *File->Document Properties...*,
 set the 'default units' to the same value as the units used to specify the
@@ -107,7 +107,8 @@ two styles... Sphinx handles both just fine.
 
 Testing has been artisinal.
 
-Most modules produce a lot of pylint warnings.
+Most modules produce some pylint warnings. But IMO pylint is overly
+nit-picky about some things.
 
 An attempt has been made to start migrating the code to full
 python3 compatibility, but this has not been tested. Inkscape

@@ -15,7 +15,7 @@ Tcnc is an Inkscape (version .91+) extension that generates
 G-code suitable for a
 3.5 axis CNC machine controlled by LinuxCNC v2.4+.
 The rotational axis (A) is assumed to rotate about
-the Z axis and is kept tangent to movement along the X and Y axis.
+the Z axis and is kept tangent to movement along the X and Y axes.
 
 It is currently used to produce output for a painting apparatus based on
 a modified Fletcher 6100 CNC mat cutter controlled by LinuxCNC. A stepper
@@ -100,8 +100,12 @@ Notes
 -----
 
 These extensions do not depend at all on the extension libraries supplied
-with Inkscape. In fact, you can run these as standalone command line tools
-without Inkscape being installed.
+with Inkscape. In fact, you can run these extensions as standalone
+command line tools without having to install Inkscape.
+
+All the code is written for Python 2.7.x with some consideration
+for compatibility with Python 3. Porting to Python 3 should be
+relatively painless but I have not tried it.
 
 
 Etc...
@@ -110,8 +114,9 @@ Tcnc is an ongoing project that is mainly designed for my own use
 and some of the features may seem weirdly specific. Some of the code is in
 a high state of flux due to rapid cycle experimentation.
 
-There are some handy libraries, such as the SVG and geometry modules,
-that are more generally handy. I rewrote the Inkscape extension classes
+There are some handy libraries, such as the SVG and geometry packages,
+that may be useful in other projects.
+I rewrote the Inkscape extension classes
 since the .91 version broke the .48 extensions and I just wanted to
 hoist more of the biolerplate involved with writing Inkscape extensions.
 
