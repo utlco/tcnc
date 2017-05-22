@@ -19,10 +19,14 @@
 
     <page name="bezier" _gui-text="Bezier">
       <param name="tolerance" type="float" precision="8" min="0" max="1" _gui-text="Floating point tolerance (epsilon)">0.00001</param>
-      <param name="draw-inflections" type="boolean" _gui-text="Draw inflections">false</param>
-      <param name="draw-controlpoints" type="boolean" _gui-text="Draw control points">false</param>
-      <param name="draw-normals" type="boolean" _gui-text="Draw normals">false</param>
-      <param name="draw-biarcs" type="boolean" _gui-text="Draw biarcs">false</param>
+      <param name="draw-inflections" type="boolean" _gui-text="Show inflection points">false</param>
+      <param name="draw-subdivide-inflections" type="boolean" _gui-text="Subdivide at inflections">false</param>
+      <param name="draw-controlpoints" type="boolean" _gui-text="Show control points">false</param>
+      <param name="draw-t5" type="boolean" _gui-text="Show point at t=0.5">false</param>
+      <param name="draw-extrema" type="boolean" _gui-text="Show extrema">false</param>
+      <param name="draw-extrema-align" type="boolean" _gui-text="Show aligned extrema">false</param>
+      <param name="draw-normals" type="boolean" _gui-text="Show normals">false</param>
+      <param name="draw-biarcs" type="boolean" _gui-text="Show biarcs">false</param>
     </page>
 
     <page name="biarc" _gui-text="Biarc">
