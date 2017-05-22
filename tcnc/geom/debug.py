@@ -44,6 +44,19 @@ def draw_line(line, color='#c00000', width='1px', verbose=False, parent=None):
             draw_point(line[0], color=color)
             draw_point(line[1], color=color)
 
+def draw_poly(vertices, color='#c00000', width='1px', verbose=False,
+              parent=None, close_poly=True):
+    """Draw an SVG polygon.
+    """
+    svg = svg_context()
+    if svg is not None:
+        style = ('fill:none;stroke:%s;stroke-width:%f;stroke-opacity:1' %
+                 (color, svg.unit2uu(width)))
+        svg.create_polygon(vertices, close_polygon=close_poly,
+                           style=style, parent=parent)
+        if verbose:
+            for p in vertices:
+                draw_point(p, color=color)
 
 def draw_arc(arc, color='#cccc99', width='1px', verbose=False, parent=None):
     """Draw an SVG arc for debugging/testing"""
@@ -107,11 +120,11 @@ def draw_bezier(curve, color='#cccc99', verbose=False, parent=None):
             # Draw inflection points if any
             t1, t2 = curve.find_inflections()
             if t1 > 0.0:
-                #ip1 = curve.controlpoints_at(t1)[2]
+                # ip1 = curve.controlpoints_at(t1)[2]
                 ip1 = curve.point_at(t1)
                 draw_point(ip1, color='#c00000', parent=parent)
             if t2 > 0.0:
-                #ip2 = curve.controlpoints_at(t2)[2]
+                # ip2 = curve.controlpoints_at(t2)[2]
                 ip2 = curve.point_at(t2)
                 draw_point(ip2, color='#c00000', parent=parent)
             # Draw midpoint
