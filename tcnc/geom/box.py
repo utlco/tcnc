@@ -39,17 +39,28 @@ class Box(tuple):
 
     @staticmethod
     def from_points(points):
-        """Create a Box from the bounding box of the given points."""
-        xmin = sys.float_info.max
-        ymin = sys.float_info.max
-        xmax = sys.float_info.min
-        ymax = sys.float_info.min
-        for p in points:
-            x, y = p
-            xmin = min(xmin, x)
-            ymin = min(ymin, y)
-            xmax = max(xmax, x)
-            ymax = max(ymax, y)
+        """Create a Box from the bounding box of the given points.
+        
+        Returns:
+            A geom.Box or None if there are zero points.
+        """
+        if not points:
+            return None
+        x_values, y_values = zip(*points)
+        xmin = min(x_values)
+        xmax = max(x_values)
+        ymin = min(y_values)
+        ymax = max(y_values)
+#         xmin = sys.float_info.max
+#         ymin = sys.float_info.max
+#         xmax = sys.float_info.min
+#         ymax = sys.float_info.min
+#         for p in points:
+#             x, y = p
+#             xmin = min(xmin, x)
+#             ymin = min(ymin, y)
+#             xmax = max(xmax, x)
+#             ymax = max(ymax, y)
         return Box(P(xmin, ymin), P(xmax, ymax))
 
     @property
@@ -61,7 +72,7 @@ class Box(tuple):
     def p2(self):
         """The upper right corner of the box rectangle."""
         return self[1]
-    
+
     @property
     def topleft(self):
         """The upper left corner of the box recangle."""
@@ -91,6 +102,12 @@ class Box(tuple):
     def ymax(self):
         """Maximum X value of bounding box."""
         return self[1][1]
+
+    def vertices(self):
+        """Get the four vertices of the box as a tuple of four points.
+        """
+        return (P(self.xmin, self.ymin), P(self.xmin, self.ymax),
+                P(self.xmax, self.ymax), P(self.xmax, self.ymin))
 
     def center(self):
         """Return the center point of this rectangle."""
@@ -203,7 +220,7 @@ class Box(tuple):
             elif u < u_minmax[1]:
                 u_minmax[1] = u
         return True
-    
+
     def clip_arc(self, arc):
         """If the given circular arc is clipped by this rectangle then
         return a new arc with clipped end-points.
