@@ -132,10 +132,9 @@ class SimpleCAM(object):
             bezier.CubicBezier, geom.Line, or geom.Arc segments.
             Other shape types will be silently ignored...
         """
-        # Make sure the z step is canonical
-        if self.z_step == 0.0:
+        # TODO: range check various properties
+        if geom.is_zero(self.z_step):
             self.z_step = self.z_depth
-        self.z_step = abs(self.z_step)
         # Sort paths to optimize rapid moves
         if self.path_sort_method is not None:
             path_list = self.sort_paths(path_list, self.path_sort_method)
@@ -150,10 +149,10 @@ class SimpleCAM(object):
         # depth is reached.
         # If the final tool depth is > 0 then just ignore the step
         # value since the tool won't reach the work surface anyway.
-        if self.z_depth > 0 or self.z_step > -self.z_depth:
+        if self.z_depth > 0 or self.z_step < self.z_depth:
             tool_depth = self.z_depth
         else:
-            tool_depth = -self.z_step
+            tool_depth = self.z_step
         depth_pass = 1
         while tool_depth >= self.z_depth:
             for path_count, path in enumerate(path_list, 1):
@@ -187,7 +186,7 @@ class SimpleCAM(object):
             if rdist > self.gc.tolerance and rdist < self.z_step:
                 tool_depth = self.z_depth
             else:
-                tool_depth -= self.z_step
+                tool_depth += self.z_step
             depth_pass += 1
         # Do a rapid move back to the home position if specified
         if self.home_when_done:
