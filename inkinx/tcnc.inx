@@ -101,14 +101,15 @@
       <param name="brush-overshoot-mode" type="optiongroup" appearance="minimal" _gui-text="Brush overshoot">
         <_option value="">No overshoot</_option>
         <_option value="auto">Overshoot based on tool width</_option>
-        <_option value="manual">Manual overshoot distance:</_option>
+        <_option value="manual">Explicit overshoot distance:</_option>
       </param>
-      <param name="brush-overshoot-distance" type="float" precision="4" min="0" _gui-text="Manual overshoot distance">0</param>
+      <param name="brush-overshoot-distance" type="float" precision="4" min="0" _gui-text="Explicit overshoot distance">0</param>
 
       <param name="" type="description">-----------------------------------------------------</param>
 
       <param name="brush-soft-landing" type="boolean" _gui-text="Perform soft brush landing and liftoff">false</param>
       <param name="brush-landing-strip" type="float" precision="4" min="0" _gui-text="Landing strip distance">0</param>
+
 <!--
       <param name="brush-flip-path" type="boolean" _gui-text="Flip brush after every path">false</param>
       <param name="brush-trail-up" type="float" precision="4" min="0" max="1000" _gui-text="Brush trail up:">0.25</param>
