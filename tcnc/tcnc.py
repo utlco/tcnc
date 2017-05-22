@@ -308,8 +308,8 @@ class Tcnc(inkext.InkscapeExtension):
         enable_tangent = not self.options.disable_tangent
         cam = paintcam.PaintCAM(gc)
         cam.debug_svg = self.debug_svg
-        cam.z_step = self.options.z_step
         cam.z_depth = self.options.z_depth
+        cam.z_step = max(-(abs(self.options.z_step)), cam.z_depth)
         if self.options.path_sort_method != 'none':
             cam.path_sort_method = self.options.path_sort_method
         cam.tool_width = self.options.tool_width
