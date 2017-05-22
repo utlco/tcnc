@@ -24,6 +24,7 @@ from . import transform2d
 from .point import P
 from .line import Line
 from .arc import Arc
+from .box import Box
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ class CubicBezier(tuple):
         c2: Second control point as 2-tuple (x, y).
         p2: End point as 2-tuple (x, y).
     """
+
     def __new__(cls, p1, c1, c2, p2):
         return tuple.__new__(CubicBezier, (P(p1), P(c1), P(c2), P(p2)))
 
@@ -196,7 +198,6 @@ class CubicBezier(tuple):
         curve2 = CubicBezier(p, cp2, cp3, self.p2)
         return (curve1, curve2)
 
-
     def subdivide_inflections(self):
         """Subdivide this curve at the inflection points, if any.
 
@@ -212,19 +213,21 @@ class CubicBezier(tuple):
         elif t1 > 0.0 and t2 > 0.0:
             # Two inflection points
             curves = []
-#             logger.debug('t1=%f, t2=%f', t1, t2)
-#             if t1 > t2:
-#                 t1, t2 = t2, t1
+            logger.debug('t1=%f, t2=%f', t1, t2)
+            if t1 > t2:
+                t1, t2 = t2, t1
             curve1, curve2 = self.subdivide(t1)
 #             curve3, curve4 = curve2.subdivide(t2 - t1)
 #             return (curve1, curve3, curve4)
             t1, t2 = curve1.find_inflections(imaginary=True)
+#             logger.debug('C1 t1=%f, t2=%f', t1, t2)
             t = max(t1, t2)
             if t > 0.0:
                 curves.extend(curve1.subdivide(t))
                 curves.append(curve2)
             else:
-                t1, t2 = curve1.find_inflections()
+                t1, t2 = curve2.find_inflections(imaginary=True)
+#                 logger.debug('C2 t1=%f, t2=%f', t1, t2)
                 t = max(t1, t2)
                 if t > 0.0:
                     curves.append(curve1)
@@ -233,7 +236,7 @@ class CubicBezier(tuple):
                     curves.extend((curve1, curve2))
             return curves
         else:
-            return [self,]
+            return [self, ]
 
 
     def find_inflections(self, imaginary=False):
@@ -256,8 +259,6 @@ class CubicBezier(tuple):
             if any.
             The location values will be 0 if no inflection.
         """
-        # TODO: rethink the imaginary
-
         # Basically the equation to be solved is where the cross product of
         # the first and second derivatives is zero:
         # P' X P'' = 0
@@ -275,7 +276,7 @@ class CubicBezier(tuple):
             return (0.5, 0.0)
 
         v2 = self.c2 - self.c1 - v1
-        v3 = self.p2 - self.c2 - v1 - 2*v2
+        v3 = self.p2 - self.c2 - v1 - 2 * v2
 
         # Calculate quadratic coefficients
         # of the form a*x**2 + b*x + c = 0
@@ -290,18 +291,19 @@ class CubicBezier(tuple):
         a2 = 2 * a
         if abs(a2) > 0.0: # Avoid div by zero
             # the discriminant of the quadratic eq.
-            dis = b*b - 4*a*c
+            dis = b * b - 4 * a * c
 #             if dis < 0 and not imaginary:
 #                 return (0.0, 0.0)
             # When a curve has a loop the discriminant will be negative
             # so use the absolute value...
             # I can't remember how this was determined besides
             # experimentally.
+            # TODO: prove this
             disroot = math.sqrt(abs(dis))
             root1 = (-b - disroot) / a2
             root2 = (-b + disroot) / a2
 
-            # Make sure the roots are on the curve segment
+            # Filter floating point drift
             if root1 < const.EPSILON or root1 >= (1.0 - const.EPSILON):
                 root1 = 0.0
             if root2 < const.EPSILON or root2 >= (1.0 - const.EPSILON):
@@ -315,21 +317,71 @@ class CubicBezier(tuple):
                 return (0.0, 0.0)
         return (root1, root2)
 
-    def find_roots(self):
+    def find_extrema_align(self):
+        """Find the extremities of the curve as if a chord connecting
+        the end points is parallel to the X axis. 
+        This can be used to find the height of the curve if the curve
+        has no inflections..
+        
+        This also returns the bounding box since it needs to be rotated
+        to match the curve alignment.
+         
+        Returns:
+            A tuple where the first item is a list of zero to four points
+            and the second is the bounding box (as a list of four points)
+            or None if no extrema can be found.
         """
-        This only works on a curve with no inflections.
+        # First rotate the curve so that the end points are
+        # on the X axis.
+        chord = Line(self.p1, self.p2)
+        mrot = transform2d.matrix_rotate(-chord.angle(), origin=chord.p1)
+        curve = self.transform(mrot)
+        extrema_rot = curve.find_extrema()
+        if not extrema_rot:
+            return ((), None)
+        # Rotate the extrema to match original curve
+        extrema = [p.rotate(chord.angle(), origin=chord.p1) for p in extrema_rot]
+        extrema_rot.append(curve.p1)
+        extrema_rot.append(curve.p2)
+        bbox_rot = Box.from_points(extrema_rot).vertices()
+        bbox = [p.rotate(chord.angle(), origin=chord.p1) for p in bbox_rot]
+        return (extrema, bbox)
+
+    def find_extrema(self):
+        """
+        Find the extremities of this curve.
 
         See:
             https://pomax.github.io/bezierinfo/#extremities
 
         Returns:
-            The root or None
+            A list of zero to four points.
         """
+        extrema = []
+        # Get the quadratic coefficients
         v_a = 3 * (-self.p1 + (3 * self.c1) - (3 * self.c2) + self.p2)
         v_b = 6 * (self.p1 - (2 * self.c1) + self.c2)
         v_c = 3 * (self.c1 - self.p1)
-        #TODO: implement this
-        raise NotImplementedError
+        # Discriminent
+        disc_x = v_b.x * v_b.x - 4 * v_a.x * v_c.x
+        disc_y = v_b.y * v_b.y - 4 * v_a.y * v_c.y
+        if disc_x >= 0:
+            disc_sqrt = math.sqrt(disc_x)
+            t1 = (-v_b.x + disc_sqrt) / (2 * v_a.x)
+            if t1 > 0 and t1 < 1:
+                extrema.append(self.point_at(t1))
+            t2 = (-v_b.x - disc_sqrt) / (2 * v_a.x)
+            if t2 > 0 and t2 < 1:
+                extrema.append(self.point_at(t2))
+        if disc_y >= 0:
+            disc_sqrt = math.sqrt(disc_y)
+            t3 = (-v_b.y + disc_sqrt) / (2 * v_a.y)
+            if t3 > 0 and t3 < 1:
+                extrema.append(self.point_at(t3))
+            t4 = (-v_b.y - disc_sqrt) / (2 * v_a.y)
+            if t4 > 0 and t4 < 1:
+                extrema.append(self.point_at(t4))
+        return extrema
 
     def controlpoints_at(self, t):
         """Get the point on this curve corresponding to `t`
@@ -383,8 +435,16 @@ class CubicBezier(tuple):
         """
         # TODO: confirm this is correct.
         # See: https://pomax.github.io/bezierinfo/#inflections
-        return 6 * ( (1 - t) * self.p1 + (3*t - 2) * self.c1 +
-                     (1 - 3*t) * self.c2 + t * self.p2 )
+        return 6 * ((1 - t) * self.p1 + (3 * t - 2) * self.c1 +
+                     (1 - 3 * t) * self.c2 + t * self.p2)
+
+    def derivative3(self):
+        """Calculate the 3rd derivative of this curve.
+
+        Returns:
+            The third derivative as 2-tuple (dx, dy).
+        """
+        return (-6 * self.p1) + (18 * self.c1) - (18 * self.c2) + (6 * self.p2)
 
     def curvature_at(self, t):
         """Calculate the curvature at `t`.
@@ -400,7 +460,7 @@ class CubicBezier(tuple):
         d1 = self.derivative1(t)
         d2 = self.derivative2(t)
         c = (((d1.x * d2.y) - (d1.y * d2.x)) /
-             math.pow((d1.x * d1.x) + (d1.y * d1.y), 3./2))
+             math.pow((d1.x * d1.x) + (d1.y * d1.y), 3. / 2))
         return c
 
     def length(self, tolerance=None):
@@ -477,7 +537,6 @@ class CubicBezier(tuple):
             if the curve is degenerate (i.e. if the end points
             are coincident).
         """
-#        self.svg_plot(color='#ff0000') #DEBUG
         # Check for degenerate cases:
         # Bail if the curve endpoints are coincident.
         if self.p1 == self.p2:
@@ -485,7 +544,7 @@ class CubicBezier(tuple):
         # Or if the curve is basically a straight line then return a Line.
         if self.is_straight_line(line_flatness):
 #             logger.debug('curve->line: flatness=%f' % self.flatness())
-            return [Line(self.p1, self.p2),]
+            return [Line(self.p1, self.p2), ]
 
         if _recurs_depth == 0:
             # Subdivide this curve at any inflection points to make sure
@@ -500,7 +559,7 @@ class CubicBezier(tuple):
                     sub_biarcs = curve.biarc_approximation(
                                     tolerance=tolerance, max_depth=max_depth,
                                     line_flatness=line_flatness,
-                                    _recurs_depth=_recurs_depth+1)
+                                    _recurs_depth=_recurs_depth + 1)
                     biarcs.extend(sub_biarcs)
                 return biarcs
 
@@ -556,13 +615,13 @@ class CubicBezier(tuple):
                 biarcs = curve1.biarc_approximation(tolerance=tolerance,
                                                 max_depth=max_depth,
                                                 line_flatness=line_flatness,
-                                                _recurs_depth=_recurs_depth+1)
+                                                _recurs_depth=_recurs_depth + 1)
                 biarcs.extend(curve2.biarc_approximation(tolerance=tolerance,
                                                 max_depth=max_depth,
                                                 line_flatness=line_flatness,
-                                                _recurs_depth=_recurs_depth+1))
+                                                _recurs_depth=_recurs_depth + 1))
                 return biarcs
-        return [arc1,] if arc2 is None else [arc1, arc2]
+        return [arc1, ] if arc2 is None else [arc1, arc2]
 
     def biarc_joint_arc(self):
         """Calculate the arc that intersects the two endpoints of this curve
@@ -574,11 +633,9 @@ class CubicBezier(tuple):
         # The center <s> of the circle is the intersection of the bisectors
         # of line segments P1->P2 and (P1+unit(C1))->(P2+unit(C2))
         chord = Line(self.p1, self.p2)
-#        chord.svg_plot()
         u1 = (self.c1 - self.p1).unit()
         u2 = (self.c2 - self.p2).unit()
         useg = Line(self.p1 + u1, self.p2 + P(-u2.x, -u2.y))
-#        useg.svg_plot()
         center = chord.bisector().intersection(useg.bisector())
         if center is not None:
             radius = center.distance(self.p1)
@@ -598,7 +655,7 @@ class CubicBezier(tuple):
         # Newton-Raphson to find maximum of the cubic curve, or
         # maybe improve the existing naive method with a binary search.
         dmax = 0.0
-        for i in range(ndiv+1):
+        for i in range(ndiv + 1):
             t = float(i) / ndiv
             p = self.point_at(t)
 #            p.svg_plot('#00cccc') #DEBUG
@@ -632,7 +689,7 @@ class CubicBezier(tuple):
                  self.c2.x, self.c2.y, self.p2.x, self.p2.y))
 
 
-def bezier_circle(center=(0,0), radius=1.0):
+def bezier_circle(center=(0, 0), radius=1.0):
     """Create an approximation of a circle with a cubic Bezier curve.
 
     Args:
@@ -755,7 +812,7 @@ def bezier_elliptical_arc(ellipse, t1, t2):
     return CubicBezier(p1, c1, c2, p2)
 
 
-def bezier_sine_wave(amplitude, wavelength, cycles=1, origin=(0.0,0.0)):
+def bezier_sine_wave(amplitude, wavelength, cycles=1, origin=(0.0, 0.0)):
     """Create an approximation of a sine wave using a cubic Bezier curve.
 
     Args:
@@ -805,7 +862,7 @@ def bezier_sine_wave(amplitude, wavelength, cycles=1, origin=(0.0,0.0)):
     # Create a Bezier of the first quadrant of the sine wave
     q0 = CubicBezier(P0, P1, P2, P3)
     # Scale to match specified amplitude and wavelength
-    t0 = transform2d.matrix_scale((wavelength/4.0)/P3[0], amplitude/P3[1])
+    t0 = transform2d.matrix_scale((wavelength / 4.0) / P3[0], amplitude / P3[1])
     # First quadrant 0 to PI/2
     q0 = q0.transform(t0)
     dx1 = q0.p1.x - q0.c1.x
