@@ -226,8 +226,8 @@ class Lines(inkext.InkscapeExtension):
             # TODO: See if it makes sense to then connect the two paths
         
         # Create polypaths
-        hpaths = self.connected_paths(hlines)
-        vpaths = self.connected_paths(vlines)
+        hpaths = self.connected_paths(hlines, self.options.hline_connect)
+        vpaths = self.connected_paths(vlines, self.options.vline_connect)
         
         # Create SVG layer(s)
         if ((not self.options.grid_layers)
@@ -266,15 +266,15 @@ class Lines(inkext.InkscapeExtension):
                 self.render_lines(vpaths, style=self._styles['v_line'],
                                   layer=v_layer)
                 
-    def connected_paths(self, lines):
+    def connected_paths(self, lines, connect_lines):
         """ Make paths from connected lines
         """
+        if not lines:
+            return []
         paths = []
-        path = []
-        for line in lines:
-            if not path:
-                path.append(line)
-            elif path[-1].p2 == line.p1:
+        path = [lines[0],]
+        for line in lines[1:]:
+            if connect_lines and path[-1].p2 == line.p1:
                 path.append(line)
             else:
                 paths.append(path)
@@ -311,6 +311,30 @@ class Lines(inkext.InkscapeExtension):
             connected_lines.append(line)
         return connected_lines
         
+    def _connect_lines(self, line1, line2):
+        """
+        """
+        # The following mess takes care of literal corner cases
+        # where the connection would be between two lines on either
+        # side of a clip rect corner.
+        # There's probably a simpler way to deal with this...
+        pp1 = geom.P(line1.p2.x, line2.p1.y)
+        pp2 = geom.P(line2.p1.x, line1.p2.y)
+        corner_pt = None
+        if (pp1 == self.cliprect.p1 or pp2 == self.cliprect.p1):
+            corner_pt = self.cliprect.p1
+        elif (pp1 == self.cliprect.topleft or pp2 == self.cliprect.topleft):
+            corner_pt = self.cliprect.topleft
+        elif (pp1 == self.cliprect.p2 or pp2 == self.cliprect.p2):
+            corner_pt = self.cliprect.p2
+        elif (pp1 == self.cliprect.bottomright or pp2 == self.cliprect.bottomright):
+            corner_pt = self.cliprect.bottomright
+        if corner_pt is not None and line1.p2 != corner_pt:
+            return (geom.Line(line1.p2, corner_pt),
+                    geom.Line(corner_pt, line2.p1))
+        else:
+            return (geom.Line(line1.p2, line2.p1),)
+
     def make_lines(self, spacing, line_rotation, reverse_path,
                    reverse_order, alternate, doubled):
         """
@@ -409,29 +433,6 @@ class Lines(inkext.InkscapeExtension):
                     segment2 = geom.Line(segment.p2, segment.p1)
                     lines.append(segment2)
         return lines
-
-    def _connect_lines(self, line1, line2):
-        """
-        """
-        # The following mess takes care of literal corner cases
-        # where the connection would be between two lines on either
-        # side of a clip rect corner.
-        # There's probably a simpler way to deal with this...
-        pp1 = geom.P(line1.p2.x, line2.p1.y)
-        pp2 = geom.P(line2.p1.x, line1.p2.y)
-        pc = None
-        if (pp1 == self.cliprect.p1 or pp2 == self.cliprect.p1):
-            pc = self.cliprect.p1
-        elif (pp1 == self.cliprect.topleft or pp2 == self.cliprect.topleft):
-            pc = self.cliprect.topleft
-        elif (pp1 == self.cliprect.p2 or pp2 == self.cliprect.p2):
-            pc = self.cliprect.p2
-        elif (pp1 == self.cliprect.bottomright or pp2 == self.cliprect.bottomright):
-            pc = self.cliprect.bottomright
-        if pc is not None:
-            return (geom.Line(line1.p2, pc), geom.Line(pc, line2.p1))
-        else:
-            return (geom.Line(line1.p2, line2.p1),)
 
     def _spacing_offset(self, current_offset, spacing, linenum, _maxlines):
         """
