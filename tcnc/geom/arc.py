@@ -63,9 +63,9 @@ class Arc(tuple):
 #                 const.float_eq(angle, center.angle2(p1, p2))):
 #             p1.svg_plot(color='#00ff00')
 #             p2.svg_plot(color='#0000ff')
-# #         assert geometry.float_eq(angle, center.angle2(p1, p2))
+#         assert const.float_eq(angle, center.angle2(p1, p2))
 #         # DEBUG end
-        return tuple.__new__(Arc, (p1, p2, radius, angle, P(center)))
+        return tuple.__new__(Arc, (p1, p2, radius, angle, center))
     # pylint: enable=too-many-arguments
 
     @staticmethod
