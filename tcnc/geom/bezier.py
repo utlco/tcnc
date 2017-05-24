@@ -156,13 +156,15 @@ class CubicBezier(tuple):
         """
         return self.tangent(t).normal()
 
-    def is_straight_line(self, flatness=const.EPSILON):
+    def is_straight_line(self, flatness=None):
         """Return True if curve is essentially a straight line.
 
         Args:
             flatness: The required flatness tolerance to be considered a line.
                 Default is geom.const.EPSILON.
         """
+        if flatness is None:
+            flatness = const.EPSILON
         return ((self.p1 == self.c1 and self.p2 == self.c2) or
                 self.flatness() < flatness)
 
