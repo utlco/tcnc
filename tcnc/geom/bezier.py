@@ -15,7 +15,7 @@ from future_builtins import *
 import math
 import logging
 
-# import geom.debug
+import geom.debug
 
 from . import const
 # from . import util
@@ -101,8 +101,6 @@ class CubicBezier(tuple):
         at the end (second) point.
         -PI < angle < PI."""
         return self.tangent(1.0).angle()
-#         return util.normalize_angle(self.tangent_at(1.0).angle() + math.pi,
-#                                     center=0.0)
 
     def point_at(self, t):
         """A point on the curve corresponding to <t>.
@@ -141,32 +139,30 @@ class CubicBezier(tuple):
         """
         if const.is_zero(t):
             if self.c1 == self.p1:
-                v = self.c2 - self.p1
+                tangent_vector = self.c2 - self.p1
             else:
-                v = self.c1 - self.p1
+                tangent_vector = self.c1 - self.p1
         elif const.float_eq(t, 1.0):
             if self.c2 == self.p2:
-                v = (self.c1 - self.p2).mirror()
+                tangent_vector = (self.c1 - self.p2).mirror()
             else:
-                v = (self.c2 - self.p2).mirror()
+                tangent_vector = (self.c2 - self.p2).mirror()
         else:
-            v = self.derivative1(t)
-        return v.unit()
+            tangent_vector = self.derivative1(t)
+        return tangent_vector.unit()
 
     def normal(self, t):
         """Normal unit vector at `t`.
         """
         return self.tangent(t).normal()
 
-    def is_straight_line(self, flatness=None):
+    def is_straight_line(self, flatness=const.EPSILON):
         """Return True if curve is essentially a straight line.
 
         Args:
             flatness: The required flatness tolerance to be considered a line.
                 Default is geom.const.EPSILON.
         """
-        if flatness is None:
-            flatness = const.EPSILON
         return ((self.p1 == self.c1 and self.p2 == self.c2) or
                 self.flatness() < flatness)
 
@@ -237,7 +233,6 @@ class CubicBezier(tuple):
             return curves
         else:
             return [self, ]
-
 
     def find_inflections(self, imaginary=False):
         """Find (t1, t2) where the curve changes direction,
@@ -317,7 +312,7 @@ class CubicBezier(tuple):
                 return (0.0, 0.0)
         return (root1, root2)
 
-    def find_extrema_align(self):
+    def find_extrema_align(self, calc_bbox=True):
         """Find the extremities of the curve as if a chord connecting
         the end points is parallel to the X axis. 
         This can be used to find the height of the curve if the curve
@@ -325,6 +320,11 @@ class CubicBezier(tuple):
         
         This also returns the bounding box since it needs to be rotated
         to match the curve alignment.
+        
+        Args:
+            calc_bbox: Calculate an aligned bounding box.
+                This can be performed slightly more efficiently here since
+                the alignment rotation is known.
          
         Returns:
             A tuple where the first item is a list of zero to four points
@@ -336,20 +336,22 @@ class CubicBezier(tuple):
         chord = Line(self.p1, self.p2)
         mrot = transform2d.matrix_rotate(-chord.angle(), origin=chord.p1)
         curve = self.transform(mrot)
-        extrema_rot = curve.find_extrema()
+        extrema_rot = curve.find_extrema_points()
         if not extrema_rot:
             return ((), None)
         # Rotate the extrema to match original curve
         extrema = [p.rotate(chord.angle(), origin=chord.p1) for p in extrema_rot]
         extrema_rot.append(curve.p1)
         extrema_rot.append(curve.p2)
-        bbox_rot = Box.from_points(extrema_rot).vertices()
-        bbox = [p.rotate(chord.angle(), origin=chord.p1) for p in bbox_rot]
+        if calc_bbox:
+            bbox_rot = Box.from_points(extrema_rot).vertices()
+            bbox = [p.rotate(chord.angle(), origin=chord.p1) for p in bbox_rot]
+        else:
+            bbox = None
         return (extrema, bbox)
 
-    def find_extrema(self):
-        """
-        Find the extremities of this curve.
+    def find_extrema_points(self):
+        """Find the extremities of this curve.
 
         See:
             https://pomax.github.io/bezierinfo/#extremities
@@ -357,7 +359,42 @@ class CubicBezier(tuple):
         Returns:
             A list of zero to four points.
         """
-        extrema = []
+        return [self.point_at(t) for t in self.find_extrema()]
+#         extrema = []
+#         # Get the quadratic coefficients
+#         v_a = 3 * (-self.p1 + (3 * self.c1) - (3 * self.c2) + self.p2)
+#         v_b = 6 * (self.p1 - (2 * self.c1) + self.c2)
+#         v_c = 3 * (self.c1 - self.p1)
+#         # Discriminent
+#         disc_x = v_b.x * v_b.x - 4 * v_a.x * v_c.x
+#         disc_y = v_b.y * v_b.y - 4 * v_a.y * v_c.y
+#         if disc_x >= 0:
+#             disc_sqrt = math.sqrt(disc_x)
+#             t1 = (-v_b.x + disc_sqrt) / (2 * v_a.x)
+#             if t1 > 0 and t1 < 1:
+#                 extrema.append(self.point_at(t1))
+#             t2 = (-v_b.x - disc_sqrt) / (2 * v_a.x)
+#             if t2 > 0 and t2 < 1:
+#                 extrema.append(self.point_at(t2))
+#         if disc_y >= 0:
+#             disc_sqrt = math.sqrt(disc_y)
+#             t3 = (-v_b.y + disc_sqrt) / (2 * v_a.y)
+#             if t3 > 0 and t3 < 1:
+#                 extrema.append(self.point_at(t3))
+#             t4 = (-v_b.y - disc_sqrt) / (2 * v_a.y)
+#             if t4 > 0 and t4 < 1:
+#                 extrema.append(self.point_at(t4))
+#         return extrema
+
+    def find_extrema(self):
+        """Find the extremities of this curve.
+
+        See:
+            https://pomax.github.io/bezierinfo/#extremities
+
+        Returns:
+            A list of zero to four <t> values.
+        """
         # Get the quadratic coefficients
         v_a = 3 * (-self.p1 + (3 * self.c1) - (3 * self.c2) + self.p2)
         v_b = 6 * (self.p1 - (2 * self.c1) + self.c2)
@@ -365,23 +402,17 @@ class CubicBezier(tuple):
         # Discriminent
         disc_x = v_b.x * v_b.x - 4 * v_a.x * v_c.x
         disc_y = v_b.y * v_b.y - 4 * v_a.y * v_c.y
+        extrema = []
         if disc_x >= 0:
             disc_sqrt = math.sqrt(disc_x)
-            t1 = (-v_b.x + disc_sqrt) / (2 * v_a.x)
-            if t1 > 0 and t1 < 1:
-                extrema.append(self.point_at(t1))
-            t2 = (-v_b.x - disc_sqrt) / (2 * v_a.x)
-            if t2 > 0 and t2 < 1:
-                extrema.append(self.point_at(t2))
+            extrema.append((-v_b.x + disc_sqrt) / (2 * v_a.x))
+            extrema.append((-v_b.x - disc_sqrt) / (2 * v_a.x))
         if disc_y >= 0:
             disc_sqrt = math.sqrt(disc_y)
-            t3 = (-v_b.y + disc_sqrt) / (2 * v_a.y)
-            if t3 > 0 and t3 < 1:
-                extrema.append(self.point_at(t3))
-            t4 = (-v_b.y - disc_sqrt) / (2 * v_a.y)
-            if t4 > 0 and t4 < 1:
-                extrema.append(self.point_at(t4))
-        return extrema
+            extrema.append((-v_b.y + disc_sqrt) / (2 * v_a.y))
+            extrema.append((-v_b.y - disc_sqrt) / (2 * v_a.y))
+        return [t for t in extrema if t > 0 and t < 1]
+
 
     def controlpoints_at(self, t):
         """Get the point on this curve corresponding to `t`
@@ -566,42 +597,30 @@ class CubicBezier(tuple):
         # Calculate the arc that intersects the two endpoints of this curve
         # and the set of possible biarc joints.
         j_arc = self.biarc_joint_arc()
-#         j_arc.svg_plot(color='#c00000') #DEBUG
         # Another degenerate case which shouldn't happen if the line flatness
         # is reasonable.
         if (j_arc is None or j_arc.radius < const.EPSILON or
             j_arc.length() < const.EPSILON):
             return []
 
-        # TODO: Use a better method of finding J.
-        # A possibly more accurate method (see A. Riskus, 2006)
-        # is to find the intersection of the joint arc and this curve
-        # and use that point for J. The curve subdivision would occur at J
-        # as well.
         # To make this simple for now:
         # The biarc joint J will be the intersection of the line
         # whose endpoints are the center of the joint arc and the
-        # 'middle' (t=0.5) of the bezier curve and the joint arc.
+        # maximum of the bezier curve, and the joint arc.
+        # In practice, t=.05 instead of the maximum works just as well...
+        # TODO: See [A. Riskus, 2006] for a possibly more accurate method
         p = self.point_at(0.5)
+        geom.debug.draw_point(p, color='#ffff00') # DEBUG
         v = p - j_arc.center
         pjoint = v * (j_arc.radius / v.length()) + j_arc.center
-#         pjoint.svg_plot(color='#ffff00') #DEBUG
+        geom.debug.draw_point(pjoint, color='#00ff00') # DEBUG
 
-        # Create the two arcs that define the biarc. If one of the curve
-        # control points are coincident with the corresponding end point
-        # then just make a single arc.
-        arc2 = None
-        if self.p1 == self.c1:
-            arc1 = Arc.from_two_points_and_tangent(self.p2, self.c2,
-                                                        self.p1, reverse=True)
-        elif self.p2 == self.c2:
-            arc1 = Arc.from_two_points_and_tangent(self.p1, self.c1,
-                                                        self.p2)
-        else:
-            arc1 = Arc.from_two_points_and_tangent(self.p1, self.c1,
-                                                        pjoint)
-            arc2 = Arc.from_two_points_and_tangent(self.p2, self.c2,
-                                                        pjoint, reverse=True)
+        # Create the two arcs that define the biarc.
+        c1 = self.c1 if self.c1 != self.p1 else self.c2
+        c2 = self.c2 if self.c2 != self.p2 else self.c1
+        arc1 = Arc.from_two_points_and_tangent(self.p1, c1, pjoint)
+        arc2 = Arc.from_two_points_and_tangent(self.p2, c2, pjoint, reverse=True)
+        assert const.float_eq(arc1.end_tangent_angle(), arc2.start_tangent_angle())
 
         if _recurs_depth < max_depth:
             # Calculate Hausdorff distance from arcs to this curve
@@ -611,6 +630,8 @@ class CubicBezier(tuple):
             # If distance is above tolerance then split this curve and
             # recursively approximate the two sub-curves.
             if hd > tolerance:
+                # Note: subdividing at t=0.5 is as good or better
+                # than using J or maximum. I've tried it.
                 curve1, curve2 = self.subdivide(0.5)
                 biarcs = curve1.biarc_approximation(tolerance=tolerance,
                                                 max_depth=max_depth,
@@ -632,15 +653,30 @@ class CubicBezier(tuple):
         """
         # The center <s> of the circle is the intersection of the bisectors
         # of line segments P1->P2 and (P1+unit(C1))->(P2+unit(C2))
+        # TODO: in case of c1/c2 coincident with endpoint - calc tangent
+        # to create fake unit vector.
         chord = Line(self.p1, self.p2)
-        u1 = (self.c1 - self.p1).unit()
-        u2 = (self.c2 - self.p2).unit()
+#         geom.debug.draw_line(chord, color='#c0c000')
+        u1 = self.tangent(0) # (self.c1 - self.p1).unit()
+        u2 = self.tangent(1).mirror() # (self.c2 - self.p2).unit()
         useg = Line(self.p1 + u1, self.p2 + P(-u2.x, -u2.y))
-        center = chord.bisector().intersection(useg.bisector())
+#         geom.debug.draw_line(useg, color='#c0c000')
+        bisect1 = chord.bisector()
+#         geom.debug.draw_line(bisect1, color='#ffff00')
+        bisect2 = useg.bisector()
+#         geom.debug.draw_line(bisect2, color='#ffff00')
+        center = bisect1.intersection(bisect2)
+#         geom.debug.draw_point(center, color='#c0c000')
         if center is not None:
             radius = center.distance(self.p1)
             angle = center.angle2(self.p1, self.p2)
-            return Arc(self.p1, self.p2, radius, angle, center)
+            # The angle is reversed if the center is also the chord midpoint.
+            # This is not strictly necessary...
+            if center == chord.midpoint():
+                angle = -angle
+            j_arc = Arc(self.p1, self.p2, radius, angle, center)
+#             geom.debug.draw_circle(j_arc.center, j_arc.radius, color='#c0c0c0')
+            return j_arc
         else:
             return None
 
@@ -651,14 +687,14 @@ class CubicBezier(tuple):
         The approximation accuracy depends on the number of curve subdivisions
         specified by `ndiv`.
         """
-        # TODO: improve this method... Possibilities include using
-        # Newton-Raphson to find maximum of the cubic curve, or
+        # TODO: improve this method... Possibilities include
+        # comparing curve maximum distance to arc or
         # maybe improve the existing naive method with a binary search.
         dmax = 0.0
         for i in range(ndiv + 1):
             t = float(i) / ndiv
             p = self.point_at(t)
-#            p.svg_plot('#00cccc') #DEBUG
+#            debug.draw_point(p, color='#00cccc') #DEBUG
             d = arc.distance_to_point(p)
             if d > 0.0: # only if arc intersects segment(center,p)
                 dmax = max(dmax, d)
