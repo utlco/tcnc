@@ -73,7 +73,7 @@ class QuasiExtension(inkext.InkscapeExtension):
         'bbox':
             'fill:none;stroke-width:.1;stroke:#30f090;',
         'polygon':
-            'stroke-opacity:1.0;stroke-linejoin:round;'
+            'fill:none;stroke-opacity:1.0;stroke-linejoin:round;'
             'stroke-width:$polygon_stroke_width;stroke:$polygon_stroke;',
         'polygon_filled':
             'fill:%s;stroke:%s;stroke-width:$polygon_fill_stroke_width;',
@@ -187,7 +187,7 @@ class QuasiExtension(inkext.InkscapeExtension):
         top_right = doc_size - geom.P(self.options.margin_right,
                                      self.options.margin_bottom)
         self.margin_clip_rect = geom.box.Box(bottom_left, top_right)
-        doc_clip_rect = geom.box.Box(geom.P(0,0), doc_size)
+        doc_clip_rect = geom.box.Box(geom.P(0, 0), doc_size)
         if self.options.clip_to_doc and self.options.clip_to_margins:
             clip_rect = doc_clip_rect.intersection(self.margin_clip_rect)
         elif self.options.clip_to_doc:
@@ -295,9 +295,9 @@ class QuasiExtension(inkext.InkscapeExtension):
         self._styles.update(self.svg.styles_from_templates(
             self._styles, self._style_defaults, vars(self.options)))
 
-        logger.debug('colors: %d' % len(plotter.color_count))
-        for color in sorted(plotter.color_count.keys()):
-            logger.debug('[%.5f]: %d' % (color, plotter.color_count[color]))
+#         logger.debug('colors: %d' % len(plotter.color_count))
+#         for color in sorted(plotter.color_count.keys()):
+#             logger.debug('[%.5f]: %d' % (color, plotter.color_count[color]))
 
         if self.options.create_info_layer:
             self._draw_info_layer()
@@ -368,7 +368,7 @@ class QuasiExtension(inkext.InkscapeExtension):
         if isinstance(self.clip_region, geom.ellipse.Ellipse):
             self.svg.create_ellipse(self.clip_region.center,
                                     self.clip_region.rx, self.clip_region.ry,
-                                    angle = 0.0,
+                                    angle=0.0,
                                     style=self._styles['margins'], parent=layer)
         else:
             margin_vertices = [self.clip_region.p1,
@@ -387,7 +387,7 @@ class QuasiExtension(inkext.InkscapeExtension):
 
     def _draw_frame(self):
         layer = self.svg.create_layer('q_frame')
-        offset  = self.options.frame_thickness / 2
+        offset = self.options.frame_thickness / 2
         cx = self.options.frame_width / 2 + offset
         cy = self.options.frame_height / 2 + offset
         frame_vertices = [self.doc_center + geom.P(cx, cy),
@@ -413,6 +413,8 @@ class QuasiExtension(inkext.InkscapeExtension):
             fill_colors = sorted(plotter.color_count.keys())
         else:
             style = self._styles['polygon']
+#         logger.debug('fill: %s', str(self.options.polygon_fill))
+#         logger.debug('style: %s', style)
         color_index = 0
         for i, vertices in enumerate(polygon_list):
             if self.options.polygon_fill:
@@ -437,7 +439,7 @@ class QuasiExtension(inkext.InkscapeExtension):
         style = self._styles['polygon']
         offset_total = offset
         for n in range(nmax):
-            layer = self.svg.create_layer('q_insetpolygons_%d' % (n+1,),
+            layer = self.svg.create_layer('q_insetpolygons_%d' % (n + 1,),
                                           incr_suffix=True)
             for vertices in polygon_list:
                 vertices = self._inset_polygon(vertices, offset_total)
@@ -453,7 +455,7 @@ class QuasiExtension(inkext.InkscapeExtension):
         L4 = geom.Line(vertices[3], vertices[0])
         d1 = L1.distance_to_point(L3.p1)
         d2 = L2.distance_to_point(L1.p1)
-        if d1 >= offset*2 and d2 >= offset*2:
+        if d1 >= offset * 2 and d2 >= offset * 2:
             offset *= L1.which_side(L2.p2)
             L1_o = L1.offset(offset)
             L2_o = L2.offset(offset)
@@ -505,7 +507,7 @@ class QuasiExtension(inkext.InkscapeExtension):
                 segment = segment.extend(ext, from_midpoint=True)
             if self.options.polyseg_clip_to_margins:
                 segment = self.margin_clip_rect.clip_line(segment)
-            style=self._styles['polyseg_color'] % fill_lut[color_index]
+            style = self._styles['polyseg_color'] % fill_lut[color_index]
             color_index = (color_index + 1) % len(fill_lut)
             if self.options.polyseg_layer_per_color:
                 layer = layers[color_index]
@@ -597,7 +599,7 @@ class _SegmentChain(list):
         return vertices
 
     def _prepend_segment(self, segment):
-        angle_ok =  self._angle_is_ok(segment, self[0])
+        angle_ok = self._angle_is_ok(segment, self[0])
         if angle_ok:
             self.insert(0, segment)
         return angle_ok

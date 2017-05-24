@@ -20,7 +20,7 @@ from . import util
 
 
 # pylint: disable=too-many-public-methods
-class P(tuple):#namedtuple('P', 'x, y')):
+class P(tuple): # namedtuple('P', 'x, y')):
     """Two dimensional immutable point (vector).
 
     Represented as a simple tuple (x, y) so that it is compatible with many
@@ -217,7 +217,7 @@ class P(tuple):#namedtuple('P', 'x, y')):
         v2 = P(p2) - self
         if v1 == v2:
             return 0.0
-        # return math.acos(v1.dot(v2))
+#         return math.acos(v1.dot(v2))
         # Apparently this is more accurate for angles near 0 or PI:
         # see http://www.mathworks.com/matlabcentral/newsreader/view_thread/151925
         return math.atan2(v1.cross(v2), v1.dot(v2))
@@ -343,7 +343,7 @@ class P(tuple):#namedtuple('P', 'x, y')):
         # Using barycentric coordinates
         v1 = B - A
         v2 = C - A
-        v3 = self -A
+        v3 = self - A
         det = v1.cross(v2)
         s = v1.cross(v3) / det
         t = v2.cross(v3) / det

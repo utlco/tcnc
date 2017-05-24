@@ -21,7 +21,7 @@ from .box import Box # @UnresolvedImport
 #     print('dummy')
 
 
-class Line(tuple):#namedtuple('Line', 'p1, p2')):
+class Line(tuple): # namedtuple('Line', 'p1, p2')):
     """Two dimensional immutable line segment defined by two points.
 
     Args:
@@ -302,7 +302,7 @@ class Line(tuple):#namedtuple('Line', 'p1, p2')):
         if segment:
             seg_a = True
             seg_b = True
-            
+
         x1, y1 = self[0]
         x2, y2 = self[1]
         x3, y3 = other[0]
@@ -362,17 +362,17 @@ class Line(tuple):#namedtuple('Line', 'p1, p2')):
         x2, y2 = self[1]
         x3, y3 = other[0]
         x4, y4 = other[1]
- 
+
         a = (x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)
         b = (x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)
         denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
- 
+
         if abs(denom) < const.EPSILON: # Lines are parallel ?
             if abs(a) < const.EPSILON and abs(b) < const.EPSILON: # Lines are coincident ?
                 return self.midpoint()
             else:
                 return None
- 
+
         mu_a = a / denom
         mu_b = b / denom
 #        if segment and (mua < 0.0 or mua > 1.0 or mub < 0.0 or mub > 1.0):

@@ -14,15 +14,18 @@ from future_builtins import *
 # svg.SVGContext for drawing debug output. Default is None.
 _SVG_CONTEXT = None
 
+
 def svg_context():
     """The SVG context used for debug output."""
     return _SVG_CONTEXT
+
 
 def set_svg_context(svg_context):
     """Initialize this module with an SVGContext that can be used
     for debug output by draw...() methods."""
     global _SVG_CONTEXT
     _SVG_CONTEXT = svg_context
+
 
 def draw_point(point, radius=3, color='#000000', parent=None):
     """Draw a dot. Useful for debugging and testing."""
@@ -44,6 +47,7 @@ def draw_line(line, color='#c00000', width='1px', verbose=False, parent=None):
             draw_point(line[0], color=color)
             draw_point(line[1], color=color)
 
+
 def draw_poly(vertices, color='#c00000', width='1px', verbose=False,
               parent=None, close_poly=True):
     """Draw an SVG polygon.
@@ -57,6 +61,7 @@ def draw_poly(vertices, color='#c00000', width='1px', verbose=False,
         if verbose:
             for p in vertices:
                 draw_point(p, color=color)
+
 
 def draw_arc(arc, color='#cccc99', width='1px', verbose=False, parent=None):
     """Draw an SVG arc for debugging/testing"""
