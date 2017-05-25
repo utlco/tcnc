@@ -882,12 +882,20 @@ def bezier_sine_wave(amplitude, wavelength, cycles=1, origin=(0.0, 0.0)):
     """
     # Control points that will match sine curvature and slope at
     # quadrant end points. See http://mathb.in/1447
-    # _T0 = 3.0 / 2.0 * math.pi - 3 #1.7123889803846897
-    # _T1 = (6.0 - (_T0 * _T0)) / 6.0 #0.5112873299761805
-    # P0 = (0.0, 0.0)
-    # P1 = (_T1, _T1) #(0.511287, 0.511287)
-    # P2 = (1.0, 1.0)
-    # P3 = (math.pi / 2.0, 1.0) #(1.570796, 1.0)
+#     _T0 = 3.0 / 2.0 * math.pi - 3 #1.7123889803846897
+#     _T1 = (6.0 - (_T0 * _T0)) / 6.0 #0.5112873299761805
+    P0 = (0.0, 0.0)
+#     P1 = (_T1, _T1)
+#     P2 = (1.0, 1.0)
+    P3 = (math.pi / 2.0, 1.0)
+
+    # According to Gernot Hoffmann these numerically derived
+    # constants work well. I haven't verified this.
+    # See http://docs-hoffmann.de/bezier18122002.pdf
+    # I couldn't find a reference to numbers with better precision but
+    # it may not be required:
+#     P1 = (0.5600, 0.5600)
+#     P2 = (1.0300, 1.0000)
 
     # These numerically derived constants produce a more accurate
     # sine wave approximation.They are optimized to produce
@@ -895,20 +903,8 @@ def bezier_sine_wave(amplitude, wavelength, cycles=1, origin=(0.0, 0.0)):
     # See: https://stackoverflow.com/questions/13932704/how-to-draw-sine-waves-with-svg-js
     # (See answer comment by NominalAnimal)
     # See: https://codepen.io/Sphinxxxx/pen/LpzNzb
-    P0 = (0.0, 0.0)
     P1 = (0.512286623256592433, 0.512286623256592433)
     P2 = (1.002313685767898599, 1.0)
-    P3 = (1.570796326794896619, 1.0)
-
-    # According to Gernot Hoffmann these numerically derived
-    # constants work well. I haven't verified this.
-    # See http://docs-hoffmann.de/bezier18122002.pdf
-    # I couldn't find a reference to numbers with better precision but
-    # it may not be required:
-#     P0 = (0.0, 0.0)
-#     P1 = (0.5600, 0.5600)
-#     P2 = (1.0300, 1.0000)
-#     P3 = (1.5708, 1.0)
 
     # Create a Bezier of the first quadrant of the sine wave
     q0 = CubicBezier(P0, P1, P2, P3)
@@ -1039,13 +1035,15 @@ def smooth_path(path, smoothness=.5):
     Returns:
         A list of CubicBezier segments.
     """
-    # TODO: add support for cubic Bezier segments
     smooth_path = []
     if len(path) < 2:
         return path
     seg1 = path[0]
     cp1 = seg1.p1
     for seg2 in path[1:]:
+        if (isinstance(seg1, CubicBezier) or isinstance(seg2, CubicBezier)):
+            # TODO: add support for cubic Bezier segments
+            return smooth_path
         curve, cp1 = smoothing_curve(seg1, seg2, cp1, smoothness=smoothness)
         smooth_path.append(curve)
         seg1 = seg2
