@@ -156,18 +156,6 @@ class CubicBezier(tuple):
         """
         return self.tangent(t).normal()
 
-    def is_straight_line(self, flatness=None):
-        """Return True if curve is essentially a straight line.
-
-        Args:
-            flatness: The required flatness tolerance to be considered a line.
-                Default is geom.const.EPSILON.
-        """
-        if flatness is None:
-            flatness = const.EPSILON
-        return ((self.p1 == self.c1 and self.p2 == self.c2) or
-                self.flatness() < flatness)
-
     def flatness(self):
         """Return the flatness of this curve.
 
@@ -176,6 +164,9 @@ class CubicBezier(tuple):
         This is known as convex hull flatness and is robust regarding
         degenerate curves.
         """
+        # First check if this curve is actually a straight line...
+        if self.p1 == self.c1 and self.p2 == self.c2:
+            return 0
         chord = Line(self.p1, self.p2)
         d1 = chord.distance_to_point(self.c1, segment=True)
         d2 = chord.distance_to_point(self.c2, segment=True)
@@ -211,27 +202,23 @@ class CubicBezier(tuple):
         elif t1 > 0.0 and t2 > 0.0:
             # Two inflection points
             curves = []
-            logger.debug('t1=%f, t2=%f', t1, t2)
+#             logger.debug('t1=%f, t2=%f', t1, t2)
             if t1 > t2:
                 t1, t2 = t2, t1
             curve1, curve2 = self.subdivide(t1)
-#             curve3, curve4 = curve2.subdivide(t2 - t1)
-#             return (curve1, curve3, curve4)
             t1, t2 = curve1.find_inflections(imaginary=True)
-#             logger.debug('C1 t1=%f, t2=%f', t1, t2)
             t = max(t1, t2)
             if t > 0.0:
                 curves.extend(curve1.subdivide(t))
                 curves.append(curve2)
             else:
                 t1, t2 = curve2.find_inflections(imaginary=True)
-#                 logger.debug('C2 t1=%f, t2=%f', t1, t2)
                 t = max(t1, t2)
                 if t > 0.0:
                     curves.append(curve1)
                     curves.extend(curve2.subdivide(t))
                 else:
-                    curves.extend((curve1, curve2))
+                    curves = [curve1, curve2]
             return curves
         else:
             return [self, ]
@@ -395,7 +382,7 @@ class CubicBezier(tuple):
             https://pomax.github.io/bezierinfo/#extremities
 
         Returns:
-            A list of zero to four <t> values.
+            A list of zero to four parametric (t) values.
         """
         # Get the quadratic coefficients
         v_a = 3 * (-self.p1 + (3 * self.c1) - (3 * self.c2) + self.p2)
@@ -454,7 +441,6 @@ class CubicBezier(tuple):
                 6 * (t - t2) * (self.c2 - self.c1) +
                 3 * t2 * (self.p2 - self.c2))
         return dxdy
-#         t2 = t * t
 #         return (self.p1 * ((2 * t - t2 - 1) * 3) +
 #                 self.c1 * ((3 * t2 - 4 * t + 1) * 3) +
 #                 self.c2 * (t * (2 - 3 * t) * 3) +
@@ -468,8 +454,10 @@ class CubicBezier(tuple):
         """
         # TODO: confirm this is correct.
         # See: https://pomax.github.io/bezierinfo/#inflections
-        return 6 * ((1 - t) * self.p1 + (3 * t - 2) * self.c1 +
-                     (1 - 3 * t) * self.c2 + t * self.p2)
+        return 6 * ((1 - t) * self.p1 +
+                    (3 * t - 2) * self.c1 +
+                    (1 - 3 * t) * self.c2 +
+                    t * self.p2)
 
     def derivative3(self):
         """Calculate the 3rd derivative of this curve.
@@ -575,7 +563,7 @@ class CubicBezier(tuple):
         if self.p1 == self.p2:
             return []
         # Or if the curve is basically a straight line then return a Line.
-        if self.is_straight_line(line_flatness):
+        if self.flatness() < line_flatness:
 #             logger.debug('curve->line: flatness=%f' % self.flatness())
             return [Line(self.p1, self.p2), ]
 
@@ -583,7 +571,8 @@ class CubicBezier(tuple):
             # Subdivide this curve at any inflection points to make sure
             # the curve has monotone curvature with no discontinuities.
             # Recursively approximate each sub-curve.
-            # This should only be required once.
+            # This is only required once before any recursion starts
+            # since sub-curves shouldn't have any inflections (right?).
             curves = self.subdivide_inflections()
             if len(curves) > 1:
 #                 logger.debug('found inflections - subdividing %d' % len(curves))
@@ -598,9 +587,9 @@ class CubicBezier(tuple):
 
         # Calculate the arc that intersects the two endpoints of this curve
         # and the set of possible biarc joints.
-        j_arc = self.biarc_joint_arc()
-        # Another degenerate case which shouldn't happen if the line flatness
-        # is reasonable.
+        j_arc = self._biarc_joint_arc()
+        # Another degenerate case which could happen if the curve is too flat
+        # or too tiny.
         if (j_arc is None or j_arc.radius < const.EPSILON or
             j_arc.length() < const.EPSILON):
             return []
@@ -617,6 +606,13 @@ class CubicBezier(tuple):
         pjoint = v * (j_arc.radius / v.length()) + j_arc.center
         geom.debug.draw_point(pjoint, color='#00ff00') # DEBUG
 
+        # Subdivide and recurse if pjoint-arc distance is > tolerance
+        if _recurs_depth < max_depth and pjoint.distance(p) > tolerance:
+            return self._biarc_recurs_subdiv(tolerance=tolerance,
+                                             max_depth=max_depth,
+                                             line_flatness=line_flatness,
+                                             _recurs_depth=_recurs_depth)
+
         # Create the two arcs that define the biarc.
         c1 = self.c1 if self.c1 != self.p1 else self.c2
         c2 = self.c2 if self.c2 != self.p2 else self.c1
@@ -624,29 +620,37 @@ class CubicBezier(tuple):
         arc2 = Arc.from_two_points_and_tangent(self.p2, c2, pjoint, reverse=True)
         assert const.float_eq(arc1.end_tangent_angle(), arc2.start_tangent_angle())
 
-        if _recurs_depth < max_depth:
-            # Calculate Hausdorff distance from arcs to this curve
-            d1 = self.distance_to_arc(arc1)
-            d2 = 0.0 if arc2 is None else self.distance_to_arc(arc2)
-            hd = max(d1, d2)
-            # If distance is above tolerance then split this curve and
-            # recursively approximate the two sub-curves.
-            if hd > tolerance:
-                # Note: subdividing at t=0.5 is as good or better
-                # than using J or maximum. I've tried it.
-                curve1, curve2 = self.subdivide(0.5)
-                biarcs = curve1.biarc_approximation(tolerance=tolerance,
-                                                max_depth=max_depth,
-                                                line_flatness=line_flatness,
-                                                _recurs_depth=_recurs_depth + 1)
-                biarcs.extend(curve2.biarc_approximation(tolerance=tolerance,
-                                                max_depth=max_depth,
-                                                line_flatness=line_flatness,
-                                                _recurs_depth=_recurs_depth + 1))
-                return biarcs
-        return [arc1, ] if arc2 is None else [arc1, arc2]
+        if (_recurs_depth < max_depth and
+                (not self._check_hausdorff(arc2, 0.5, 1.0, tolerance)
+                 or not self._check_hausdorff(arc1, 0, 0.5, tolerance))):
+            return self._biarc_recurs_subdiv(tolerance=tolerance,
+                                             max_depth=max_depth,
+                                             line_flatness=line_flatness,
+                                             _recurs_depth=_recurs_depth)
 
-    def biarc_joint_arc(self):
+        # Biarc is within tolerance or recursion limit has been reached.
+        return [arc1, arc2]
+
+    def _biarc_recurs_subdiv(self, tolerance, max_depth,
+                             line_flatness, _recurs_depth):
+        """Recursively subdivide the curve and approximate each
+        sub-curve with biarcs.
+        """
+        _recurs_depth += 1
+        # Note: subdividing at t=0.5 is as good or better
+        # than using J or maximum. I've tried it.
+        curve1, curve2 = self.subdivide(0.5)
+        biarcs1 = curve1.biarc_approximation(tolerance=tolerance,
+                                        max_depth=max_depth,
+                                        line_flatness=line_flatness,
+                                        _recurs_depth=_recurs_depth)
+        biarcs2 = curve2.biarc_approximation(tolerance=tolerance,
+                                        max_depth=max_depth,
+                                        line_flatness=line_flatness,
+                                        _recurs_depth=_recurs_depth)
+        return biarcs1 + biarcs2
+
+    def _biarc_joint_arc(self):
         """Calculate the arc that intersects the two endpoints of this curve
         and the set of possible biarc joints.
 
@@ -682,25 +686,34 @@ class CubicBezier(tuple):
         else:
             return None
 
-    def distance_to_arc(self, arc, ndiv=9):
-        """Calculate an approximate normal distance between this curve and
-        the specified circular arc.
+    def _check_hausdorff(self, arc, t1, t2, tolerance, ndiv=7):
+        """Check this curve against the specified arc to see
+        if the Hausdorff distance is within `tolerance`.
 
-        The approximation accuracy depends on the number of curve subdivisions
-        specified by `ndiv`.
+        The approximation accuracy depends on the number of steps
+        specified by `ndiv`. Default is nine.
+        
+        Args:
+            arc: The arc to test
+            t1: Start location of curve
+            t2: End location of curve
+            tolerance: The maximum distance
+            ndiv: Number of steps
+            
+        Returns:
+            True if the Hausdorff distance to the arc is within
+            the specified tolerance.
         """
-        # TODO: improve this method... Possibilities include
-        # comparing curve maximum distance to arc or
-        # maybe improve the existing naive method with a binary search.
-        dmax = 0.0
-        for i in range(ndiv + 1):
-            t = float(i) / ndiv
+        # TODO: improve this method... maybe just check curve maximum?
+        t_step = (t2 - t1) * (1.0 / ndiv)
+        t = t1 + t_step
+        while t < t2:
             p = self.point_at(t)
-#            debug.draw_point(p, color='#00cccc') #DEBUG
-            d = arc.distance_to_point(p)
-            if d > 0.0: # only if arc intersects segment(center,p)
-                dmax = max(dmax, d)
-        return dmax
+            geom.debug.draw_point(p, color='#000000') # DEBUG
+            if arc.distance_to_point(p) > tolerance:
+                return False
+            t += t_step
+        return True
 
     def reversed(self):
         """Return a CubicBezier with control points (direction) reversed."""
