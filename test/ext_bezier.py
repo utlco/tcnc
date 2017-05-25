@@ -87,7 +87,7 @@ class ExtBezier(inkext.InkscapeExtension):
             self.draw_t5(curve)
 
         if self.options.draw_extrema:
-            extrema = curve.find_extrema()
+            extrema = curve.find_extrema_points()
             if extrema:
                 for p in extrema:
                     geom.debug.draw_point(p, color='#000000')
