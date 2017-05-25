@@ -15,9 +15,8 @@ from __future__ import (absolute_import, division, unicode_literals)
 
 import gettext
 
-import geom
-
 from inkscape import inkext
+from geom import bezier
 
 __version__ = '0.2'
 
@@ -53,10 +52,10 @@ class SineWave(inkext.InkscapeExtension):
                                                 incr_suffix=True, flipy=True)
         # Approximate a sine wave using Bezier curves
         origin = (self.options.origin_x, self.options.origin_y)
-        sine_path = geom.bezier.bezier_sine_wave(self.options.amplitude,
-                                                 self.options.wavelength,
-                                                 cycles=self.options.cycles,
-                                                 origin=origin)
+        sine_path = bezier.bezier_sine_wave(self.options.amplitude,
+                                            self.options.wavelength,
+                                            cycles=self.options.cycles,
+                                            origin=origin)
         # Draw the sine wave
         style = self.svg.scale_inline_style(self._LINE_STYLE)
         self.svg.create_polypath(sine_path, style=style, parent=self.line_layer)
