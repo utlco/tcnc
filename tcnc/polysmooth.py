@@ -92,6 +92,11 @@ class PolySmooth(inkext.InkscapeExtension):
                 element, element_transform=element_transform)
             for path in pathlist:
                 new_path = bezier.smooth_path(path, smoothness)
+                if not new_path:
+                    # Ignore failures and keep going...
+                    # This should only happen if there are segments
+                    # that are neither arc nor line.
+                    continue
                 if self.options.new_layer:
                     parent = new_layer
                 else:
