@@ -11,6 +11,7 @@ from __future__ import (absolute_import, division, unicode_literals)
 # Uncomment this if any of these builtins are used.
 # from future_builtins import (ascii, filter, hex, map, oct, zip)
 
+import math
 import gettext
 import logging
 
@@ -21,6 +22,7 @@ if __name__ == '__main__':
 from inkscape import inkext
 from tcnc import geom
 from geom import bezier
+from geom import arc
 from svg import geomsvg
 
 __version__ = '0.2'
@@ -47,6 +49,8 @@ class ExtBezier(inkext.InkscapeExtension):
         inkext.ExtOption('--biarc-tolerance', type='docunits', default=0.01),
         inkext.ExtOption('--biarc-max-depth', type='int', default=4),
         inkext.ExtOption('--line-flatness', type='docunits', default=0.001),
+        inkext.ExtOption('--test-arcbez', type='inkbool', default=False),
+        inkext.ExtOption('--test-circbez', type='inkbool', default=False),
     )
 
     _LAYER_NAME = 'bezier-test'
@@ -79,6 +83,8 @@ class ExtBezier(inkext.InkscapeExtension):
             for segment in path:
                 if isinstance(segment, bezier.CubicBezier):
                     self.draw_curve_attributes(segment)
+                if isinstance(segment, arc.Arc):
+                    self.test_arcbez(segment)
 
     def draw_curve_attributes(self, curve):
         """
@@ -175,6 +181,18 @@ class ExtBezier(inkext.InkscapeExtension):
                 geom.debug.draw_arc(segment, color='#00c000', parent=layer)
             geom.debug.draw_point(segment.p1, color='#c000c0', parent=layer)
             geom.debug.draw_point(segment.p2, color='#c000c0', parent=layer)
+
+    def test_arcbez(self, testarc):
+        """
+        """
+        if self.options.test_circbez and geom.float_eq(testarc.angle, math.pi / 2):
+            curves = bezier.bezier_circle(testarc.center, testarc.radius)
+            for curve in curves:
+                geom.debug.draw_bezier(curve)
+        elif self.options.test_arcbez:
+            curve = bezier.bezier_circular_arc(testarc)
+            geom.debug.draw_bezier(curve)
+
 
 
 if __name__ == '__main__':

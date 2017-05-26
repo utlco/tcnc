@@ -27,6 +27,8 @@
       <param name="draw-extrema-align" type="boolean" _gui-text="Show aligned extrema">false</param>
       <param name="draw-normals" type="boolean" _gui-text="Show normals">false</param>
       <param name="draw-biarcs" type="boolean" _gui-text="Show biarcs">false</param>
+      <param name="test-arcbez" type="boolean" _gui-text="Test arc->Bezier">false</param>
+      <param name="test-circbez" type="boolean" _gui-text="Test circle->Bezier">false</param>      
     </page>
 
     <page name="biarc" _gui-text="Biarc">
