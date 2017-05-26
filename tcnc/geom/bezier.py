@@ -756,23 +756,18 @@ def bezier_circle(center=(0, 0), radius=1.0):
         https://pomax.github.io/bezierinfo/#circles_cubic
     """
     # Magic number for control point tangent length
+    #    K = 4 * math.tan(arc.angle / 4) / 3
+    # or:
+    #    K = 4 * ((math.sqrt(2) - 1) / 3)
     k = 0.5522847498308 * radius
-    b1 = CubicBezier(P(radius, 0.0) + center,
-                     P(radius, k) + center,
-                     P(k, radius) + center,
-                     P(0.0, radius) + center)
-    b2 = CubicBezier(P(0.0, radius) + center,
-                     P(-k, radius) + center,
-                     P(-radius, k) + center,
-                     P(-radius, 0.0) + center)
-    b3 = CubicBezier(P(-radius, 0.0) + center,
-                     P(-radius, -k) + center,
-                     P(-k, -radius) + center,
-                     P(0.0, -radius) + center)
-    b4 = CubicBezier(P(0.0, -radius) + center,
-                     P(k, -radius) + center,
-                     P(radius, -k) + center,
-                     P(radius, 0.0) + center)
+    b1 = CubicBezier(P(radius, 0.0) + center, P(radius, k) + center,
+                     P(k, radius) + center, P(0.0, radius) + center)
+    b2 = CubicBezier(P(0.0, radius) + center, P(-k, radius) + center,
+                     P(-radius, k) + center, P(-radius, 0.0) + center)
+    b3 = CubicBezier(P(-radius, 0.0) + center, P(-radius, -k) + center,
+                     P(-k, -radius) + center, P(0.0, -radius) + center)
+    b4 = CubicBezier(P(0.0, -radius) + center, P(k, -radius) + center,
+                     P(radius, -k) + center, P(radius, 0.0) + center)
     return (b1, b2, b3, b4)
 
 
@@ -787,23 +782,18 @@ def bezier_circular_arc(arc):
         A CubicBezier.
     """
     #-------------------------------------------------------------------------
+    # This is from:
+    # https://pomax.github.io/bezierinfo/#circles_cubic
+    #
     # See: http://itc.ktu.lt/itc354/Riskus354.pdf for possibly
     # better solution.
-    # This is from:
-    # http://www.spaceroots.org/documents/ellipse/node22.html
-    # but specialized for the simpler circular arc case.
-    # Implicit derivative of the arc is straightforward.
-    # TODO: test this...
+    # But this currently works pretty well in practice.
     #-------------------------------------------------------------------------
-    # Alpha doesn't quite match up with the magic number
-    # used for the circle quadrant case and there might be
-    # a better approximation...
-    N1 = math.tan(arc.angle / 2)
-    alpha = math.sin(arc.angle) * ((math.sqrt(4 + (3 * (N1 * N1))) - 1) / 3)
+    alpha = 4 * math.tan(arc.angle / 4.0) / 3.0
     v1 = arc.p1 - arc.center
     v2 = arc.p2 - arc.center
     c1 = arc.p1 + alpha * P(-v1.y, v1.x)
-    c2 = arc.p2 - alpha * P(v2.y, -v2.x)
+    c2 = arc.p2 - alpha * P(-v2.y, v2.x)
     return CubicBezier(arc.p1, c1, c2, arc.p2)
 
 
@@ -820,6 +810,7 @@ def bezier_ellipse(ellipse):
     Returns:
         A list containing one to four BezierCurves.
     """
+    # See: http://www.spaceroots.org/documents/ellipse/node22.html
     bz = []
     t1 = getattr(ellipse, 'start_angle', 0.0)
     t2 = t1 + math.pi / 2
@@ -854,8 +845,8 @@ def bezier_elliptical_arc(ellipse, t1, t2):
     """
     # TODO: test this for arcs in both directions
     sweep_angle = t2 - t1
-    N1 = math.tan(sweep_angle / 2)
-    alpha = math.sin(sweep_angle) * (math.sqrt(4 + (3 * (N1 * N1))) - 1) / 3
+    N1 = math.tan(sweep_angle / 2.0)
+    alpha = math.sin(sweep_angle) * (math.sqrt(4 + (3 * (N1 * N1))) - 1) / 3.0
     p1 = ellipse.point_at(t1)
     p2 = ellipse.point_at(t2)
     c1 = p1 + alpha * ellipse.derivative(t1)
@@ -1041,7 +1032,7 @@ def smooth_path(path, smoothness=.5):
     seg1 = path[0]
     cp1 = seg1.p1
     for seg2 in path[1:]:
-        if (isinstance(seg1, CubicBezier) or isinstance(seg2, CubicBezier)):
+        if isinstance(seg1, CubicBezier) or isinstance(seg2, CubicBezier):
             # TODO: add support for cubic Bezier segments
             return smooth_path
         curve, cp1 = smoothing_curve(seg1, seg2, cp1, smoothness=smoothness)
