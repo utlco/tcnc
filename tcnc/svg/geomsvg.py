@@ -91,7 +91,7 @@ def svg_element_to_geometry(element, element_transform=None,
         elif tag == 'polygon':
             subpath = convert_polygon(element)
         if subpath:
-            subpath_list = [subpath,]
+            subpath_list = [subpath, ]
 
     if subpath_list:
         # Create a transform matrix that is composed of the
@@ -229,17 +229,17 @@ def convert_circle(element):
     """
     # Convert to four arcs. CCW winding.
     r = abs(float(element.get('r', 0)))
-    cx = abs(float(element.get('cx', 0)))
-    cy = abs(float(element.get('cy', 0)))
+    cx = float(element.get('cx', 0))
+    cy = float(element.get('cy', 0))
     center = (cx, cy)
     p1 = (cx + r, cy)
     p2 = (cx, cy + r)
     p3 = (cx - r, cy)
     p4 = (cx, cy - r)
-    a1 = geom.Arc(p1, p2, r, math.pi/2, center)
-    a2 = geom.Arc(p2, p3, r, math.pi/2, center)
-    a3 = geom.Arc(p3, p4, r, math.pi/2, center)
-    a4 = geom.Arc(p4, p1, r, math.pi/2, center)
+    a1 = geom.Arc(p1, p2, r, math.pi / 2, center)
+    a2 = geom.Arc(p2, p3, r, math.pi / 2, center)
+    a3 = geom.Arc(p3, p4, r, math.pi / 2, center)
+    a4 = geom.Arc(p4, p1, r, math.pi / 2, center)
     return [a1, a2, a3, a4]
 
 
