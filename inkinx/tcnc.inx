@@ -161,17 +161,17 @@
     </page>
 
    <page name="tolerances" _gui-text="Tolerances">
-      <param name="tolerance" type="float" precision="8" min="0" max="1" _gui-text="Numeric tolerance (epsilon)">0.00001</param>
+      <param name="tolerance" type="float" precision="5" min="0" max="1" _gui-text="Numeric tolerance (epsilon)">0.0001</param>
 <!--
       <param name="gc-precision" type="float" precision="0" min="1" max="15" _gui-text="G code output precision">5</param>
 -->
 
       <param name="" type="description">-----------------------------------------------------</param>
 
-      <param name="biarc-tolerance" type="float" precision="5" min="0.00001" max="10" _gui-text="Curve approximation tolerance">0.01</param>
+      <param name="biarc-tolerance" type="float" precision="4" min="0.0001" max="10" _gui-text="Curve approximation tolerance">0.001</param>
       <param name="biarc-max-depth" type="int" min="1" max="8" _gui-text="Maximum Bezier curve subdivisions">4</param>
-      <param name="line-flatness" type="float" precision="5" min="0.00001" max="10" _gui-text="Minimum curve flatness for conversion to line">0.001</param>
-      <param name="min-arc-radius" type="float" precision="5" min="0.00001" max="10"  _gui-text="Minimum arc radius">0.001</param>
+      <param name="line-flatness" type="float" precision="4" min="0.0001" max="10" _gui-text="Minimum curve flatness for conversion to line">0.001</param>
+      <param name="min-arc-radius" type="float" precision="4" min="0.0001" max="10"  _gui-text="Minimum arc radius">0.001</param>
 <!--
       <param name="angle-tolerance" type="float" precision="5" min="0" max="1" _gui-text="Angle tolerance:">0.0001</param>
 -->

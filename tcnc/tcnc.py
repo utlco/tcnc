@@ -175,7 +175,7 @@ class Tcnc(inkext.InkscapeExtension):
                          help=_('Show tangent tool preview.')),
         inkext.ExtOption('--preview-scale', default='medium',
                          help=_('Preview scale.')),
-                  
+
         inkext.ExtOption('--write-settings', type='inkbool', default=False,
                          help=_('Write Tcnc command line options in header.')),
     )
@@ -284,14 +284,16 @@ class Tcnc(inkext.InkscapeExtension):
             else:
                 units = doc_units
         unit_scale = self.svg.uu2unit('1.0', to_unit=units)
+        gcgen.set_units(units, unit_scale)
 #         logger = logging.getLogger(__name__)
 #         logger.debug('doc units: %s' % doc_units)
 #         logger.debug('view_scale: %f' % self.svg.view_scale)
 #         logger.debug('unit_scale: %f' % unit_scale)
-        gcgen.set_units(units, unit_scale)
-        gcgen.set_tolerance(geom.const.EPSILON)
-        # For simplicity the output precision is the same as epsilon
-        gcgen.set_output_precision(geom.const.EPSILON_PRECISION)
+#         gcgen.set_tolerance(geom.const.EPSILON)
+#         gcgen.set_output_precision(geom.const.EPSILON_PRECISION)
+        gcgen.set_tolerance(self.options.tolerance)
+        precision = max(0, int(round(abs(math.log(self.options.tolerance, 10)))))
+        gcgen.set_output_precision(precision)
         if self.options.blend_mode:
             gcgen.set_path_blending(self.options.blend_mode,
                                  self.options.blend_tolerance)
