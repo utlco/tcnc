@@ -23,18 +23,38 @@
       <param name="" type="description">-----------------------------------------------------</param>
       <param name="hline-spacing" type="float" precision="2" min="0.0001" max="99999"
           _gui-text="Line spacing center to center">1</param>
+      <param name="hline-spacing-jitter" type="int" min="0" max="100"
+          _gui-text="Maximum spacing jitter (0-100% of line spacing)">0</param>
+      <param name="hline-varspacing-formula" type="optiongroup" appearance="minimal" _gui-text="Spacing formula">
+        <_option value="">None (even spacing)</_option>
+        <_option value="linear">Linear</_option>
+        <_option value="log">Logarithmic</_option>
+        <_option value="sine">Sine</_option>
+      </param>
+      <param name="hline-varspacing-min" type="float" precision="2" min="0" max="99999"
+          _gui-text="Minimum line spacing">0</param>
+      <param name="hline-varspacing-cycles" type="float" precision="2" min="0" max="99999"
+          _gui-text="Number of cycles">1</param>
+      <param name="hline-varspacing-invert" type="boolean"
+          _gui-text="Invert variable spacing order">False</param>
+      <param name="" type="description">-----------------------------------------------------</param>
       <param name="hline-rotation" type="float" precision="2" min="-90" max="90"
-          _gui-text="Line rotation (degrees)">0</param>
-      <param name="hline-right2left" type="boolean"
+          _gui-text="Line angle (degrees)">0</param>
+      <param name="hline-angle-jitter" type="float" min="0" max="22.5"
+          _gui-text="Maximum angle jitter (0-22.5deg)">0</param>
+      <param name="hline-angle-kappa" type="float" min="0" max="10"
+          _gui-text="Jitter angle concentration (Von Mises kappa: 0-10)">2</param>
+      <param name="" type="description">-----------------------------------------------------</param>
+      <param name="hline-reverse-path" type="boolean"
           _gui-text="Draw right to left">False</param>
       <param name="hline-double" type="boolean"
           _gui-text="Draw line both directions (double line)">False</param>
-      <param name="hline-top2bottom" type="boolean"
-          _gui-text="Order top to bottom">True</param>
       <param name="hline-alt" type="boolean"
           _gui-text="Alternate line direction">False</param>
       <param name="hline-connect" type="boolean"
           _gui-text="Connect lines">False</param>
+      <param name="hline-reverse-order" type="boolean"
+          _gui-text="Reverse line order">False</param>
       <param name="hline-skip" type="int" min="0" max="99999"
           _gui-text="Skip interval">0</param>
       <param name="hline-start" type="int" min="1" max="99999"
@@ -47,18 +67,38 @@
       <param name="" type="description">-----------------------------------------------------</param>
       <param name="vline-spacing" type="float" precision="2" min="0.0001" max="99999"
           _gui-text="Line spacing center to center">1</param>
+      <param name="vline-spacing-jitter" type="int" min="0" max="100"
+          _gui-text="Maximum spacing jitter (0-100% of line spacing)">0</param>
+      <param name="vline-varspacing-formula" type="optiongroup" appearance="minimal" _gui-text="Spacing formula">
+        <_option value="">None (even spacing)</_option>
+        <_option value="linear">Linear</_option>
+        <_option value="log">Logarithmic</_option>
+        <_option value="sine">Sine</_option>
+      </param>
+      <param name="vline-varspacing-min" type="float" precision="2" min="0" max="99999"
+          _gui-text="Minimum line spacing">0</param>
+      <param name="vline-varspacing-cycles" type="float" precision="2" min="0" max="99999"
+          _gui-text="Number of cycles">1</param>
+      <param name="vline-varspacing-invert" type="boolean"
+          _gui-text="Invert variable spacing order">False</param>
+      <param name="" type="description">-----------------------------------------------------</param>
       <param name="vline-rotation" type="float" precision="2" min="-90" max="90"
-          _gui-text="Line rotation">0</param>
-      <param name="vline-top2bottom" type="boolean"
+          _gui-text="Line rotation (degrees)">0</param>
+      <param name="vline-angle-jitter" type="float" min="0" max="22.5"
+          _gui-text="Maximum angle jitter (0-22.5deg)">0</param>
+      <param name="vline-angle-kappa" type="float" min="0" max="10"
+          _gui-text="Jitter angle concentration (Von Mises kappa: 0-10)">2</param>
+      <param name="" type="description">-----------------------------------------------------</param>
+      <param name="vline-reverse-path" type="boolean"
           _gui-text="Draw top to bottom">True</param>
       <param name="vline-double" type="boolean"
           _gui-text="Draw line both directions (double line)">False</param>
-      <param name="vline-right2left" type="boolean"
-          _gui-text="Order right to left">False</param>
       <param name="vline-alt" type="boolean"
           _gui-text="Alternate line direction">False</param>
       <param name="vline-connect" type="boolean"
           _gui-text="Connect lines">False</param>
+      <param name="vline-reverse-order" type="boolean"
+          _gui-text="Reverse line order">False</param>
       <param name="vline-skip" type="int" min="0" max="99999"
           _gui-text="Skip interval">0</param>
       <param name="vline-start" type="int" min="1" max="99999"
@@ -94,16 +134,16 @@
       <param name="hv-shuffle" type="boolean"
           _gui-text="Shuffle alternating lines">False</param>
       <param name="" type="description">-----------------------------------------------------</param>
-      <param name="disable-jitter" type="boolean"
-          _gui-text="Disable jitter">False</param>
+<!-- 
+      <param name="enable-jitter" type="boolean"
+          _gui-text="Enable jitter">False</param>
       <param name="spacing-jitter" type="int" min="0" max="100"
           _gui-text="Maximum spacing jitter (0-100% of line spacing)">0</param>
-      <param name="angle-jitter" type="float" min="0" max="45"
-          _gui-text="Maximum angle jitter (0-45deg)">0</param>
+      <param name="angle-jitter" type="float" min="0" max="22.5"
+          _gui-text="Maximum angle jitter (0-22.5deg)">0</param>
       <param name="angle-kappa" type="float" min="0" max="10"
           _gui-text="Jitter angle concentration (Von Mises kappa: 0-10)">2</param>
       <param name="" type="description">-----------------------------------------------------</param>
-<!-- 
       <param name="line-curvature" type="int" min="0" max="100"
           _gui-text="Amount of curvature (0-100% from flat to semi-circle)">0</param>
       <param name="line-wiggle" type="int" min="0" max="100"

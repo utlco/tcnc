@@ -26,7 +26,6 @@ from geom import transform2d
 from inkscape import inkext
 from svg import css
 
-
 logger = logging.getLogger(__name__)
 
 class Lines(inkext.InkscapeExtension):
@@ -36,12 +35,30 @@ class Lines(inkext.InkscapeExtension):
                          help=_('Draw horizontal lines')),
         inkext.ExtOption('--hline-spacing', type='docunits', default=1.0,
                          help=_('Line spacing center to center')),
+        inkext.ExtOption('--hline-spacing-jitter', type='int', default=0,
+                         help=_('Line spacing jitter (0-100% of spacing)')),
+        inkext.ExtOption('--hline-angle-jitter', type='degrees', default=0,
+                         help=_('Maximum line angle jitter (degrees)')),
+        inkext.ExtOption('--hline-angle-kappa', type='float', default=2,
+                         help=_('Angle jitter concentration (kappa)')),
+        inkext.ExtOption('--hline-varspacing', type='inkbool', default=False,
+                         help=_('Enable variable spacing')),
+        inkext.ExtOption('--hline-varspacing-min', type='docunits', default=0,
+                         help=_('Minimum line spacing')),
+        inkext.ExtOption('--hline-varspacing-max', type='docunits', default=0,
+                         help=_('Maximum line spacing')),
+        inkext.ExtOption('--hline-varspacing-cycles', type='float', default=1,
+                         help=_('Number of cycles')),
+        inkext.ExtOption('--hline-varspacing-formula', default='',
+                         help=_('Spacing formula')),
+        inkext.ExtOption('--hline-varspacing-invert', type='inkbool', default=False,
+                         help=_('Invert spacing order')),
         inkext.ExtOption('--hline-rotation', type='degrees', default=0.0,
                          help=_('Line rotation')),
-        inkext.ExtOption('--hline-right2left', type='inkbool', default=False,
-                         help=_('Direction left to right')),
-        inkext.ExtOption('--hline-top2bottom', type='inkbool', default=True,
-                         help=_('Order top to bottom')),
+        inkext.ExtOption('--hline-reverse-path', type='inkbool', default=False,
+                         help=_('Draw left to right')),
+        inkext.ExtOption('--hline-reverse-order', type='inkbool', default=True,
+                         help=_('Reverse line order')),
         inkext.ExtOption('--hline-double', type='inkbool', default=True,
                          help=_('Double line')),
         inkext.ExtOption('--hline-alt', type='inkbool', default=False,
@@ -57,12 +74,32 @@ class Lines(inkext.InkscapeExtension):
                          help=_('Draw vertical lines')),
         inkext.ExtOption('--vline-spacing', type='docunits', default=1.0,
                          help=_('Line spacing center to center')),
+        inkext.ExtOption('--vline-spacing-jitter', type='int', default=0,
+                         help=_('Line spacing jitter (0-100% of spacing)')),
+        inkext.ExtOption('--vline-varspacing', type='inkbool', default=False,
+                         help=_('Enable variable spacing')),
+        inkext.ExtOption('--vline-varspacing-min', type='docunits', default=0,
+                         help=_('Minimum line spacing')),
+        inkext.ExtOption('--vline-varspacing-max', type='docunits', default=0,
+                         help=_('Maximum line spacing')),
+        inkext.ExtOption('--vline-varspacing-cycles', type='float', default=1,
+                         help=_('Number of cycles')),
+        inkext.ExtOption('--vline-varspacing-formula', default='linear',
+                         help=_('Spacing formula')),
+        inkext.ExtOption('--vline-varspacing-invert', type='inkbool', default=True,
+                         help=_('Invert spacing order')),
         inkext.ExtOption('--vline-rotation', type='degrees', default=0.0,
                          help=_('Line rotation')),
+        inkext.ExtOption('--vline-angle-jitter', type='degrees', default=0,
+                         help=_('Maximum line angle jitter (degrees)')),
+        inkext.ExtOption('--vline-angle-kappa', type='float', default=2,
+                         help=_('Angle jitter concentration (kappa)')),
         inkext.ExtOption('--vline-right2left', type='inkbool', default=False,
                          help=_('Direction left to right')),
-        inkext.ExtOption('--vline-top2bottom', type='inkbool', default=True,
+        inkext.ExtOption('--vline-reverse-path', type='inkbool', default=True,
                          help=_('Order top to bottom')),
+        inkext.ExtOption('--vline-reverse-order', type='inkbool', default=True,
+                         help=_('Reverse line order')),
         inkext.ExtOption('--vline-double', type='inkbool', default=True,
                          help=_('Double line')),
         inkext.ExtOption('--vline-alt', type='inkbool', default=False,
@@ -103,7 +140,7 @@ class Lines(inkext.InkscapeExtension):
                          help=_('Alternate horizontal and vertical lines')),
         inkext.ExtOption('--hv-shuffle', type='inkbool', default=False,
                          help=_('Shuffle alternating lines')),
-        inkext.ExtOption('--disable-jitter', type='inkbool', default=False,
+        inkext.ExtOption('--enable-jitter', type='inkbool', default=False,
                          help=_('Disable jitter')),
         inkext.ExtOption('--spacing-jitter', type='int', default=0,
                          help=_('Line spacing jitter (0-100% of spacing)')),
@@ -165,7 +202,7 @@ class Lines(inkext.InkscapeExtension):
         geom.debug.set_svg_context(self.debug_svg)
 
         if not self.options.css_default:
-            color =  css.csscolor_to_cssrgb(self.options.h_stroke)      
+            color = css.csscolor_to_cssrgb(self.options.h_stroke)
             self.options.h_stroke = color
             if self.options.h_stroke_width == 0:
                 self.options.h_stroke_width = self.svg.unit2uu('1pt')
@@ -185,7 +222,7 @@ class Lines(inkext.InkscapeExtension):
             option_styles = vars(self.options)
         else:
             option_styles = None
-                
+
         # Update styles with any command line option values
         self._styles.update(self.svg.styles_from_templates(
             self._styles, self._style_defaults, option_styles))
@@ -194,28 +231,53 @@ class Lines(inkext.InkscapeExtension):
                                                  self.options.margin_right,
                                                  self.options.margin_bottom,
                                                  self.options.margin_left)
-        
+
         # Jitter is expressed as a percentage of max jitter.
         # Max jitter is 50% of line spacing.
         self.options.spacing_jitter /= 100
-        
+
         # Create the grid lines
         hlines = []
         vlines = []
         if self.options.hline_draw:
-            hlines = self.make_lines(self.options.hline_spacing,
-                                     self.options.hline_rotation,
-                                     self.options.hline_right2left,
-                                     self.options.hline_top2bottom,
-                                     self.options.hline_alt,
-                                     self.options.hline_double)
+            logger.debug('invert0: %s', self.options.hline_varspacing_invert)
+            lineset = LineSet(
+                        self.cliprect, self.options.hline_spacing,
+                        self.options.hline_rotation,
+                        spacing_jitter=self.options.hline_spacing_jitter,
+                        angle_jitter=self.options.hline_angle_jitter,
+                        angle_jitter_kappa=self.options.hline_angle_kappa,
+                        spacing_formula=self.options.hline_varspacing_formula,
+                        varspace_min=self.options.hline_varspacing_min,
+                        varspace_max=self.options.hline_varspacing_max,
+                        varspace_cycles=self.options.hline_varspacing_cycles,
+                        varspace_invert=self.options.hline_varspacing_invert)
+            hlines = lineset.lines
+            if self.options.hline_reverse_order:
+                hlines.reverse()
+            hlines = self.insert_reversed_lines(hlines,
+                                                self.options.hline_double,
+                                                self.options.hline_reverse_path,
+                                                self.options.hline_alt)
         if self.options.vline_draw:
-            vlines = self.make_lines(self.options.vline_spacing,
-                                     self.options.vline_rotation + math.pi / 2,
-                                     self.options.vline_top2bottom,
-                                     self.options.vline_right2left,
-                                     self.options.vline_alt,
-                                     self.options.vline_double)
+            lineset = LineSet(
+                        self.cliprect, self.options.vline_spacing,
+                        self.options.vline_rotation + math.pi / 2,
+                        spacing_jitter=self.options.vline_spacing_jitter,
+                        angle_jitter=self.options.vline_angle_jitter,
+                        angle_jitter_kappa=self.options.vline_angle_kappa,
+                        spacing_formula=self.options.vline_varspacing_formula,
+                        varspace_min=self.options.vline_varspacing_min,
+                        varspace_max=self.options.vline_varspacing_max,
+                        varspace_cycles=self.options.vline_varspacing_cycles,
+                        varspace_invert=self.options.vline_varspacing_invert)
+            vlines = lineset.lines
+            if self.options.vline_reverse_order:
+                vlines.reverse()
+            vlines = self.insert_reversed_lines(vlines,
+                                                self.options.vline_double,
+                                                self.options.vline_reverse_path,
+                                                self.options.vline_alt)
 
         if not self.options.hline_vline:
             # Connect the lines to create continuous paths
@@ -224,14 +286,14 @@ class Lines(inkext.InkscapeExtension):
             if self.options.vline_connect:
                 vlines = self.insert_connectors(vlines)
             # TODO: See if it makes sense to then connect the two paths
-        
+
         # Create polypaths
-        hpaths = self.connected_paths(hlines, self.options.hline_connect)
-        vpaths = self.connected_paths(vlines, self.options.vline_connect)
-        
+        hpaths = self.connected_paths(hlines)
+        vpaths = self.connected_paths(vlines)
+
         # Create SVG layer(s)
         if ((not self.options.grid_layers)
-            or (self.options.hline_vline and hlines and vlines)):
+                or (self.options.hline_vline and hlines and vlines)):
             h_layer = self.svg.create_layer(self._LAYER_NAME,
                                              incr_suffix=True, flipy=True)
             v_layer = h_layer
@@ -242,7 +304,7 @@ class Lines(inkext.InkscapeExtension):
             if vlines:
                 v_layer = self.svg.create_layer(self._LAYER_NAME_V,
                                                 incr_suffix=True, flipy=True)
-            
+
         if self.options.hline_vline and hlines and vlines:
             # Optionally shuffle the path order.
             if self.options.hv_shuffle:
@@ -265,21 +327,21 @@ class Lines(inkext.InkscapeExtension):
             if vlines:
                 self.render_lines(vpaths, style=self._styles['v_line'],
                                   layer=v_layer)
-                
-    def connected_paths(self, lines, connect_lines):
+
+    def connected_paths(self, lines):
         """ Make paths from connected lines
         """
         if not lines:
             return []
         paths = []
-        path = [lines[0],]
+        path = [lines[0]]
         for line in lines[1:]:
-            if connect_lines and path[-1].p2 == line.p1:
+            if path[-1].p2 == line.p1:
                 path.append(line)
             else:
                 paths.append(path)
 #                 logger.debug('pathlen: %d' % len(path))
-                path = [line,]
+                path = [line]
         if path:
             paths.append(path)
         return paths
@@ -297,7 +359,29 @@ class Lines(inkext.InkscapeExtension):
                     path = geom.fillet.fillet_path(path, radius,
                                                    fillet_close=False)
                 self.svg.create_polypath(path, style=style, parent=layer)
-        
+
+    def insert_reversed_lines(self, lines, doubled, reverse, alternate):
+        """
+        """
+        if not doubled and not reverse:
+            return lines
+        doubled_lines = []
+        linenum = 0
+        for line in lines:
+            is_odd = (linenum % 2) != 0
+#             logger.debug('R: %s, A: %s, O: %s', str(reverse), str(alternate), str(is_odd))
+            if ((not reverse and alternate and is_odd)
+                    or (reverse and (not alternate or not is_odd))):
+                doubled_lines.append(line.reversed())
+                if doubled:
+                    doubled_lines.append(line)
+            else:
+                doubled_lines.append(line)
+                if doubled:
+                    doubled_lines.append(line.reversed())
+            linenum += 1
+        return doubled_lines
+
     def insert_connectors(self, lines):
         """
         """
@@ -305,168 +389,160 @@ class Lines(inkext.InkscapeExtension):
         prev_line = None
         for line in lines:
             if prev_line is not None and prev_line.p2 != line.p1:
-                connectors = self._connect_lines(prev_line, line)
-                connected_lines.extend(connectors)
+                connected_lines.append(geom.Line(prev_line.p2, line.p1))
             prev_line = line
             connected_lines.append(line)
         return connected_lines
-        
-    def _connect_lines(self, line1, line2):
+
+
+class LineSet(object):
+    """
+    """
+    def __init__(self, cliprect, spacing, angle,
+                   spacing_jitter=0,
+                   angle_jitter=0, angle_jitter_kappa=2,
+                   spacing_formula=None,
+                   varspace_min=0, varspace_max=0,
+                   varspace_cycles=2,
+                   varspace_invert=False,
+                   ):
         """
         """
-        # The following mess takes care of literal corner cases
-        # where the connection would be between two lines on either
-        # side of a clip rect corner.
-        # There's probably a simpler way to deal with this...
-        pp1 = geom.P(line1.p2.x, line2.p1.y)
-        pp2 = geom.P(line2.p1.x, line1.p2.y)
-        corner_pt = None
-        if (pp1 == self.cliprect.p1 or pp2 == self.cliprect.p1):
-            corner_pt = self.cliprect.p1
-        elif (pp1 == self.cliprect.topleft or pp2 == self.cliprect.topleft):
-            corner_pt = self.cliprect.topleft
-        elif (pp1 == self.cliprect.p2 or pp2 == self.cliprect.p2):
-            corner_pt = self.cliprect.p2
-        elif (pp1 == self.cliprect.bottomright or pp2 == self.cliprect.bottomright):
-            corner_pt = self.cliprect.bottomright
-        if corner_pt is not None and line1.p2 != corner_pt:
-            return (geom.Line(line1.p2, corner_pt),
-                    geom.Line(corner_pt, line2.p1))
+        self.cliprect = cliprect
+        self.spacing = spacing
+        self.spacing_jitter = spacing_jitter
+        self.angle_jitter = angle_jitter
+        self.angle_jitter_kappa = angle_jitter_kappa
+        self.spacing_formula = spacing_formula
+        self.varspace_min = varspace_min
+        self.varspace_max = varspace_max
+        self.varspace_cycles = varspace_cycles
+        self.varspace_invert = varspace_invert
+
+        # Normalize the line angle: -pi/2 < angle < pi/2
+        # Prototype line vector is always bottom to top, left to right.
+        self.angle = geom.normalize_angle(angle, center=0)
+        if self.angle > (math.pi / 2):
+            self.angle -= math.pi
+        elif self.angle < -(math.pi / 2):
+            self.angle += math.pi
+        # A line that's between 45 and 135 degrees is considered
+        # vertically oriented.
+        if self.angle > math.pi * .25 and self.angle < math.pi * .75:
+            self.is_vertical = True
         else:
-            return (geom.Line(line1.p2, line2.p1),)
+            self.is_vertical = False
+        logger.debug('angle: %.3f, is_vertical: %s', self.angle, str(self.is_vertical))
 
-    def make_lines(self, spacing, line_rotation, reverse_path,
-                   reverse_order, alternate, doubled):
+        self.axis_spacing = self.spacing
+        if not geom.is_zero(self.angle):
+            # Adjust axis-aligned spacing to compensate for rotated normal
+            if self.is_vertical:
+                self.axis_spacing /= math.sin(self.angle)
+            else:
+                self.axis_spacing /= math.cos(self.angle)
+
+        # Set reasonable defaults for variable spacing extents
+        if geom.is_zero(self.varspace_min):
+            self.varspace_min = 0.1
+        if geom.is_zero(self.varspace_max):
+            self.varspace_max = self.axis_spacing
+
+        self.lines = self.make_lines()
+
+    def make_lines(self):
+        """ Generate lines.
         """
-        """
-        # Rotation angle should be > -math.pi and < math.pi
-        line_rotation = geom.normalize_angle(line_rotation, center=0.0)
-        quadrant = abs(line_rotation) + (math.pi / 4)
-        if math.pi/2 < quadrant and quadrant < math.pi:
-            # Lines are vertically oriented
-            return self.make_vlines(spacing, line_rotation,
-                                    reverse_path, reverse_order,
-                                    alternate, doubled)
+        if self.is_vertical:
+            dx = abs(math.cos(self.angle) * self.cliprect.height())
+            max_extent = self.cliprect.width() + dx
+            x1 = self.cliprect.xmin - dx
+            x2 = self.cliprect.xmin
+            y1 = self.cliprect.ymin
+            y2 = self.cliprect.ymax
+            if self.angle < 0:
+                x1, x2 = x2, x1
         else:
-            return self.make_hlines(spacing, line_rotation,
-                                    reverse_path, reverse_order,
-                                    alternate, doubled)
-
-    def make_hlines(self, spacing, line_rotation, reverse_path,
-                    reverse_order, alternate, doubled):
-        """ Generate horizontal lines
-        """
-        # Adjust axis-aligned spacing to compensate for rotated normal 
-        if not geom.is_zero(line_rotation):
-            spacing = spacing / math.cos(line_rotation)
-        dx = self.cliprect.width()
-        dy = abs(math.tan(line_rotation) * dx)
-        maxlines = int((self.cliprect.height() + dy) / spacing) + 1
-        x1 = self.cliprect.xmin
-        x2 = self.cliprect.xmin + dx
-        if reverse_path:
-            x1, x2 = x2, x1
-        y1 = self.cliprect.ymin - dy
-        y2 = self.cliprect.ymin
-        if reverse_order:
-            y_offset = self.cliprect.height() + dy
-            y1 += y_offset
-            y2 += y_offset
-            spacing = -spacing
-        if reverse_path == (line_rotation > 0):
-            y1, y2 = y2, y1
+            dy = abs(math.sin(self.angle) * self.cliprect.width())
+            max_extent = self.cliprect.height() + dy
+            x1 = self.cliprect.xmin
+            x2 = self.cliprect.xmax
+            y1 = self.cliprect.ymin - dy
+            y2 = self.cliprect.ymin
+            if self.angle < 0:
+                y1, y2 = y2, y1
         start_line = geom.Line((x1, y1), (x2, y2))
-        return self._create_lines(start_line, maxlines, spacing,
-                                  alternate, doubled, 0, 1)
-
-
-    def make_vlines(self, spacing, line_rotation, reverse_path,
-                    reverse_order, alternate, doubled):
-        """ Generate vertical lines
-        """
-        # Adjust axis-aligned spacing to compensate for rotated normal
-        if not geom.is_zero(line_rotation):
-            spacing = spacing / math.sin(line_rotation)
-        # Re-canonicalize the rotation angle (relative to vertical axis)
-        line_rotation -= math.pi/2
-        dy = self.cliprect.height()
-        dx = abs(math.tan(line_rotation) * dy)
-        maxlines = int((self.cliprect.width() + dx) / spacing) + 1
-        y1 = self.cliprect.ymin
-        y2 = self.cliprect.ymin + dy
-        if reverse_path:
-            y1, y2 = y2, y1
-        x1 = self.cliprect.xmin - dx
-        x2 = self.cliprect.xmin
-        if reverse_order:
-            x_offset = self.cliprect.width() + dx
-            x1 += x_offset
-            x2 += x_offset
-            spacing = -spacing
-        if reverse_path == (line_rotation < 0):
-            x1, x2 = x2, x1
-        start_line = geom.Line((x1, y1), (x2, y2))
-        return self._create_lines(start_line, maxlines, spacing,
-                                  alternate, doubled, 1, 0)
-
-    def _create_lines(self, start_line, maxlines, spacing,
-                      alternate, doubled, x, y):
-        # Extend the start line to provide some headroom for clipping
-        # possibly rotated line segments. This is a hack to compensate
-        # for the lack of infinite line clipping in Box...
-        # TODO: implement infinite line clipping...
-        start_line = start_line.extend(self.cliprect.diagonal(), from_midpoint=True)
+#         if self.angle_jitter > 0:
+#             # Extend the start line to provide some headroom for clipping
+#             # possibly rotated line segments. This is a hack to compensate
+#             # for the lack of infinite line clipping in Box...
+#             # TODO: implement infinite line clipping...
+#             start_line = start_line.extend(self.cliprect.diagonal(),
+#                                            from_midpoint=True)
+        if self.spacing_jitter > 0:
+            # Compensate extent for possible spacing jitter
+            max_extent += self.axis_spacing * (1 + self.spacing_jitter)
         lines = []
         offset = 0
-        for i in range(maxlines):
-            offset = self._spacing_offset(offset, spacing, i, maxlines)
-            line = geom.Line(start_line + (x * offset, y * offset))
-            if (i % 2) > 0 and alternate:
-                # Alternate the path direction every other line
-                line = line.reversed()
-            # Add rotational jitter or offset if any
-            line = self._rotate_line(line, i, maxlines)
+        jitter = 0
+        while offset < max_extent:
+            if self.is_vertical:
+                line_offset = (offset + jitter, 0)
+            else:
+                line_offset = (0, offset + jitter)
+            line = self.angle_jittered_line(start_line + line_offset)
             segment = self.cliprect.clip_line(line)
-            if segment is not None:
+            if segment is not None and not geom.is_zero(segment.length()):
                 lines.append(segment)
-                if doubled:
-                    segment2 = geom.Line(segment.p2, segment.p1)
-                    lines.append(segment2)
+            spacing = self.scaled_spacing(offset, max_extent)
+            logger.debug('max_extent: %.3f, offset: %.3f, spacing: %.3f, jitter: %.3f',
+                         max_extent, offset, spacing, jitter)
+            offset += spacing
+            if self.spacing_jitter > 0:
+                jitter = spacing * self.spacing_jitter_scale()
         return lines
 
-    def _spacing_offset(self, current_offset, spacing, linenum, _maxlines):
+    def angle_jittered_line(self, line):
         """
         """
-        if linenum == 0:
-            spacing = 0
-        if not self.options.disable_jitter and self.options.spacing_jitter > 0:
-            mu = 0
-            sigma = 0.4
-            jitter_scale = random.normalvariate(mu, sigma) / 2
-            spacing += jitter_scale * self.options.spacing_jitter * spacing
-        return current_offset + spacing
-
-    def _rotate_line(self, line, _linenum, _maxlines):
-        """
-        """
-        if self.options.disable_jitter or self.options.angle_jitter == 0:
+        if geom.is_zero(self.angle_jitter):
             return line
         # This produces a random angle between -pi and pi
-        kappa = self.options.angle_kappa
+        kappa = self.angle_jitter_kappa
         norm_angle = random.vonmisesvariate(math.pi, kappa) - math.pi
-        jitter_angle = norm_angle * self.options.angle_jitter / math.pi
+        jitter_angle = norm_angle * self.angle_jitter / math.pi
         if not geom.is_zero(jitter_angle):
             mat = transform2d.matrix_rotate(jitter_angle,
                                             origin=line.midpoint())
             line = line.transform(mat)
         return line
-        
-    def _nonlinear_spacing(self, spacing, linenum, maxlines):
+
+    def scaled_spacing(self, current_offset, max_extent):
         """
         """
-#         mult = abs(spacing) / math.log(maxlines)
-#         offset = linenum * spacing# * math.log(linenum + 1) * mult
-        
-        
+        scale = 1.0
+        cycle_interval = max_extent / self.varspace_cycles
+        t = (current_offset % cycle_interval) / cycle_interval
+        if self.spacing_formula == 'linear':
+            scale = t
+        elif self.spacing_formula == 'log':
+            scale = math.log10(t * 9 + 1)
+        elif self.spacing_formula == 'sine':
+            scale = abs(math.sin(t * math.pi * 2))
+        if scale < 1.0 and self.varspace_invert:
+            scale = 1.0 - scale
+        logger.debug('interval=%f, t=%f, scale=%f', cycle_interval, t, scale)
+        spacing = self.axis_spacing * scale
+        return min(max(spacing, self.varspace_min), self.varspace_max)
+
+    def spacing_jitter_scale(self):
+        """
+        """
+        mu = 0
+        sigma = 0.4
+        jitter = random.normalvariate(mu, sigma)
+        return jitter * self.spacing_jitter
+
+
 if __name__ == '__main__':
     Lines().main(Lines.OPTIONSPEC)
