@@ -64,51 +64,51 @@ class SimpleCAM(object):
         # Properties will be set by user.
         # Only default initialization should be done here.
 
-        #: Home the XYA axes when all done
+        # : Home the XYA axes when all done
         self.home_when_done = False
-        #: Sort strategy
+        # : Sort strategy
         self.path_sort_method = None
-        #: Maximum feed depth per pass
+        # : Maximum feed depth per pass
         self.z_step = 0.0
-        #: Final feed depth
+        # : Final feed depth
         self.z_depth = 0.0
-        #: Tangential tool width in machine units
+        # : Tangential tool width in machine units
         self.tool_width = 0.0
-        #: Tool trail offset in machine units
+        # : Tool trail offset in machine units
         self.tool_trail_offset = 0.0
-        #: Feed distance to travel (in machine units) before outputting
+        # : Feed distance to travel (in machine units) before outputting
         # application-specific G code.
         # Default is 0, meaning no action.
 #         self.feed_interval = 0.0
-        #: Biarc approximation tolerance
+        # : Biarc approximation tolerance
         self.biarc_tolerance = 0.01
-        #: Maximum bezier curve subdivision recursion for biarcs
+        # : Maximum bezier curve subdivision recursion for biarcs
         self.biarc_max_depth = 4
-        #: Flatness of curve to convert to line
+        # : Flatness of curve to convert to line
         self.line_flatness = 0.001
-        #: Ignore path segment start tangent angle when rotating about A
+        # : Ignore path segment start tangent angle when rotating about A
 #         self.ignore_segment_angle = False
-        #: Allow tool reversal at sharp corners
+        # : Allow tool reversal at sharp corners
         self.allow_tool_reversal = False
-        #: Enable tangent rotation. Default is True.
+        # : Enable tangent rotation. Default is True.
         self.enable_tangent = True
-        #: Fillet paths to compensate for tool width
+        # : Fillet paths to compensate for tool width
         self.path_tool_fillet = False
-        #: Offset paths to compensate for tool trail offset
+        # : Offset paths to compensate for tool trail offset
         self.path_tool_offset = False
-        #: Preserve G1 continuity for offset arcs
+        # : Preserve G1 continuity for offset arcs
         self.path_preserve_g1 = False
-        #: Split cam at points that are not G1 or C1 continuous
+        # : Split cam at points that are not G1 or C1 continuous
         self.path_split_cusps = False
-        #: Close polygons with tool fillet
+        # : Close polygons with tool fillet
         self.path_close_polygons = False
-        #: Fillet paths to smooth tool travel
+        # : Fillet paths to smooth tool travel
         self.path_smooth_fillet = False
-        #: Smoothing fillet radius
+        # : Smoothing fillet radius
         self.path_smooth_radius = 0.01
-        #: Number of paths to skip over before processing
+        # : Number of paths to skip over before processing
         self.skip_path_count = 0
-        #: Start outputting G code when path count reaches this
+        # : Start outputting G code when path count reaches this
         # Useful if the job has to be stopped and restarted later.
         self.path_count_start = 1
 
@@ -278,7 +278,8 @@ class SimpleCAM(object):
         if self.path_tool_offset and self.tool_trail_offset > 0:
             new_path_list = []
             for path in path_list:
-                path = offset.offset_path(path, self.tool_trail_offset)
+                path = offset.offset_path(path, self.tool_trail_offset,
+                                          self.line_flatness)
 #                 if self.debug_svg is not None:
 #                     geom.debug.plot_path(path, '#cc3333', offset_layer)
                 new_path_list.append(path)

@@ -11,15 +11,15 @@ from __future__ import (absolute_import, division,
 from future_builtins import *
 
 import math
-# import logging
+import logging
 
 import geom
 from . import toolpath
 from . import util
 
-# logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
-def offset_path(path, offset, g1_tolerance=None):
+def offset_path(path, offset, min_arc_dist, g1_tolerance=None):
     """Recalculate path to compensate for a trailing tangential offset.
     This will shift all of the segments by `offset` amount. Arcs will
     be recalculated to correct for the shift offset.
@@ -27,6 +27,11 @@ def offset_path(path, offset, g1_tolerance=None):
     Args:
         path: The path to recalculate.
         offset: The amount of tangential tool trail.
+        min_arc_dist: The minimum distance between two connected
+            segment end points that can be bridged with an arc.
+            A line will be used if the distance is less than this.
+        g1_tolerance: The angle tolerance to determine if two segments
+            are g1 continuous.
 
     Returns:
         A new path
@@ -54,9 +59,13 @@ def offset_path(path, offset, g1_tolerance=None):
         # Fix discontinuities caused by offsetting non-G1 segments
         if prev_seg is not None:
             if prev_offset_seg.p2 != offset_seg.p1:
-                if geom.float_eq(prev_offset_seg.end_tangent_angle(),
-                                 offset_seg.start_tangent_angle()):
-                    # If G1 continuous then just insert a connecting line.
+                seg_distance = prev_offset_seg.p2.distance(offset_seg.p1)
+                # If the distance between the two segments is less than the
+                # minimum arc distance or if the segments are G1 continuous
+                # then just insert a connecting line.
+                if (seg_distance < min_arc_dist or geom.float_eq(
+                                            prev_offset_seg.end_tangent_angle(),
+                                            offset_seg.start_tangent_angle())):
                     connect_seg = geom.Line(prev_offset_seg.p2, offset_seg.p1)
                 else:
                     # Insert an arc in tool path to rotate the tool to the next
@@ -66,7 +75,10 @@ def offset_path(path, offset, g1_tolerance=None):
                     p1 = prev_offset_seg.p2
                     p2 = offset_seg.p1
                     angle = prev_seg.p2.angle2(p1, p2)
+                    # TODO: This should be a straight line if the arc is tiny
                     connect_seg = geom.Arc(p1, p2, offset, angle, prev_seg.p2)
+                    if connect_seg.length() < 0.01:
+                        logger.debug('tiny arc! length= %f, radius=%f, angle=%f', connect_seg.length(), connect_seg.radius, connect_seg.angle)
                 connect_seg.inline_start_angle = prev_seg.end_tangent_angle()
                 connect_seg.inline_end_angle = seg.start_tangent_angle()
                 offset_path.append(connect_seg)
