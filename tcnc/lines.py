@@ -140,15 +140,25 @@ class Lines(inkext.InkscapeExtension):
                          help=_('Alternate horizontal and vertical lines')),
         inkext.ExtOption('--hv-shuffle', type='inkbool', default=False,
                          help=_('Shuffle alternating lines')),
-        inkext.ExtOption('--enable-jitter', type='inkbool', default=False,
-                         help=_('Disable jitter')),
-        inkext.ExtOption('--spacing-jitter', type='int', default=0,
-                         help=_('Line spacing jitter (0-100% of spacing)')),
-        inkext.ExtOption('--angle-jitter', type='degrees', default=0,
-                         help=_('Maximum line angle jitter (degrees)')),
-        inkext.ExtOption('--angle-kappa', type='float', default=2,
-                         help=_('Angle jitter concentration (kappa)')),
+#         inkext.ExtOption('--enable-jitter', type='inkbool', default=False,
+#                          help=_('Disable jitter')),
+#         inkext.ExtOption('--spacing-jitter', type='int', default=0,
+#                          help=_('Line spacing jitter (0-100% of spacing)')),
+#         inkext.ExtOption('--angle-jitter', type='degrees', default=0,
+#                          help=_('Maximum line angle jitter (degrees)')),
+#         inkext.ExtOption('--angle-kappa', type='float', default=2,
+#                          help=_('Angle jitter concentration (kappa)')),
 
+        inkext.ExtOption('--gcode-write', type='inkbool', default=False,
+                         help=_('Write G code')),
+        inkext.ExtOption('--gcode-no-z', type='inkbool', default=False,
+                         help=_('Don\'t lift brush for rapid moves (dangerous)')),
+        inkext.ExtOption('--gcode-no-tangent', type='inkbool', default=False,
+                         help=_('Disable tangent rotation')),
+        inkext.ExtOption('--gcode-speed', type='float', default=100,
+                         help=_('XY speed in units/minute')),
+        inkext.ExtOption('--gcode-path', default='~/lines.ngc',
+                         help=_('Path to output file')),
 
         inkext.ExtOption('--sine-line', type='inkbool', default=False,
                          help=_('Draw lines as sine waves')),
@@ -234,7 +244,8 @@ class Lines(inkext.InkscapeExtension):
 
         # Jitter is expressed as a percentage of max jitter.
         # Max jitter is 50% of line spacing.
-        self.options.spacing_jitter /= 100
+        self.options.hline_spacing_jitter /= 100
+        self.options.vline_spacing_jitter /= 100
 
         # Create the grid lines
         hlines = []
@@ -363,7 +374,7 @@ class Lines(inkext.InkscapeExtension):
     def insert_reversed_lines(self, lines, doubled, reverse, alternate):
         """
         """
-        if not doubled and not reverse:
+        if not doubled and not reverse and not alternate:
             return lines
         doubled_lines = []
         linenum = 0
