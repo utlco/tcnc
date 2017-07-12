@@ -63,9 +63,9 @@ def offset_path(path, offset, min_arc_dist, g1_tolerance=None):
                 # If the distance between the two segments is less than the
                 # minimum arc distance or if the segments are G1 continuous
                 # then just insert a connecting line.
-                if (seg_distance < min_arc_dist or geom.float_eq(
-                                            prev_offset_seg.end_tangent_angle(),
-                                            offset_seg.start_tangent_angle())):
+                if (seg_distance < min_arc_dist
+                        or geom.segments_are_g1(prev_offset_seg, offset_seg,
+                                                g1_tolerance)):
                     connect_seg = geom.Line(prev_offset_seg.p2, offset_seg.p1)
                 else:
                     # Insert an arc in tool path to rotate the tool to the next

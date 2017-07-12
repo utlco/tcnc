@@ -228,8 +228,8 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
             px = p
         if self.tool_width > self.gcgen.tolerance:
             r = self.tool_width / 2
-            p1 = px + geom.P.from_polar(r, angle + math.pi/2)
-            p2 = px + geom.P.from_polar(r, angle - math.pi/2)
+            p1 = px + geom.P.from_polar(r, angle + math.pi / 2)
+            p2 = px + geom.P.from_polar(r, angle - math.pi / 2)
             self.svg.create_line(p1, p2, self._styles['toolmark'],
                                  parent=self.tool_layer)
 

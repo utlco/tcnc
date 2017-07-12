@@ -135,6 +135,7 @@ def parse_path_geom(path_data, ellipse_to_bezier=False):
     for cmd, params in svg.parse_path(path_data):
         p2 = (params[-2], params[-1])
         if cmd == 'M':
+            # Start of path or sub-path
             if subpath:
                 subpath_list.append(subpath)
                 subpath = []
