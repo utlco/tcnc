@@ -31,6 +31,7 @@ from geom import transform2d
 from cam import gcode
 from cam import paintcam
 from cam import gcodesvg
+from cam import output
 
 from svg import geomsvg
 
@@ -69,11 +70,11 @@ class Tcnc(inkext.InkscapeExtension):
         inkext.ExtOption('--gcode-units', default='in',
                          help=_('G code output units (inch or mm).')),
         inkext.ExtOption('--xy-feed', type='float', default=10.0,
-                         help=_('XY axis feed rate in unit/s')),
+                         help=_('XY axis feed rate in unit/m')),
         inkext.ExtOption('--z-feed', type='float', default=10.0,
-                         help=_('Z axis feed rate in unit/s')),
+                         help=_('Z axis feed rate in unit/m')),
         inkext.ExtOption('--a-feed', type='float', default=60.0,
-                         help=_('A axis feed rate in deg/s')),
+                         help=_('A axis feed rate in deg/m')),
         inkext.ExtOption('--z-safe', type='float', default=1.0,
                          help=_('Z axis safe height for rapid moves')),
         inkext.ExtOption('--z-wait', type='float', default=500,
@@ -212,7 +213,7 @@ class Tcnc(inkext.InkscapeExtension):
         # Convert SVG elements to path geometry
         path_list = geomsvg.svg_to_geometry(svg_elements, flip_transform)
         # Create the output file path name
-        filepath = self.create_pathname(
+        filepath = output.create_pathname(
             self.options.output_path, append_suffix=self.options.append_suffix)
         try:
             with io.open(filepath, 'w') as output:
@@ -359,53 +360,6 @@ class Tcnc(inkext.InkscapeExtension):
 #         if self.options.brushstroke_max > 0.0:
 #             cam.feed_interval = self.options.brushstroke_max
         return cam
-
-
-    def create_pathname(self, filepath, append_suffix=False):
-        """Generate an absolute file path name based on the specified path.
-        The pathname can optionally have an auto-incrementing numeric suffix.
-
-        Args:
-            filepath: Pathname of output file. If the directory, file name, or
-                file extension are missing then defaults will be used.
-            append_suffix: Append an auto-incrementing numeric suffix to the
-                file name if True. Default is False.
-
-        Returns:
-            An absolute path name.
-        """
-        filepath = os.path.abspath(os.path.expanduser(filepath.strip()))
-        filedir, basename = os.path.split(filepath)
-        if not filedir:
-            filedir = os.path.abspath(os.path.expanduser(self._DEFAULT_DIR))
-        file_root, file_ext = os.path.splitext(basename)
-        if not file_root:
-            file_root = self._DEFAULT_FILEROOT
-        if not file_ext:
-            file_ext = self._DEFAULT_FILEEXT
-        basename = file_root + file_ext # Rebuild in case of defaults
-        if append_suffix:
-            # Get a list of existing files that match the numeric suffix.
-            # They should already be sorted.
-            filter_str = '%s_[0-9]*%s' % (file_root, file_ext)
-            files = fnmatch.filter(os.listdir(filedir), filter_str)
-            if len(files) > 0:
-                # Get the suffix from the last one and add one to it.
-                # This seems overly complicated but it takes care of the case
-                # where the user deletes a file in the middle of the
-                # sequence, which guarantees the newest file will always
-                # have the highest numeric suffix.
-                last_file = files[-1]
-                file_root, file_ext = os.path.splitext(last_file)
-                if len(file_root) > 4:
-                    try:
-                        suffix = int(file_root[-4:]) + 1
-                    except ValueError:
-                        suffix = 0
-                basename = file_root[:-4] + ('%04d' % suffix) + file_ext
-            else:
-                basename = file_root + '_0000' + file_ext
-        return os.path.join(filedir, basename)
 
 
 # _unused_options = [
