@@ -29,8 +29,8 @@
         <_option value="rand">Random shuffle</_option>
       </param>
 -->
-      <param name="shuffle" type="boolean" _gui-text="Shuffle paths">false</param>
-      <param name="break-paths" type="boolean" _gui-text="Break apart paths at nodes">false</param>
+      <param name="shuffle" type="boolean" _gui-text="Shuffle paths">true</param>
+      <param name="break-paths" type="boolean" _gui-text="Explode paths">false</param>
     </page>
 
     <page name="log" _gui-text="Debug">

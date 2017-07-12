@@ -3,11 +3,9 @@
 #    Copyright 2012-2016 Claude Zervas
 #    email: claude@utlco.com
 #-----------------------------------------------------------------------------#
-"""Smooth non-G1 path nodes using Bezier curves and draw it as SVG.
+"""Randomly shuffle path order.
 
-Works for polyline/polygons made of line/arc segments.
-
-This can be invoked as an Inkscape extension or from the command line.
+Optionally break apart (explode) paths at node points.
 """
 # Python 3 compatibility boilerplate
 from __future__ import (absolute_import, division, unicode_literals)
@@ -34,17 +32,17 @@ class BreakShuffle(inkext.InkscapeExtension):
     """
     # Command line options
     OPTIONSPEC = (
-        inkext.ExtOption('--shuffle', type='inkbool', default=False,
-                         help=_('Shuffle between layers')),
+        inkext.ExtOption('--shuffle', type='inkbool', default=True,
+                         help=_('Shuffle paths')),
+        inkext.ExtOption('--break-paths', type='inkbool', default=False,
+                         help=_('Break paths')),
 #         inkext.ExtOption('--shuffle', default='alt',
 #                          help=_('Path shuffle method')),
 #         inkext.ExtOption('--shuffle-pathdir', default='',
 #                          help=_('Path direction shuffle method')),
-        inkext.ExtOption('--break-paths', type='inkbool', default=False,
-                         help=_('Break paths')),
     )
 
-    _LAYER_NAME = 'breakshuffle'
+    _LAYER_NAME = 'shuffled-paths'
 
     def run(self):
         """Main entry point for Inkscape extensions.
@@ -80,9 +78,9 @@ class BreakShuffle(inkext.InkscapeExtension):
         new_layer = self.svg.create_layer(self._LAYER_NAME, incr_suffix=True)
 
         if self.options.break_paths:
-            broken_layer_paths = []
+            exploded_layer_paths = []
             for paths in layer_paths:
-                broken_paths = []
+                exploded_paths = []
                 for path in paths:
                     path_data = path.get('d')
                     path_style = path.get('style')
@@ -90,8 +88,7 @@ class BreakShuffle(inkext.InkscapeExtension):
                     transform_attr = None
                     if not transform2d.is_identity_transform(path_transform):
                         transform_attr = svg.svg.transform_attr(path_transform)
-#                     logger.debug('transform: %s, %s', str(path_transform), transform_attr)
-                    dlist = svg.svg.break_path(path_data)
+                    dlist = svg.svg.explode_path(path_data)
                     for d in dlist:
                         attr = {'d': d}
                         if path_style is not None and path_style:
@@ -99,11 +96,9 @@ class BreakShuffle(inkext.InkscapeExtension):
                         if transform_attr is not None:
                             attr['transform'] = transform_attr
                         element = etree.Element(svg_ns('path'), attr)
-                        broken_paths.append(element)
-#                         self.svg.create_path(attr, style=path_style,
-#                                              parent=new_layer)
-                broken_layer_paths.append(broken_paths)
-            layer_paths = broken_layer_paths
+                        exploded_paths.append(element)
+                exploded_layer_paths.append(exploded_paths)
+            layer_paths = exploded_layer_paths
 
         if self.options.shuffle:
             all_paths = list(itertools.chain(*layer_paths))
@@ -111,7 +106,7 @@ class BreakShuffle(inkext.InkscapeExtension):
             for path in all_paths:
                 new_layer.append(path)
         else:
-            # Just add the borken paths...
+            # Just add the exploded paths...
             for paths in layer_paths:
                 for path in paths:
                     new_layer.append(path)

@@ -24,6 +24,7 @@ from geom import transform2d
 
 from . import css
 
+# For debugging...
 logger = logging.getLogger(__name__)
 
 # : SVG Namespaces
@@ -52,32 +53,6 @@ def xlink_ns(tag):
 def strip_ns(tag):
     """Strip the namespace part from the tag if any."""
     return tag.rpartition('}')[2]
-
-
-# # SVG whitespace
-# _SVG_WS = ' \t\r\n\f'
-#
-# def inline_style_to_dict(inline_style):
-#     """Create a dictionary from a simple inline style string.
-#     """
-#     d = {}
-#     if inline_style is not None and inline_style:
-#         for t in inline_style.split(';'):
-#             kv = t.split(':')
-#             if len(kv) == 2:
-#                 # Strip whitespace from style names and values
-#                 k = kv[0].strip(_SVG_WS)
-#                 v = kv[1].strip(_SVG_WS)
-#                 if k and v:
-#                     # Only add non-empty styles
-#                     d[k] = v
-#     return d
-#
-#
-# def dict_to_inline_style(style_dict):
-#     """Create a simple inline style string from a dictionary.
-#     """
-#     return ';'.join([k + ':' + str(v) for k,v in style_dict.iteritems()])
 
 
 class SVGContext(object):
@@ -337,7 +312,6 @@ class SVGContext(object):
         Returns:
             A node if found otherwise None.
         """
-#         return self.document.find('//*[@id="%s"]' % node_id)
         return get_node_by_id(self.document, node_id)
 
     def get_element_transform(self, node, root=None):
@@ -981,8 +955,8 @@ def parse_path(path_data):
                 expecting_command = True
 
 
-def break_path(path_data):
-    """Split the path at node points into components. Sub-paths are flattened.
+def explode_path(path_data):
+    """Break the path at node points into component segments.
 
     Args:
         path_def: The 'd' attribute value of a SVG path element.
@@ -999,9 +973,7 @@ def break_path(path_data):
         p2 = (params[-2], params[-1])
         if p1 is not None:
             paramstr = ' '.join([str(param) for param in params])
-#             logger.debug('path: %s %s', cmd, paramstr)
             d = 'M %f %f %s %s' % (p1[0], p1[1], cmd, paramstr)
-#             logger.debug('d: %s', d)
             dlist.append(d)
         p1 = p2
     return dlist
