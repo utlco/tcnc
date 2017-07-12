@@ -15,10 +15,27 @@ from __future__ import (absolute_import, division,
 
 import math
 
+# from . import const
 
-#:2D tranform identity matrix
+
+# :2D tranform identity matrix
 IDENTITY_MATRIX = ((1.0, 0.0, 0.0), (0.0, 1.0, 0.0))
 
+def is_identity_transform(m):
+    """Return True if the matrix is the identity matrix.
+    """
+#     return (const.float_eq(m[0][0], IDENTITY_MATRIX[0][0])
+#             and const.float_eq(m[0][1], IDENTITY_MATRIX[0][1])
+#             and const.float_eq(m[0][2], IDENTITY_MATRIX[0][2])
+#             and const.float_eq(m[1][0], IDENTITY_MATRIX[1][0])
+#             and const.float_eq(m[1][1], IDENTITY_MATRIX[1][1])
+#             and const.float_eq(m[1][2], IDENTITY_MATRIX[1][2]))
+    return (m[0][0] == IDENTITY_MATRIX[0][0] and
+            m[0][1] == IDENTITY_MATRIX[0][1] and
+            m[0][2] == IDENTITY_MATRIX[0][2] and
+            m[1][0] == IDENTITY_MATRIX[1][0] and
+            m[1][1] == IDENTITY_MATRIX[1][1] and
+            m[1][2] == IDENTITY_MATRIX[1][2])
 
 def compose_transform(m1, m2):
     """Combine two matrices by multiplying them.
@@ -110,7 +127,7 @@ def matrix_skew_x(angle):
     Returns:
         A transform matrix as 2x3 tuple
     """
-    return ((1.0, math.tan(angle), 0.0),(0.0, 1.0, 0.0))
+    return ((1.0, math.tan(angle), 0.0), (0.0, 1.0, 0.0))
 
 def matrix_skew_y(angle):
     """Create a transform matrix to skew along Y axis by `angle`.
@@ -121,7 +138,7 @@ def matrix_skew_y(angle):
     Returns:
         A transform matrix as 2x3 tuple
     """
-    return ((1.0, 0.0, 0.0),(math.tan(angle), 1.0, 0.0))
+    return ((1.0, 0.0, 0.0), (math.tan(angle), 1.0, 0.0))
 
 def matrix_apply_to_point(matrix, p):
     """Return a copy of `p` with the transform matrix applied to it."""
