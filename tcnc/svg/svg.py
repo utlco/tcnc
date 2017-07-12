@@ -16,7 +16,7 @@ import numbers
 import re
 import string
 import random
-# import logging
+import logging
 
 from lxml import etree
 
@@ -24,9 +24,9 @@ from geom import transform2d
 
 from . import css
 
-# logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
-#: SVG Namespaces
+# : SVG Namespaces
 SVG_NS = {
 #     None: u'http://www.w3.org/2000/svg',
     u'svg': u'http://www.w3.org/2000/svg',
@@ -340,6 +340,26 @@ class SVGContext(object):
 #         return self.document.find('//*[@id="%s"]' % node_id)
         return get_node_by_id(self.document, node_id)
 
+    def get_element_transform(self, node, root=None):
+        """Get the combined transform of the element and it's combined parent
+        transforms.
+        
+        Args:
+            node: The element node.
+            root: The document root or where to stop searching.
+
+        Returns:
+            The combined transform matrix or the identity matrix
+            if none found.
+        """
+        matrix = self.get_parent_transform(node, root)
+        transform_attr = node.get('transform')
+        if transform_attr is not None and transform_attr:
+            node_transform = self.parse_transform_attr(transform_attr)
+            matrix = transform2d.compose_transform(matrix, node_transform)
+        return matrix
+
+
     def get_parent_transform(self, node, root=None):
         """Get the combined transform of the node's parents.
 
@@ -348,7 +368,7 @@ class SVGContext(object):
             root: The document root or where to stop searching.
 
         Returns:
-            The parent tranform matrix or the identity matrix
+            The parent transform matrix or the identity matrix
             if none found.
         """
         matrix = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
@@ -534,7 +554,7 @@ class SVGContext(object):
         # See http://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes
         # for converting center parameterization to SVG arc
         # Normalize angle first:
-        angle = angle - (2*math.pi) * math.floor(angle / (2*math.pi))
+        angle = angle - (2 * math.pi) * math.floor(angle / (2 * math.pi))
         x1 = rx * math.cos(angle) + center.x
         y1 = rx * math.sin(angle) + center.y
         x2 = rx * math.cos(angle + math.pi) + center.x
@@ -547,7 +567,7 @@ class SVGContext(object):
                               math.degrees(angle), 0, 1,
                               self._scale(x1),
                               self._scale(y1))
-        attrs = {'d': m + ' ' + a1 + ' ' + a2,}
+        attrs = {'d': m + ' ' + a1 + ' ' + a2, }
         return self.create_path(attrs, style, parent)
 
     def create_line(self, p1, p2, style=None, parent=None, attrs=None):
@@ -718,7 +738,7 @@ class SVGContext(object):
                 node.getparent().remove(node)
         marker = etree.SubElement(defs, svg_ns('marker'),
                         {'id': marker_id, 'orient': 'auto', 'refX':  '0.0',
-                         'refY': '0.0', 'style': 'overflow:visible',})
+                         'refY': '0.0', 'style': 'overflow:visible', })
         etree.SubElement(marker, svg_ns('path'),
                         { 'd': d, 'style': style, 'transform': transform, })
         return marker
@@ -751,7 +771,7 @@ class SVGContext(object):
         return text_elem
 
     def _create_text_line(self, text, x, y, parent):
-        attrs = {'x': str(self._scale(x)), 'y': str(self._scale(y)),}
+        attrs = {'x': str(self._scale(x)), 'y': str(self._scale(y)), }
         tspan_elem = etree.SubElement(parent, svg_ns('tspan'), attrs)
         tspan_elem.text = text
         return tspan_elem
@@ -841,8 +861,8 @@ def path_tokenizer(path_data):
 _PATHDEFS = {
     'M': ['M', 2, [float, float], [0, 1]],
     'L': ['L', 2, [float, float], [0, 1]],
-    'H': ['L', 1, [float], [0,]],
-    'V': ['L', 1, [float], [1,]],
+    'H': ['L', 1, [float], [0, ]],
+    'V': ['L', 1, [float], [1, ]],
     'C': ['C', 6, [float, float, float, float, float, float],
           [0, 1, 0, 1, 0, 1]],
     'S': ['C', 4, [float, float, float, float], [0, 1, 0, 1]],
@@ -961,6 +981,31 @@ def parse_path(path_data):
                 expecting_command = True
 
 
+def break_path(path_data):
+    """Split the path at node points into components. Sub-paths are flattened.
+
+    Args:
+        path_def: The 'd' attribute value of a SVG path element.
+        
+    Returns:
+        A list of path 'd' attribute values.
+    """
+    dlist = []
+    p1 = None
+    for cmd, params in parse_path(path_data):
+        if cmd == 'M':
+            p1 = (params[-2], params[-1])
+            continue
+        p2 = (params[-2], params[-1])
+        if p1 is not None:
+            paramstr = ' '.join([str(param) for param in params])
+#             logger.debug('path: %s %s', cmd, paramstr)
+            d = 'M %f %f %s %s' % (p1[0], p1[1], cmd, paramstr)
+#             logger.debug('d: %s', d)
+            dlist.append(d)
+        p1 = p2
+    return dlist
+
 def create_svg_document(width, height, doc_units='px', doc_id=None):
     """Create a minimal SVG document tree.
 
@@ -1009,10 +1054,10 @@ def random_id(prefix='_svg', rootnode=None):
         A random id string that has a fairly low chance of collision
         with previously generated ids.
     """
-    id_attr = '%s%d' % (prefix, random.randint(1, 2**31))
+    id_attr = '%s%d' % (prefix, random.randint(1, 2 ** 31))
     if rootnode is not None:
         while get_node_by_id(rootnode, id) is not None:
-            id_attr = '%s%d' % (prefix, random.randint(1, 2**31))
+            id_attr = '%s%d' % (prefix, random.randint(1, 2 ** 31))
     return id_attr
 
 def get_node_by_id(rootnode, node_id):
@@ -1026,3 +1071,8 @@ def get_node_by_id(rootnode, node_id):
         A node if found otherwise None.
     """
     return rootnode.find('//*[@id="%s"]' % node_id)
+
+def transform_attr(matrix):
+    return 'matrix(%f,%f,%f,%f,%f,%f)' % (matrix[0][0], matrix[1][0],
+                                          matrix[0][1], matrix[1][1],
+                                          matrix[0][2], matrix[1][2])
