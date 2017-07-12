@@ -45,6 +45,14 @@ def _check_degrees(dummy_option, opt_str, value):
         errstr = 'option %s: invalid degree value: %s' % (opt_str, value)
         raise optparse.OptionValueError(errstr)
 
+def _check_percent(dummy_option, opt_str, value):
+    """Convert a percentage specified as 0-100 to a float 0-1.0."""
+    try:
+        return float(value) / 100
+    except:
+        errstr = 'option %s: invalid percent value: %s' % (opt_str, value)
+        raise optparse.OptionValueError(errstr)
+
 
 class ExtOption(optparse.Option):
     """Subclass of optparse.Option that adds additional type
@@ -56,6 +64,7 @@ class ExtOption(optparse.Option):
     _EXT_TYPES = ('inkbool', 'docunits', 'degrees',)
     _EXT_TYPE_CHECKER = {'inkbool': _check_inkbool,
                          'degrees': _check_degrees,
+                         'percent': _check_percent,
                          'docunits': optparse.Option.TYPE_CHECKER['float']}
     optparse.Option.TYPES = optparse.Option.TYPES + _EXT_TYPES
     optparse.Option.TYPE_CHECKER.update(_EXT_TYPE_CHECKER)
@@ -80,10 +89,10 @@ class InkscapeExtension(object):
     See Also:
         inkex.Effect
     """
-    #: Name of debug output layer
+    # Name of debug output layer
     _DEBUG_LAYER_NAME = 'inkext_debug'
 
-    #: Built-in default extension options. These are commonly used...
+    # Built-in default extension options. These are commonly used...
     _DEFAULT_OPTIONS = (
         # This option is used by Inkscape to pass the ids of selected SVG nodes
         ExtOption('--id', action='append', dest='ids', default=[],
@@ -271,7 +280,7 @@ class InkscapeExtension(object):
         if doc_units is None or not doc_units:
             doc_units = 'px'
         for opt_str in options.docunit_options:
-            value = options.docunit_options[opt_str]#getattr(options, opt_str)
+            value = options.docunit_options[opt_str] # getattr(options, opt_str)
             uu_value = self.svg.unit2uu(value, from_unit=doc_units)
             setattr(options, opt_str, uu_value)
 
