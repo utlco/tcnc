@@ -103,7 +103,7 @@ class InkscapeSVGContext(svg.SVGContext):
         if len(args) > 1:
             mbottom = args[1]
         if len(args) > 2:
-            mleft = args[2]   
+            mleft = args[2]
         return geom.Box((mleft, mbottom),
                         (doc_size[0] - mright, doc_size[1] - mtop))
 
@@ -268,6 +268,41 @@ class InkscapeSVGContext(svg.SVGContext):
             node = None
         return node
 
+    def get_visible_layers(self):
+        """Get a list of visible layers
+        """
+        layers = []
+        for node in self.docroot:
+            if self.is_layer(node) and self.node_is_visible(node):
+                layers.append(node)
+        return layers
+
+    def get_layer_elements(self, layer):
+        """Get document elements by layer.
+
+        Returns all the visible child elements of the given layer.
+
+        Args:
+            layer: The layer root element.
+
+        Returns:
+            A (possibly empty) list of visible elements.
+        """
+        elements = []
+        if self.node_is_visible(layer):
+            for node in layer:
+                if self.node_is_visible(node, check_parent=False):
+                    elements.append(node)
+        return elements
+
+    def is_layer(self, node):
+        """Determine if the element is an Inkscape layer node.
+        """
+        if self.node_is_group(node):
+            layer_name = self.get_layer_name(node)
+            return layer_name is not None and layer_name
+        return False
+
     def get_shape_elements(self, rootnode,
                         shapetags=_DEFAULT_SHAPES,
                         parent_transform=None, skip_layers=None):
@@ -359,7 +394,7 @@ class InkscapeSVGContext(svg.SVGContext):
                 # [1:] to ignore leading '#' in reference
                 refnode = self.get_node_by_id(refid[1:])
                 # TODO: Can the referred node not be visible?
-                if refnode is not None:# and self.node_is_visible(refnode):
+                if refnode is not None: # and self.node_is_visible(refnode):
                     # Apply explicit x,y translation transform
                     x = float(node.get('x', '0'))
                     y = float(node.get('y', '0'))
