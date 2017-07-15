@@ -31,7 +31,7 @@ from geom import transform2d
 from cam import gcode
 from cam import paintcam
 from cam import gcodesvg
-from cam import output
+from cam.output import create_pathname
 
 from svg import geomsvg
 
@@ -213,7 +213,7 @@ class Tcnc(inkext.InkscapeExtension):
         # Convert SVG elements to path geometry
         path_list = geomsvg.svg_to_geometry(svg_elements, flip_transform)
         # Create the output file path name
-        filepath = output.create_pathname(
+        filepath = create_pathname(
             self.options.output_path, append_suffix=self.options.append_suffix)
         try:
             with io.open(filepath, 'w') as output:
