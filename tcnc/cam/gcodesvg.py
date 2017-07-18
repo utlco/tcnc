@@ -17,6 +17,7 @@ import geom
 
 from . import gcode
 
+logger = logging.getLogger(__name__)
 
 class SVGPreviewPlotter(gcode.PreviewPlotter):
     """Provides a graphical preview of the G-code output.
@@ -51,6 +52,11 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
             'fill:none;stroke:$toolmark_stroke;'
             'stroke-width:$toolmark_stroke_width;'
             'stroke-opacity:0.75',
+        'toolmark_outline':
+            'fill:$tm_outline_fill;stroke:$tm_outline_stroke;'
+            'stroke-width:$tm_outline_stroke_width;'
+            'stroke-opacity:0.75;'
+            'fill-opacity:0.5;',
         'tooloffset':
             'fill:none;stroke:$tooloffset_stroke;'
             'stroke-width:$tooloffset_stroke_width;'
@@ -61,26 +67,29 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
             'feedline_stroke':  '#ff3030',
             'moveline_stroke':  '#10cc10',
             'toolmark_stroke':  '#ff6060',
-            'tooloffset_stroke':  '#cccccc',
+            'tooloffset_stroke':  '#3030ff',
+            'tm_outline_stroke':  'none',
+            'tm_outline_stroke_width':  '1px',
+            'tm_outline_fill':  '#a0a0a0',
     }
     _style_scale_defaults = {
         'small': {
-            'feedline_stroke_width': '1pt',
-            'moveline_stroke_width': '1pt',
-            'toolmark_stroke_width': '2pt',
-            'tooloffset_stroke_width': '1pt',
+            'feedline_stroke_width': '1px',
+            'moveline_stroke_width': '1px',
+            'toolmark_stroke_width': '1px',
+            'tooloffset_stroke_width': '1px',
             'end_marker_scale': '0.38'},
         'medium': {
-            'feedline_stroke_width': '2pt',
-            'moveline_stroke_width': '2pt',
-            'toolmark_stroke_width': '3pt',
+            'feedline_stroke_width': '1pt',
+            'moveline_stroke_width': '1pt',
+            'toolmark_stroke_width': '1pt',
             'tooloffset_stroke_width': '1pt',
             'end_marker_scale': '0.38'},
         'large': {
-            'feedline_stroke_width': '3.5pt',
-            'moveline_stroke_width': '3.5pt',
-            'toolmark_stroke_width': '.2in',
-            'tooloffset_stroke_width': '1pt',
+            'feedline_stroke_width': '2pt',
+            'moveline_stroke_width': '2pt',
+            'toolmark_stroke_width': '2pt',
+            'tooloffset_stroke_width': '1.5pt',
             'end_marker_scale': '0.38'},
     }
     _line_end_markers = (
@@ -100,8 +109,8 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
 
     def __init__(self, svg_context, tool_offset=0.0, tool_width=0.0,
                  toolmark_line_interval=None,
-                 toolmark_rotation_interval=None, style_scale="medium",
-                 show_toolmarks=False,
+                 toolmark_rotation_interval=None, style_scale="small",
+                 show_toolmarks=False, show_tm_outline=False,
                  *args, **kwargs):
         """
         Args:
@@ -136,6 +145,9 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
         else:
             self.toolmark_rotation_interval = toolmark_rotation_interval
 
+        self.show_toolmarks = show_toolmarks
+        self.show_tm_outline = show_tm_outline
+
         # Current XYZA location
         self._current_xy = geom.P(0.0, 0.0)
         self._current_z = 0.0
@@ -148,12 +160,13 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
                                                            self._style_defaults))
 
         # Create layers that will contain the G code preview
-        self.path_layer = self.svg.create_layer(self.PATH_LAYER_NAME,
-                                                flipy=True)
         self.tool_layer = None
-        if self.tool_offset > 0.0 and self.tool_width > 0.0 and show_toolmarks:
+        if (self.tool_offset > 0.0 and self.tool_width > 0.0
+                and (self.show_toolmarks or self.show_tm_outline)):
             self.tool_layer = self.svg.create_layer(self.TOOL_LAYER_NAME,
                                                     flipy=True)
+        self.path_layer = self.svg.create_layer(self.PATH_LAYER_NAME,
+                                                flipy=True)
         svg_context.set_default_parent(self.path_layer)
 
         # Create Inkscape line end marker glyphs
@@ -162,6 +175,11 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
             self.svg.create_simple_marker(marker[0], marker[1],
                                           self._styles[marker[2]],
                                           transform, replace=True)
+        # Toolmark half lines that will be used to create outline.
+        self.toolmarks_side_A = []
+        self.toolmarks_side_B = []
+        # Location of last toolmark (as a point tuple)
+        self.last_toolmark = None
 
     def plot_move(self, endp):
         """Plot G00 - rapid move from current position to :endp:(x,y,z,a)."""
@@ -171,10 +189,12 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
     def plot_feed(self, endp):
         """Plot G01 - linear feed from current position to :endp:(x,y,z,a)."""
         if self._current_xy.distance(endp) > geom.const.EPSILON:
+            if self.tool_layer is not None:
+                self._draw_tool_marks(geom.Line(self._current_xy, endp),
+                                      start_angle=self._current_a,
+                                      end_angle=endp[3])
             self.svg.create_line(self._current_xy, endp,
                                  self._styles['feedline'])
-        self._draw_tool_marks(geom.Line(self._current_xy, endp),
-                              start_angle=self._current_a, end_angle=endp[3])
         self._update_location(endp)
 
     def plot_arc(self, center, endp, clockwise):
@@ -185,20 +205,41 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
         if not self.gcgen.float_eq(center.distance(endp), radius):
             logging.getLogger(__name__).debug(
                 'Degenerate arc: d1=%f, d2=%f', center.distance(endp), radius)
+
+        # Draw the tool marks
+        if self.tool_layer is not None:
+            angle = center.angle2(self._current_xy, endp)
+            arc = geom.Arc(self._current_xy, endp, radius, angle, center)
+            self._draw_tool_marks(arc, self._current_a, endp[3])
+
+        # Draw the tool path
         sweep_flag = 0 if clockwise else 1
 #         style = self._styles['feedarc' + str(sweep_flag)]
         style = self._styles['feedarc']
         self.svg.create_circular_arc(self._current_xy, endp, radius,
                                      sweep_flag, style)
-        angle = center.angle2(self._current_xy, endp)
-        arc = geom.Arc(self._current_xy, endp, radius, angle, center)
-        self._draw_tool_marks(arc, self._current_a, endp[3])
         self._update_location(endp)
+
+    def plot_tool_down(self):
+        """Plot the beginning of a tool path.
+        """
+#        logger.debug('tool down')
+        geom.debug.draw_point(self._current_xy, color='#00ff00')
+        self.toolmarks_side_A = []
+        self.toolmarks_side_B = []
+        self.last_toolmark = None
+
+    def plot_tool_up(self):
+        """Plot the end of a tool path.
+        """
+#        logger.debug('tool up')
+        geom.debug.draw_point(self._current_xy, color='#ff0000')
+        # Just finish up by drawing the approximate tool path outline.
+        if self.tool_layer is not None and self.show_tm_outline:
+            self._draw_toolmark_outline()
 
     def _draw_tool_marks(self, segment, start_angle, end_angle):
         """Draw marks showing the angle and travel of the tangential tool."""
-        if self.tool_layer is None:
-            return
         seglen = segment.length()
         rotation = end_angle - start_angle
         if seglen > 0:
@@ -219,19 +260,146 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
 #         self._draw_tool_mark(segment, 1.0, end_angle)
 
     def _draw_tool_mark(self, segment, u, angle):
+        # This will be the midpoint of the tool mark.
         p = segment.point_at(u)
+        if self.last_toolmark is not None and self.last_toolmark.distance(p) < self.toolmark_line_interval / 2:
+            return
+        self.last_toolmark = p
         if not self.gcgen.float_eq(self.tool_offset, 0.0):
+            # Calculate and draw the tool offset mark.
             px = p + geom.P.from_polar(self.tool_offset, angle - math.pi)
-            self.svg.create_line(p, px, self._styles['tooloffset'],
-                                 parent=self.tool_layer)
+            if self.show_toolmarks:
+                self.svg.create_line(p, px, self._styles['tooloffset'],
+                                     parent=self.tool_layer)
         else:
+            # No tool offset
             px = p
         if self.tool_width > self.gcgen.tolerance:
+            # Calculate the endpoints of the tool mark.
             r = self.tool_width / 2
             p1 = px + geom.P.from_polar(r, angle + math.pi / 2)
             p2 = px + geom.P.from_polar(r, angle - math.pi / 2)
-            self.svg.create_line(p1, p2, self._styles['toolmark'],
+            if self.show_toolmarks:
+                self.svg.create_line(p1, p2, self._styles['toolmark'],
+                                     parent=self.tool_layer)
+            # Save the half lines to create outline.
+            tm_line_A = geom.Line(p, p1)
+            tm_line_B = geom.Line(p, p2)
+#            if self.toolmarks_side_A:
+#                prev_line = self.toolmarks_side_A[-1]
+#                intersection = tm_line_A.intersection_mu(prev_line, segment=True)
+#                if intersection is None:
+#                    self.toolmarks_side_A.append(tm_line_A)
+#            else:
+#                self.toolmarks_side_A.append(tm_line_A)
+#            if self.toolmarks_side_B:
+#                prev_line = self.toolmarks_side_B[-1]
+#                intersection = tm_line_B.intersection_mu(prev_line, segment=True)
+#                if intersection is None:
+#                    self.toolmarks_side_B.append(tm_line_B)
+#            else:
+#                self.toolmarks_side_B.append(tm_line_B)
+            self.toolmarks_side_A.append(tm_line_A)
+            self.toolmarks_side_B.append(tm_line_B)
+
+    def _draw_toolmark_outline(self):
+        """Draw an approximation of the tangent toolpath outline.
+        """
+        # TODO: add non-g1 hints at outline cusps
+        side_A = self._make_outline_path(self.toolmarks_side_A)
+        side_B = self._make_outline_path(list(reversed(self.toolmarks_side_B)))
+        if not side_A or not side_B:
+            return
+        side_A = geom.bezier.smooth_path(side_A)
+        side_B = geom.bezier.smooth_path(side_B)
+        outline = []
+        outline.extend(side_A)
+        outline.append(geom.Line(side_A[-1].p2, side_B[0].p1))
+        outline.extend(side_B)
+        style = self._styles['toolmark_outline']
+        self.svg.create_polypath(outline, close_path=True, style=style,
                                  parent=self.tool_layer)
+
+    def _fix_intersections(self, path):
+        """Collapse self-intersecting loops.
+        """
+        # See: https://en.wikipedia.org/wiki/Bentley-Ottmann_algorithm
+        # for a more efficient sweepline method O(Nlog(N)).
+        # This is the bonehead way... O(n**2)
+        fixed_path = []
+        skip_ahead = 0
+        for i, line1 in enumerate(path):
+            if i < skip_ahead:
+                continue
+            p = None
+            for j, line2 in enumerate(path[(i + 2):]):
+                p = line1.intersection(line2, segment=True)
+                if p is not None:
+                    fixed_path.append(geom.Line(line1.p1, p))
+                    fixed_path.append(geom.Line(p, line2.p2))
+                    skip_ahead = i + j + 3
+                    break
+            if p is None:
+                fixed_path.append(line1)
+        return fixed_path
+
+    def _fix_reversals(self, path):
+        """Collapse path reversals.
+        This is when the next segment direction is more than 90deg from
+        current segment direction...
+        """
+        # TODO: for a more efficient method.
+        # This is the bonehead way...
+        skip_ahead = 0
+        line1 = path[0]
+        fixed_path = []
+        for i, line2 in enumerate(path[1:]):
+            if i < skip_ahead:
+                continue
+            skip_ahead = 0
+            angle = line1.p2.angle2(line1.p1, line2.p2)
+            if abs(angle) < math.pi / 2:
+                if angle > 0:
+                    # right turn. corner is poking outwards.
+#                    geom.debug.draw_point(line1.p2, color='#0000ff')
+                    fixed_path.append(line1)
+                    for j, line2 in enumerate(path[(i + 1):]):
+                        angle = line1.p2.angle2(line1.p1, line2.p2)
+                        if abs(angle) > math.pi / 2:
+                            line1 = geom.Line(line1.p1, line2.p2)
+                            fixed_path.append(line1)
+                            skip_ahead = i + j + 1
+                            break
+                else:
+                    # left turn. corner is poking inwards.
+#                    geom.debug.draw_point(line1.p2, color='#ff0000')
+                    for j, line2 in enumerate(path[(i + 1):]):
+                        line1 = geom.Line(line1.p1, line2.p1)
+                        angle = line1.p2.angle2(line1.p1, line2.p2)
+                        if abs(angle) > math.pi / 2:
+                            fixed_path.append(line1)
+                            skip_ahead = i + j + 1
+                            break
+            fixed_path.append(line1)
+            line1 = line2
+        fixed_path.append(line1)
+        return fixed_path
+
+    def _make_outline_path(self, lines):
+        path = []
+        if len(lines) > 1:
+            prev_pt = lines[0].p2
+            for line in lines[1:]:
+                next_pt = line.p2
+                if next_pt != prev_pt:
+                    outline = geom.Line(prev_pt, next_pt)
+                    path.append(outline)
+                prev_pt = next_pt
+            path = self._fix_intersections(path)
+            path = self._fix_reversals(path)
+        return path
+
+
 
     def _update_location(self, endp):
         self._current_xy = geom.P(endp[0], endp[1])

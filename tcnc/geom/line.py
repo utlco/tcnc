@@ -315,7 +315,7 @@ class Line(tuple): # namedtuple('Line', 'p1, p2')):
         if abs(denom) < const.EPSILON: # Lines are parallel ?
 #            # Lines are coincident ?
 #            if abs(a) < const.EPSILON and abs(b) < const.EPSILON:
-#                return self.midpoint()
+#                return 0.5
             return None
 
         mu_a = a / denom
@@ -375,19 +375,22 @@ class Line(tuple): # namedtuple('Line', 'p1, p2')):
 
         mu_a = a / denom
         mu_b = b / denom
-#        if segment and (mua < 0.0 or mua > 1.0 or mub < 0.0 or mub > 1.0):
-#         if segment and (mua < -const.EPSILON or mua > 1.0 + const.EPSILON or mub < -const.EPSILON or mub > 1.0 + const.EPSILON):
         mu_min = -const.EPSILON
         mu_max = 1.0 + const.EPSILON
         if ((seg_a and (mu_a < mu_min or mu_a > mu_max))
             or (seg_b and (mu_b < mu_min or mu_b > mu_max))):
             # The intersection lies outside the line segments
             return None
-            # The intersection lies outside the line segments
-            return None
         x = x1 + mu_a * (x2 - x1)
         y = y1 + mu_a * (y2 - y1)
         return P(x, y)
+
+    def intersects(self, other):
+        """Return True if this segment intersects another segment.
+        """
+        return self.interection_mu(other, segment=True) is not None
+        # See also: http://algs4.cs.princeton.edu/91primitives/
+        # for slightly more efficient method.
 
     def extend(self, amount, from_midpoint=False):
         """Return a Line segment that is longer (or shorter) than this line by

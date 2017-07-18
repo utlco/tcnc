@@ -77,8 +77,8 @@ def offset_path(path, offset, min_arc_dist, g1_tolerance=None):
                     angle = prev_seg.p2.angle2(p1, p2)
                     # TODO: This should be a straight line if the arc is tiny
                     connect_seg = geom.Arc(p1, p2, offset, angle, prev_seg.p2)
-                    if connect_seg.length() < 0.01:
-                        logger.debug('tiny arc! length= %f, radius=%f, angle=%f', connect_seg.length(), connect_seg.radius, connect_seg.angle)
+#                    if connect_seg.length() < 0.01:
+#                        logger.debug('tiny arc! length= %f, radius=%f, angle=%f', connect_seg.length(), connect_seg.radius, connect_seg.angle)
                 connect_seg.inline_start_angle = prev_seg.end_tangent_angle()
                 connect_seg.inline_end_angle = seg.start_tangent_angle()
                 offset_path.append(connect_seg)

@@ -188,6 +188,7 @@ class SimpleCAM(object):
             else:
                 tool_depth += self.z_step
             depth_pass += 1
+        self.gc.tool_up()
         # Do a rapid move back to the home position if specified
         if self.home_when_done:
             self.gc.rapid_move(x=0, y=0, a=0)

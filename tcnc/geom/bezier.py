@@ -601,10 +601,10 @@ class CubicBezier(tuple):
         # In practice, t=.05 instead of the maximum works just as well...
         # TODO: See [A. Riskus, 2006] for a possibly more accurate method
         p = self.point_at(0.5)
-        geom.debug.draw_point(p, color='#ffff00') # DEBUG
+#        geom.debug.draw_point(p, color='#ffff00') # DEBUG
         v = p - j_arc.center
         pjoint = v * (j_arc.radius / v.length()) + j_arc.center
-        geom.debug.draw_point(pjoint, color='#00ff00') # DEBUG
+#        geom.debug.draw_point(pjoint, color='#00ff00') # DEBUG
 
         # Subdivide and recurse if pjoint-arc distance is > tolerance
         if _recurs_depth < max_depth and pjoint.distance(p) > tolerance:
@@ -709,7 +709,7 @@ class CubicBezier(tuple):
         t = t1 + t_step
         while t < t2:
             p = self.point_at(t)
-            geom.debug.draw_point(p, color='#000000') # DEBUG
+#            geom.debug.draw_point(p, color='#000000') # DEBUG
             if arc.distance_to_point(p) > tolerance:
                 return False
             t += t_step
@@ -1026,6 +1026,7 @@ def smooth_path(path, smoothness=.5):
     Returns:
         A list of CubicBezier segments.
     """
+    # TODO: add support for non-g1 node hints
     smooth_path = []
     if len(path) < 2:
         return path
@@ -1034,9 +1035,11 @@ def smooth_path(path, smoothness=.5):
     for seg2 in path[1:]:
         if isinstance(seg1, CubicBezier) or isinstance(seg2, CubicBezier):
             # TODO: add support for cubic Bezier segments
+            # for now just bail at first curve...
             return smooth_path
         curve, cp1 = smoothing_curve(seg1, seg2, cp1, smoothness=smoothness)
-        smooth_path.append(curve)
+        if curve.p1 != curve.p2:
+            smooth_path.append(curve)
         seg1 = seg2
     # Process last segment...
     if (path[-1].p2 == path[0].p1): # Path is closed?
@@ -1048,6 +1051,7 @@ def smooth_path(path, smoothness=.5):
         smooth_path[0] = curve0
     else:
         curve, unused = smoothing_curve(seg1, None, cp1, smoothness=smoothness)
-    smooth_path.append(curve)
+    if curve.p1 != curve.p2: # ignore degenerate curves
+        smooth_path.append(curve)
     return smooth_path
 

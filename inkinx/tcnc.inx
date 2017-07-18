@@ -191,8 +191,8 @@
       <param name="" type="description">-----------------------------------------------------</param>
 
       <param name="preview-toolmarks" type="boolean" _gui-text="Show tangent tool preview">false</param>
+      <param name="preview-toolmarks-outline" type="boolean" _gui-text="Show tangent tool outline">false</param>
       <param name="preview-scale" type="optiongroup" appearance="minimal" _gui-text="Line scale of preview marks">
-        <_option value="small">Default</_option>
         <_option value="small">Small</_option>
         <_option value="medium">Medium</_option>
         <_option value="large">Large</_option>

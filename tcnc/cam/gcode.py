@@ -63,6 +63,17 @@ class PreviewPlotter(object):
         """
         pass
 
+    def plot_tool_down(self):
+        """Plot the beginning of a tool path.
+        """
+        pass
+
+    def plot_tool_up(self):
+        """Plot the end of a tool path.
+        """
+        pass
+
+
 
 class GCodeException(Exception):
     """Exception raised by gcode generator."""
@@ -85,7 +96,7 @@ class GCodeGenerator(object):
     TARGET = 'linuxcnc'
 
     # Target machine info - machine name, version
-    _TARGET_INFO = {'linuxcnc': ('LinuxCNC', '2.4+'),}
+    _TARGET_INFO = {'linuxcnc': ('LinuxCNC', '2.4+'), }
     # Order in which G code parameters are specified in a line of G code
     _GCODE_ORDERED_PARAMS = 'XYZUVWABCIJKRDHLPQSF'
     # Non-modal G codes (LinuxCNC.)
@@ -558,6 +569,7 @@ class GCodeGenerator(object):
         if wait > 0:
             self.dwell(wait)
         self._is_tool_up = True
+        self.preview_plotter.plot_tool_up()
 
     def tool_down(self, z, feed=None, wait=None, comment=None):
         """Moves tool on Z axis down to specified height.
@@ -591,6 +603,7 @@ class GCodeGenerator(object):
         self._is_tool_up = False
         if wait > 0:
             self.dwell(wait)
+        self.preview_plotter.plot_tool_down()
 
     def spindle_on(self, speed=None, clockwise=None, wait=None, comment=None):
         """Turn on the spindle.
@@ -644,9 +657,9 @@ class GCodeGenerator(object):
         if axis not in 'ABC':
             raise GCodeException(_('Can only normalize a rotational axis.'))
         angle = self._last_val[axis]
-        if abs(angle) > 2*math.pi:
+        if abs(angle) > 2 * math.pi:
             # normalize the angle
-            angle = angle - 2*math.pi * math.floor(angle / 2*math.pi)
+            angle = angle - 2 * math.pi * math.floor(angle / 2 * math.pi)
             val = self._fmt_float % math.degrees(angle)
             self._write_line('G92 %s=%s' % (axis, val),
                              comment=_('Normalize axis angle'))
@@ -825,7 +838,7 @@ class GCodeGenerator(object):
                     # Use angle tolerance for comparing angle values
                     tolerance = self.angle_tolerance
                     if self.wrap_angles:
-                        value = math.fmod(value, 2*math.pi)
+                        value = math.fmod(value, 2 * math.pi)
                 else:
                     # Otherwise use float tolerance
                     tolerance = self.tolerance
@@ -851,7 +864,7 @@ class GCodeGenerator(object):
         if len(pos_params) > 0:
             # Suppress redundant feedrate-only lines
             if len(pos_params) > 1 or 'F' not in pos_params:
-                line_parts = [command,]
+                line_parts = [command, ]
                 # Arrange the parameters in a readable order
                 for k in self._GCODE_ORDERED_PARAMS:
                     value = pos_params.get(k)

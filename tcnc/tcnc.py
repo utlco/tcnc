@@ -174,6 +174,9 @@ class Tcnc(inkext.InkscapeExtension):
 
         inkext.ExtOption('--preview-toolmarks', type='inkbool', default=False,
                          help=_('Show tangent tool preview.')),
+        inkext.ExtOption('--preview-toolmarks-outline', type='inkbool',
+                         default=False,
+                         help=_('Show tangent tool preview outline.')),
         inkext.ExtOption('--preview-scale', default='medium',
                          help=_('Preview scale.')),
 
@@ -242,7 +245,8 @@ class Tcnc(inkext.InkscapeExtension):
             preview_svg_context, tool_width=self.options.tool_width,
             tool_offset=self.options.tool_trail_offset,
             style_scale=self.options.preview_scale,
-            show_toolmarks=self.options.preview_toolmarks)
+            show_toolmarks=self.options.preview_toolmarks,
+            show_tm_outline=self.options.preview_toolmarks_outline)
         # Create G-code generator.
         gcgen = gcode.GCodeGenerator(xyfeed=self.options.xy_feed,
                                   zsafe=self.options.z_safe,
