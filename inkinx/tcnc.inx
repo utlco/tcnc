@@ -84,55 +84,6 @@
       <param name="spindle-clockwise" type="boolean" _gui-text="Clockwise spindle rotation">true</param>
     </page>
 
-    <page name="brush" _gui-text="Brush">
-      <param name="brush-reload-enable" type="boolean" _gui-text="Enable brush reload">false</param>
-      <param name="brush-reload-max-paths" type="int" min="1" max="1000" _gui-text="Number of paths between reload">1</param>
-      <param name="brush-reload-rotate" type="boolean" _gui-text="Rotate brush for reload">false</param>
-      <param name="brush-reload-angle" type="float" precision="0" min="0" max="360" _gui-text="Brush reload angle (degrees)">0</param>
-      <param name="brush-pause-mode" type="optiongroup" appearance="minimal" _gui-text="Brush reload pause">
-        <_option value="">No pause</_option>
-        <_option value="restart">Pause brush until restart</_option>
-        <_option value="time">Pause brush for time:</_option>
-      </param>
-      <param name="brush-reload-dwell" type="float" precision="1" _gui-text="Brush pause time (seconds)">0</param>
-
-      <param name="" type="description">-----------------------------------------------------</param>
-
-      <param name="brush-overshoot-mode" type="optiongroup" appearance="minimal" _gui-text="Brush overshoot">
-        <_option value="">No overshoot</_option>
-        <_option value="auto">Overshoot based on tool width</_option>
-        <_option value="manual">Explicit overshoot distance:</_option>
-      </param>
-      <param name="brush-overshoot-distance" type="float" precision="4" min="0" _gui-text="Explicit overshoot distance">0</param>
-
-      <param name="" type="description">-----------------------------------------------------</param>
-
-      <param name="brush-soft-landing" type="boolean" _gui-text="Perform soft brush landing and liftoff">false</param>
-      <param name="brush-landing-strip" type="float" precision="4" min="0" _gui-text="Landing strip distance">0</param>
-
-<!--
-      <param name="brush-flip-path" type="boolean" _gui-text="Flip brush after every path">false</param>
-      <param name="brush-trail-up" type="float" precision="4" min="0" max="1000" _gui-text="Brush trail up:">0.25</param>
-      <param name="brush-reload" type="boolean" _gui-text="Enable brush reload:">false</param>
-      <param name="brushstroke-overlap" type="float" precision="2" min="0" max="1000" _gui-text="Brushstroke overlap:">.5</param>
-      <param name="brush-reload-pause" type="boolean" _gui-text="Pause brush before path">false</param>
-      <param name="brushstroke-max" type="float" precision="2" min="0" max="1000" _gui-text="Max brushstroke distance before reload">0</param>
-
-      <param name="desc2" type="description">Brush landing profile</param>
-
-      <param name="brush-landing-start-height" type="float" precision="4" max="5" _gui-text="Start height">.3</param>
-      <param name="brush-landing-end-height" type="float" precision="4" min="-2" max="5" _gui-text="End height">-0.2</param>
-      <param name="brush-landing-angle" type="float" precision="2" min="-360" max="360" _gui-text="Landing angle">45.0</param>
-
-      <param name="desc3" type="description">Brush liftoff profile</param>
-
-      <param name="brush-liftoff-height" type="float" precision="4" max="5" _gui-text="Liftoff height">.3</param>
-      <param name="brush-liftoff-angle" type="float" precision="2" min="-360" max="360" _gui-text="Liftoff angle">45.0</param>
-      <param name="brush-fillet-radius" type="float" precision="4" min="0" max="1000" _gui-text="Brush fillet radius">0.25</param>
-      <param name="brush-fillet-radius-auto" type="boolean" _gui-text="Auto-calc fillet radius">false</param>
--->
-    </page>
-
     <page name="machine" _gui-text="Machine">
       <param name="gcode-units" type="optiongroup" appearance="minimal" _gui-text="Units">
         <_option value="doc">Infer from document</_option>
@@ -217,6 +168,69 @@
       <_param name="" type="description">Copyright 2010-2016 Claude Zervas</_param>
     </page>
 
+    <!-- Artist-specific options... Not universally applicable -->
+    <page name="brush" _gui-text="Brush">
+      <param name="" type="description">Application-specific options (can be ignored)</param>
+      <param name="" type="description">-----------------------------------------------------</param>
+
+      <param name="brush-reload-enable" type="boolean" _gui-text="Enable brush reload">false</param>
+      <param name="brush-reload-max-paths" type="int" min="1" max="1000" _gui-text="Number of paths between reload">1</param>
+      <param name="brush-reload-rotate" type="boolean" _gui-text="Rotate brush for reload">false</param>
+      <param name="brush-reload-angle" type="float" precision="0" min="0" max="360" _gui-text="Brush reload angle (degrees)">0</param>
+      <param name="brush-pause-mode" type="optiongroup" appearance="minimal" _gui-text="Brush reload pause">
+        <_option value="">No pause</_option>
+        <_option value="restart">Pause brush until restart</_option>
+        <_option value="time">Pause brush for time:</_option>
+      </param>
+      <param name="brush-reload-dwell" type="float" precision="1" _gui-text="Brush pause time (seconds)">0</param>
+
+      <param name="" type="description">-----------------------------------------------------</param>
+
+      <param name="brush-overshoot-mode" type="optiongroup" appearance="minimal" _gui-text="Brush overshoot">
+        <_option value="">No overshoot</_option>
+        <_option value="auto">Overshoot based on tool width</_option>
+        <_option value="manual">Explicit overshoot distance:</_option>
+      </param>
+      <param name="brush-overshoot-distance" type="float" precision="4" min="0" _gui-text="Explicit overshoot distance">0</param>
+
+      <param name="" type="description">-----------------------------------------------------</param>
+
+      <param name="brush-soft-landing" type="boolean" _gui-text="Perform soft brush landing and liftoff">false</param>
+      <param name="brush-landing-strip" type="float" precision="4" min="0" _gui-text="Landing strip distance">0</param>
+
+<!--
+      <param name="brush-flip-path" type="boolean" _gui-text="Flip brush after every path">false</param>
+      <param name="brush-trail-up" type="float" precision="4" min="0" max="1000" _gui-text="Brush trail up:">0.25</param>
+      <param name="brush-reload" type="boolean" _gui-text="Enable brush reload:">false</param>
+      <param name="brushstroke-overlap" type="float" precision="2" min="0" max="1000" _gui-text="Brushstroke overlap:">.5</param>
+      <param name="brush-reload-pause" type="boolean" _gui-text="Pause brush before path">false</param>
+      <param name="brushstroke-max" type="float" precision="2" min="0" max="1000" _gui-text="Max brushstroke distance before reload">0</param>
+
+      <param name="desc2" type="description">Brush landing profile</param>
+
+      <param name="brush-landing-start-height" type="float" precision="4" max="5" _gui-text="Start height">.3</param>
+      <param name="brush-landing-end-height" type="float" precision="4" min="-2" max="5" _gui-text="End height">-0.2</param>
+      <param name="brush-landing-angle" type="float" precision="2" min="-360" max="360" _gui-text="Landing angle">45.0</param>
+
+      <param name="desc3" type="description">Brush liftoff profile</param>
+
+      <param name="brush-liftoff-height" type="float" precision="4" max="5" _gui-text="Liftoff height">.3</param>
+      <param name="brush-liftoff-angle" type="float" precision="2" min="-360" max="360" _gui-text="Liftoff angle">45.0</param>
+      <param name="brush-fillet-radius" type="float" precision="4" min="0" max="1000" _gui-text="Brush fillet radius">0.25</param>
+      <param name="brush-fillet-radius-auto" type="boolean" _gui-text="Auto-calc fillet radius">false</param>
+-->
+    </page>
+
+    <page name="extra" _gui-text="Extras">
+      <param name="" type="description">Application-specific options (can be ignored)</param>
+      <param name="" type="description">-----------------------------------------------------</param>
+
+      <param name="x-subpath-render" type="boolean" _gui-text="Render subpaths">false</param>
+      <param name="x-subpath-offset" type="float" precision="4" min="0" max="1000" _gui-text="Subpath spacing">0</param>
+      <param name="x-subpath-smoothness" type="float" precision="2" min="0" max="1" _gui-text="Subpath smoothness">0.5</param>
+      <param name="x-subpath-layer" type="string" _gui-text="Subpath layer name">subpaths (tcnc)</param>
+    </page>
+    
   </param>
 
 </inkscape-extension>

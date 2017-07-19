@@ -182,6 +182,15 @@ class Tcnc(inkext.InkscapeExtension):
 
         inkext.ExtOption('--write-settings', type='inkbool', default=False,
                          help=_('Write Tcnc command line options in header.')),
+
+        inkext.ExtOption('--x-subpath-render', type='inkbool', default=False,
+                         help=_('Render subpaths')),
+        inkext.ExtOption('--x-subpath-offset', type='docunits', default=0.0,
+                         help=_('Subpath spacing')),
+        inkext.ExtOption('--x-subpath-smoothness', type='float', default=0.0,
+                         help=_('Subpath smoothness')),
+        inkext.ExtOption('--x-subpath-layer', default='subpaths (tcnc)',
+                         help=_('Subpath layer name')),
     )
 
     # Document units that can be expressed as imperial (inches)
@@ -205,8 +214,9 @@ class Tcnc(inkext.InkscapeExtension):
         flip_transform = transform2d.matrix_scale_translate(1.0, -1.0,
                                                             0.0, page_height)
         timer_start = timeit.default_timer()
-        skip_layers = (gcodesvg.SVGPreviewPlotter.PATH_LAYER_NAME,
-                       gcodesvg.SVGPreviewPlotter.TOOL_LAYER_NAME)
+#        skip_layers = (gcodesvg.SVGPreviewPlotter.PATH_LAYER_NAME,
+#                       gcodesvg.SVGPreviewPlotter.TOOL_LAYER_NAME)
+        skip_layers = ['tcnc .*']
         # Get a list of selected SVG shape elements and their transforms
         svg_elements = self.svg.get_shape_elements(self.get_elements(),
                                                    skip_layers=skip_layers)
@@ -247,6 +257,11 @@ class Tcnc(inkext.InkscapeExtension):
             style_scale=self.options.preview_scale,
             show_toolmarks=self.options.preview_toolmarks,
             show_tm_outline=self.options.preview_toolmarks_outline)
+        # Experimental options
+        preview_plotter.x_subpath_render = self.options.x_subpath_render
+        preview_plotter.x_subpath_layer_name = self.options.x_subpath_layer
+        preview_plotter.x_subpath_offset = self.options.x_subpath_offset
+        preview_plotter.x_subpath_smoothness = self.options.x_subpath_smoothness
         # Create G-code generator.
         gcgen = gcode.GCodeGenerator(xyfeed=self.options.xy_feed,
                                   zsafe=self.options.z_safe,
@@ -398,4 +413,5 @@ class Tcnc(inkext.InkscapeExtension):
 # ]
 
 if __name__ == '__main__':
-    Tcnc().main(optionspec=Tcnc.OPTIONSPEC, flip_debug_layer=True)
+    Tcnc().main(optionspec=Tcnc.OPTIONSPEC, flip_debug_layer=True,
+                debug_layer_name='tcnc debug')

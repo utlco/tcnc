@@ -128,7 +128,8 @@ class InkscapeExtension(object):
         # List of selected element nodes
         self._selected_elements = []
 
-    def main(self, optionspec=None, flip_debug_layer=False):
+    def main(self, optionspec=None, flip_debug_layer=False,
+             debug_layer_name=None):
         """Main entry point for the extension.
 
         Args:
@@ -158,6 +159,10 @@ class InkscapeExtension(object):
                             doc_units=self.options.doc_units)
             self.svg = inksvg.InkscapeSVGContext(document)
 
+        if debug_layer_name is None:
+            self.debug_layer_name = self._DEBUG_LAYER_NAME
+        else:
+            self.debug_layer_name = debug_layer_name
         # Create debug log file if specified.
         # The log file name is derived from a command line option
         # so this needs to be done after option parsing.
@@ -167,7 +172,7 @@ class InkscapeExtension(object):
         # Create debug layer and context if specified
         if getattr(self.options, 'create_debug_layer', False):
             self.debug_svg = inksvg.InkscapeSVGContext(self.svg.document)
-            debug_layer = self.debug_svg.create_layer(self._DEBUG_LAYER_NAME,
+            debug_layer = self.debug_svg.create_layer(self.debug_layer_name,
                                                       flipy=flip_debug_layer)
             self.debug_svg.current_parent = debug_layer
         # Create a list of selected elements.
@@ -194,7 +199,7 @@ class InkscapeExtension(object):
 
         Tries to get selected elements first.
         If nothing is selected and `selected_only` is False
-        then either the currently selected layer or
+        then <strike>either the currently selected layer or</strike>
         the document root is returned. The elements
         may or may not be visible.
 
@@ -207,10 +212,11 @@ class InkscapeExtension(object):
         """
         elements = self._selected_elements
         if not elements and not selected_only:
-            elements = self.svg.get_selected_layer()
-            if (elements is None or not len(elements)
-                    or not self.svg.node_is_visible(elements)):
-                elements = self.svg.docroot
+            elements = self.svg.docroot
+#            elements = self.svg.get_selected_layer()
+#            if (elements is None or not len(elements)
+#                    or not self.svg.node_is_visible(elements)):
+#                elements = self.svg.docroot
         return elements
 
     def errormsg(self, msg):

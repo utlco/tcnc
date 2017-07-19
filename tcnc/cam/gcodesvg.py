@@ -61,16 +61,21 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
             'fill:none;stroke:$tooloffset_stroke;'
             'stroke-width:$tooloffset_stroke_width;'
             'stroke-opacity:0.75',
+        'subpath':
+            'fill:none;stroke:$subpath_stroke;'
+            'stroke-width:$subpath_stroke_width;',
     }
     # Default style template mapping
     _style_defaults = {
-            'feedline_stroke':  '#ff3030',
-            'moveline_stroke':  '#10cc10',
-            'toolmark_stroke':  '#ff6060',
-            'tooloffset_stroke':  '#3030ff',
-            'tm_outline_stroke':  'none',
-            'tm_outline_stroke_width':  '1px',
-            'tm_outline_fill':  '#a0a0a0',
+            'feedline_stroke': '#ff3030',
+            'moveline_stroke': '#10cc10',
+            'toolmark_stroke': '#ff6060',
+            'tooloffset_stroke': '#3030ff',
+            'tm_outline_stroke': 'none',
+            'tm_outline_stroke_width': '1px',
+            'tm_outline_fill': '#a0a0a0',
+            'subpath_stroke': '#000000',
+            'subpath_stroke_width': '1px',
     }
     _style_scale_defaults = {
         'small': {
@@ -101,8 +106,9 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
          'movepath_end_marker', 'scale(%s) translate(-4.5,0)'),
     )
 
-    PATH_LAYER_NAME = 'Tcnc tool path preview'
-    TOOL_LAYER_NAME = 'Tcnc tangent tool preview'
+    PATH_LAYER_NAME = 'tcnc preview: tool path'
+    TOOL_LAYER_NAME = 'tcnc preview: tangent tool'
+    SUBPATH_LAYER_NAME = 'subpaths (tcnc)'
 
     _DEFAULT_TOOLMARK_INTERVAL_LINE = '10px'
     _DEFAULT_TOOLMARK_INTERVAL_ANGLE = math.pi / 10
@@ -148,6 +154,16 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
         self.show_toolmarks = show_toolmarks
         self.show_tm_outline = show_tm_outline
 
+        # TODO: make this an option... (?)
+        self.incr_layer_suffix = True
+
+        # Experimental subpath options - these aren't usually exposed publicly...
+        self.x_subpath_render = False
+        self.x_subpath_layer_name = self.SUBPATH_LAYER_NAME
+        self.x_subpath_offset = 0
+        self.x_subpath_smoothness = .5
+        self.x_subpath_layer = None
+
         # Current XYZA location
         self._current_xy = geom.P(0.0, 0.0)
         self._current_z = 0.0
@@ -164,9 +180,12 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
         if (self.tool_offset > 0.0 and self.tool_width > 0.0
                 and (self.show_toolmarks or self.show_tm_outline)):
             self.tool_layer = self.svg.create_layer(self.TOOL_LAYER_NAME,
-                                                    flipy=True)
+                                            incr_suffix=self.incr_layer_suffix,
+                                            flipy=True)
+
         self.path_layer = self.svg.create_layer(self.PATH_LAYER_NAME,
-                                                flipy=True)
+                                            incr_suffix=self.incr_layer_suffix,
+                                            flipy=True)
         svg_context.set_default_parent(self.path_layer)
 
         # Create Inkscape line end marker glyphs
@@ -175,11 +194,14 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
             self.svg.create_simple_marker(marker[0], marker[1],
                                           self._styles[marker[2]],
                                           transform, replace=True)
-        # Toolmark half lines that will be used to create outline.
+        # Toolmark half lines that will be used to create tangent tool outline.
         self.toolmarks_side_A = []
         self.toolmarks_side_B = []
         # Location of last toolmark (as a point tuple)
+        # This is used to reject toolmarks that would be too close together
         self.last_toolmark = None
+        # Non-offset tangent lines - used to make offset lines
+        self.tan_lines = []
 
     def plot_move(self, endp):
         """Plot G00 - rapid move from current position to :endp:(x,y,z,a)."""
@@ -224,19 +246,22 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
         """Plot the beginning of a tool path.
         """
 #        logger.debug('tool down')
-        geom.debug.draw_point(self._current_xy, color='#00ff00')
+#        geom.debug.draw_point(self._current_xy, color='#00ff00')
         self.toolmarks_side_A = []
         self.toolmarks_side_B = []
+        self.tan_lines = []
         self.last_toolmark = None
 
     def plot_tool_up(self):
         """Plot the end of a tool path.
         """
 #        logger.debug('tool up')
-        geom.debug.draw_point(self._current_xy, color='#ff0000')
+#        geom.debug.draw_point(self._current_xy, color='#ff0000')
         # Just finish up by drawing the approximate tool path outline.
-        if self.tool_layer is not None and self.show_tm_outline:
+        if self.show_tm_outline and self.tool_layer is not None:
             self._draw_toolmark_outline()
+        if self.x_subpath_render:
+            self._draw_subpaths()
 
     def _draw_tool_marks(self, segment, start_angle, end_angle):
         """Draw marks showing the angle and travel of the tangential tool."""
@@ -282,32 +307,25 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
             if self.show_toolmarks:
                 self.svg.create_line(p1, p2, self._styles['toolmark'],
                                      parent=self.tool_layer)
+            self.tan_lines.append(geom.Line(p1, p2))
             # Save the half lines to create outline.
-            tm_line_A = geom.Line(p, p1)
-            tm_line_B = geom.Line(p, p2)
-#            if self.toolmarks_side_A:
-#                prev_line = self.toolmarks_side_A[-1]
-#                intersection = tm_line_A.intersection_mu(prev_line, segment=True)
-#                if intersection is None:
-#                    self.toolmarks_side_A.append(tm_line_A)
-#            else:
-#                self.toolmarks_side_A.append(tm_line_A)
-#            if self.toolmarks_side_B:
-#                prev_line = self.toolmarks_side_B[-1]
-#                intersection = tm_line_B.intersection_mu(prev_line, segment=True)
-#                if intersection is None:
-#                    self.toolmarks_side_B.append(tm_line_B)
-#            else:
-#                self.toolmarks_side_B.append(tm_line_B)
+            tm_line_A = geom.Line(px, p1)
+            tm_line_B = geom.Line(px, p2)
             self.toolmarks_side_A.append(tm_line_A)
             self.toolmarks_side_B.append(tm_line_B)
 
     def _draw_toolmark_outline(self):
         """Draw an approximation of the tangent toolpath outline.
         """
+        if not self.toolmarks_side_A or not self.toolmarks_side_B:
+            return
         # TODO: add non-g1 hints at outline cusps
-        side_A = self._make_outline_path(self.toolmarks_side_A)
-        side_B = self._make_outline_path(list(reversed(self.toolmarks_side_B)))
+        _unused, p2s_A = zip(*self.toolmarks_side_A)
+        _unused, p2s_B = zip(*list(reversed(self.toolmarks_side_B)))
+        points_A = list(p2s_A)
+        points_B = list(p2s_B)
+        side_A = self._make_outline_path(points_A)
+        side_B = self._make_outline_path(points_B)
         if not side_A or not side_B:
             return
         side_A = geom.bezier.smooth_path(side_A)
@@ -320,12 +338,51 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
         self.svg.create_polypath(outline, close_path=True, style=style,
                                  parent=self.tool_layer)
 
+    def _draw_subpaths(self):
+        """Experimental: Create some offset paths
+        """
+        if not self.tan_lines:
+            return
+        if self.x_subpath_layer is None:
+            self.x_subpath_layer = self.svg.create_layer(
+                                self.x_subpath_layer_name,
+                                incr_suffix=self.incr_layer_suffix,
+                                flipy=True)
+        offset = self.x_subpath_offset
+        # All toolmark lines are the same length, so use the first one
+        length = self.tan_lines[0].length()
+        while offset < length:
+            offset_pts = []
+            for line in self.tan_lines:
+                p = line.point_at(offset / line.length())
+                offset_pts.append(p)
+            path = self._make_outline_path(offset_pts)
+            path = geom.bezier.smooth_path(path,
+                                           smoothness=self.x_subpath_smoothness)
+            self.svg.create_polypath(path, style=self._styles['subpath'],
+                                     parent=self.x_subpath_layer)
+            offset += self.x_subpath_offset
+
+    def _make_outline_path(self, points):
+        path = []
+        if len(points) > 1:
+            prev_pt = points[0]
+            for next_pt in points[1:]:
+                if next_pt != prev_pt:
+                    outline = geom.Line(prev_pt, next_pt)
+                    path.append(outline)
+                prev_pt = next_pt
+            path = self._fix_intersections(path)
+            path = self._fix_reversals(path)
+        return path
+
     def _fix_intersections(self, path):
         """Collapse self-intersecting loops.
         """
         # See: https://en.wikipedia.org/wiki/Bentley-Ottmann_algorithm
         # for a more efficient sweepline method O(Nlog(N)).
-        # This is the bonehead way... O(n**2)
+        # This is the bonehead way: O(n**2), but it's fine for
+        # reasonable path lengths...
         fixed_path = []
         skip_ahead = 0
         for i, line1 in enumerate(path):
@@ -348,8 +405,7 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
         This is when the next segment direction is more than 90deg from
         current segment direction...
         """
-        # TODO: for a more efficient method.
-        # This is the bonehead way...
+        # This works in O(n) time...
         skip_ahead = 0
         line1 = path[0]
         fixed_path = []
@@ -362,44 +418,28 @@ class SVGPreviewPlotter(gcode.PreviewPlotter):
                 if angle > 0:
                     # right turn. corner is poking outwards.
 #                    geom.debug.draw_point(line1.p2, color='#0000ff')
-                    fixed_path.append(line1)
+                    # Move forward until next reversal
                     for j, line2 in enumerate(path[(i + 1):]):
                         angle = line1.p2.angle2(line1.p1, line2.p2)
                         if abs(angle) > math.pi / 2:
-                            line1 = geom.Line(line1.p1, line2.p2)
-                            fixed_path.append(line1)
+#                            geom.debug.draw_line(line2, color='#ff0000')
+                            line2 = geom.Line(line1.p2, line2.p2)
                             skip_ahead = i + j + 1
                             break
                 else:
                     # left turn. corner is poking inwards.
 #                    geom.debug.draw_point(line1.p2, color='#ff0000')
+                    # Move forward until next reversal
                     for j, line2 in enumerate(path[(i + 1):]):
                         line1 = geom.Line(line1.p1, line2.p1)
                         angle = line1.p2.angle2(line1.p1, line2.p2)
                         if abs(angle) > math.pi / 2:
-                            fixed_path.append(line1)
                             skip_ahead = i + j + 1
                             break
             fixed_path.append(line1)
             line1 = line2
         fixed_path.append(line1)
         return fixed_path
-
-    def _make_outline_path(self, lines):
-        path = []
-        if len(lines) > 1:
-            prev_pt = lines[0].p2
-            for line in lines[1:]:
-                next_pt = line.p2
-                if next_pt != prev_pt:
-                    outline = geom.Line(prev_pt, next_pt)
-                    path.append(outline)
-                prev_pt = next_pt
-            path = self._fix_intersections(path)
-            path = self._fix_reversals(path)
-        return path
-
-
 
     def _update_location(self, endp):
         self._current_xy = geom.P(endp[0], endp[1])

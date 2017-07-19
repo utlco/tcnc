@@ -10,6 +10,7 @@ from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from future_builtins import *
 
+import re
 import logging
 logger = logging.getLogger(__name__)
 
@@ -324,6 +325,7 @@ class InkscapeSVGContext(svg.SVGContext):
                 Anything else is ignored.
             parent_transform: Transform matrix to add to each node's
                 transforms. If None the node's parent transform is used.
+            skip_layers: A list of layer names (as regexes) to ignore
 
         Returns:
             A possibly empty list of 2-tuples consisting of
@@ -361,7 +363,7 @@ class InkscapeSVGContext(svg.SVGContext):
             shapetags: List of shape element tags that can be fetched.
             parent_transform: Transform matrix to add to each node's transforms.
             check_parent: Check parent visibility
-            skip_layers: A list of layer names to ignore
+            skip_layers: A list of layer names (as regexes) to ignore
 
         Returns:
             A possibly empty list of 2-tuples consisting of
@@ -377,9 +379,13 @@ class InkscapeSVGContext(svg.SVGContext):
         node_transform = transform2d.compose_transform(parent_transform,
                                                        transform)
         if self.node_is_group(node):
-            if (skip_layers is not None and skip_layers
-                    and self.get_layer_name(node) in skip_layers):
-                return []
+            if skip_layers is not None and skip_layers:
+                layer_name = self.get_layer_name(node)
+                logger.debug('layer: %s', layer_name)
+                for skip_layer in skip_layers:
+                    if re.match(skip_layer, layer_name) is not None:
+                        logger.debug('skipping layer: %s', layer_name)
+                        return []
             # Recursively traverse group children
             for child_node in node:
                 subnodes = self._get_shape_nodes_recurs(child_node, shapetags,
