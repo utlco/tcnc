@@ -258,7 +258,7 @@ def fillet_line_arc(line, arc, fillet_radius):
         or None if the fillet radius is too big to fit or
         if the two segments are not connected.
     """
-    debug.draw_arc(arc, verbose=True)
+#    debug.draw_arc(arc, verbose=True)
     # TODO: Maybe replace this novel approach with the more usual
     # offset intersection method..
     fillet_arc = None # default return value
@@ -283,7 +283,7 @@ def fillet_line_arc(line, arc, fillet_radius):
     line3 = line.offset(fillet_radius * arc_side)
     p5 = line3.normal_projection_point(arc.center)
     b = p5.distance(arc.center)
-    a2 = h*h - b*b
+    a2 = h * h - b * b
     if a2 < 0:
         return
     a = math.sqrt(a2)
