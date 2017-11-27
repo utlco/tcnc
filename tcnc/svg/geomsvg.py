@@ -20,6 +20,8 @@ from geom import bezier
 
 from . import svg
 
+logger = logging.getLogger(__name__)
+
 
 def svg_to_geometry(svg_elements, parent_transform=None):
     """Convert the SVG shape elements to
@@ -41,8 +43,8 @@ def svg_to_geometry(svg_elements, parent_transform=None):
     path_list = []
     for element, element_transform in svg_elements:
         transformed_paths = svg_element_to_geometry(element,
-                                                   element_transform,
-                                                   parent_transform)
+                                                    element_transform,
+                                                    parent_transform)
         if transformed_paths:
             path_list.extend(transformed_paths)
     return path_list
@@ -98,9 +100,8 @@ def svg_element_to_geometry(element, element_transform=None,
         # parent transform and the element transform
         # so that control points are in absolute coordinates.
         if parent_transform is not None:
-            element_transform = transform2d.compose_transform(
-                                                    parent_transform,
-                                                    element_transform)
+            element_transform = transform2d.compose_transform(parent_transform,
+                                                              element_transform)
         if element_transform is not None:
             x_subpath_list = []
             for subpath in subpath_list:

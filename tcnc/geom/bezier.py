@@ -694,11 +694,11 @@ class CubicBezier(tuple):
         specified by `ndiv`. Default is nine.
         
         Args:
-            arc: The arc to test
-            t1: Start location of curve
-            t2: End location of curve
-            tolerance: The maximum distance
-            ndiv: Number of steps
+            arc (:obj:`geom.Arc`): The arc to test
+            t1 (float): Start location of curve
+            t2 (float): End location of curve
+            tolerance (float): The maximum distance
+            ndiv (int): Number of steps
             
         Returns:
             True if the Hausdorff distance to the arc is within
@@ -744,11 +744,11 @@ def bezier_circle(center=(0, 0), radius=1.0):
     """Create an approximation of a circle with a cubic Bezier curve.
 
     Args:
-        center: The center point of the circle. Default is (0,0).
-        radius: The radius of the circle. Default is 1.
+        center (tuple): The center point of the circle. Default is (0,0).
+        radius (float): The radius of the circle. Default is 1.
 
     Returns:
-        A tuple with four bezier curves for each circle quadrant.
+        tuple: A tuple with four bezier curves for each circle quadrant.
         Circle will be counterclockwise from the positive x axis
         relative to the center point.
 
@@ -776,10 +776,10 @@ def bezier_circular_arc(arc):
     The central arc must be less than PI/2 radians (90deg).
 
     Args:
-        arc: A geom.Arc
+        arc (:obj:`geom.Arc`): A circular arc.
 
     Returns:
-        A CubicBezier.
+        CubicBezier: A bezier curve.
     """
     #-------------------------------------------------------------------------
     # This is from:
@@ -858,18 +858,21 @@ def bezier_sine_wave(amplitude, wavelength, cycles=1, origin=(0.0, 0.0)):
     """Create an approximation of a sine wave using a cubic Bezier curve.
 
     Args:
-        amplitude: The amplitude (vertical scale) of the sine wave.
+        amplitude (float): The amplitude (vertical scale) of the sine wave.
             This is one half the vertical distance from the trough to
             the peak.
-        wavelength: The horizontal length of one complete cycle.
-        cycles: The number of cycles. Default is one.
-        origin: Location of start point as a tuple (x,y).
+        wavelength (float): The horizontal length of one complete cycle.
+        cycles (int): The number of cycles. Default is one.
+        origin (tuple): Location of start point as a tuple (x,y).
             Default is (0, 0).
 
     Returns:
-        A list of BezierCurve instances that describe the sine wave.
+        list: A list of BezierCurve instances that describe the sine wave.
         Each curve will be one quarter of a sine wave, so one cycle
         will return a list four BezierCurves, two cycle will be eight, etc...
+        
+    Todo:
+        Support fractional cycles.
     """
     # Control points that will match sine curvature and slope at
     # quadrant end points. See http://mathb.in/1447
@@ -934,17 +937,17 @@ def smoothing_curve(seg1, seg2, cp1=None, smoothness=0.5, match_arcs=True):
             Can be a geom.Line or geom.Arc.
         seg2: Second path segment containing second and third points.
             Can be a geom.Line or geom.Arc.
-        cp1: First control point computed from previous invocation.
+        cp1 (tuple): First control point computed from previous invocation.
             If cp1 is None then the first endpoint of the first
             segment will be used as the initial control point.
             Default is None.
-        smoothness: Affects the magnitude of the smoothing curve
+        smoothness (float): Affects the magnitude of the smoothing curve
             control points. A value between 0 and 1.
             Default is 0.5
-        match_arcs: Try to better match arc connections.
+        match_arcs (bool): Try to better match arc connections.
 
     Returns:
-        A tuple containing CubicBezier and the control point
+        tuple: A tuple containing CubicBezier and the control point
         for the next curve.
 
     See:
@@ -1019,13 +1022,14 @@ def smooth_path(path, smoothness=.5):
     """Create a smooth approximation of the path using Bezier curves.
 
     Args:
-        path: A list of Line/Arc segments.
-        smoothness: Smoothness value (usually between 0 and 1).
+        path (list): A list of Line/Arc segments.
+        smoothness (float): Smoothness value (usually between 0 and 1).
             .5 is a reasonable default.
 
     Returns:
-        A list of CubicBezier segments.
+        list: A list of CubicBezier segments.
     """
+    # TODO: add optonal path simplification step
     # TODO: add support for non-g1 node hints
     smooth_path = []
     if len(path) < 2:
