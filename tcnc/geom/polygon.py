@@ -18,6 +18,7 @@ from __future__ import (absolute_import, division,
 from future_builtins import *
 
 import sys
+import heapq
 # import logging
 # logger = logging.getLogger(__name__)
 
@@ -44,7 +45,7 @@ def turn(p, q, r):
     :param q: Point from which turn is determined. A 2-tuple (x, y) point.
     :param r: End point which determines turn direction. A 2-tuple (x, y) point.
     """
-    return cmp((q[0] - p[0])*(r[1] - p[1]) - (r[0] - p[0])*(q[1] - p[1]), 0)
+    return cmp((q[0] - p[0]) * (r[1] - p[1]) - (r[0] - p[0]) * (q[1] - p[1]), 0)
 
 def convex_hull(points):
     """Returns points on convex hull of an array of points in CCW order.
@@ -146,7 +147,7 @@ def _next_hull_pt_pair(hulls, pair):
         s = _rtangent(hulls[h], p)
         q, r = hulls[nextpair[0]][nextpair[1]], hulls[h][s]
         t = turn(p, q, r)
-        if t == TURN_RIGHT or t == TURN_NONE and _dist2(p,r) > _dist2(p,q):
+        if t == TURN_RIGHT or t == TURN_NONE and _dist2(p, r) > _dist2(p, q):
             nextpair = (h, s)
     return nextpair
 
@@ -175,17 +176,44 @@ def bounding_box(points):
 def area(vertices):
     """Return the area of a simple polygon.
 
-    :param vertices: the polygon vertices. A list of 2-tuple (x, y) points.
-    :return: The area of the polygon. The area will be negative if the
+    Args:
+        vertices: the polygon vertices. A list of 2-tuple (x, y) points.
+    
+    Returns (float):
+        The area of the polygon. The area will be negative if the
         vertices are ordered clockwise.
     """
     area = 0.0
     for n in range(-1, len(vertices) - 1):
         p2 = vertices[n]
-        p1 = vertices[n+1]
+        p1 = vertices[n + 1]
         # Accumulate the cross product of each pair of vertices
         area += ((p1[0] * p2[1]) - (p2[0] * p1[1]))
     return area / 2
+
+def area_triangle(a, b=None, c=None):
+    """Area of a triangle.
+    
+    This is just a slightly more efficient specialization of
+    the more general polygon area.
+    
+    Args:
+        a: The first vertex of a triangle or an iterable of three vertices.
+        b: The second vertex or None if `a` is iterable.
+        c: The third vertex or None if `a` is iterable.
+    
+    Returns (float):
+        The area of the triangle.
+    """
+    if b is None:
+        a, b, c = a
+    # See: http://mathworld.wolfram.com/TriangleArea.html
+    ux = b[0] - a[0]
+    uy = b[1] - a[1]
+    vx = c[0] - a[0]
+    vy = c[1] - a[1]
+    det = (ux * vy) - (uy * vx)
+    return abs(det) / 2
 
 def centroid(vertices):
     """Return the centroid of a simple polygon.
@@ -206,15 +234,15 @@ def centroid(vertices):
     x = 0.0
     y = 0.0
     area = 0.0
-    for n in range(-1, num_vertices-1):
+    for n in range(-1, num_vertices - 1):
         p2 = vertices[n]
-        p1 = vertices[n+1]
+        p1 = vertices[n + 1]
         cross = ((p1[0] * p2[1]) - (p2[0] * p1[1]))
         area += cross
         x += (p1[0] + p2[0]) * cross
         y += (p1[1] + p2[1]) * cross
     t = area * 3
-    return P(x/t, y/t)
+    return P(x / t, y / t)
 
 
 #==============================================================================
@@ -295,7 +323,7 @@ def intersect_line(vertices, line):
     # Find all the intersections of the line segment with the polygon
     intersections = []
     for i in range(start, len(vertices) - 1):
-        line2 = Line(vertices[i], vertices[i+1])
+        line2 = Line(vertices[i], vertices[i + 1])
         # Find the intersection unit distance (mu) from the line start point
         mu = line.intersection_mu(line2, segment=True)
         if mu is not None:
@@ -327,7 +355,7 @@ def intersect_line(vertices, line):
                 segments.append(Line(p1, p2))
             if (i + 1) == num_intersections:
                 break
-            p1 = line.point_at(intersections[i+1])
+            p1 = line.point_at(intersections[i + 1])
             i += 2
     return segments
 
@@ -385,7 +413,7 @@ def offset_polygon(poly, offset, jointype=clipper.JoinType.Square, limit=0.0):
         If the specified offset cannot be performed for the input polygon
         an empty polygon will be retured.
     """
-    mult = (10**const.EPSILON_PRECISION)
+    mult = (10 ** const.EPSILON_PRECISION)
     offset *= mult
     limit *= mult
     clipper_poly = poly2clipper(poly)
@@ -403,7 +431,7 @@ def poly2clipper(poly):
     a Clipper polygon (a list of integer 2-tuples).
     """
     clipper_poly = []
-    mult = (10**const.EPSILON_PRECISION)
+    mult = (10 ** const.EPSILON_PRECISION)
     for p in poly:
         x = int(p.x * mult)
         y = int(p.y * mult)
@@ -416,7 +444,7 @@ def clipper2poly(clipper_poly):
     a polygon (as a list of float 2-tuple vertices).
     """
     poly = []
-    mult = (10**const.EPSILON_PRECISION)
+    mult = (10 ** const.EPSILON_PRECISION)
     for p in clipper_poly:
         x = float(p.x) / mult
         y = float(p.y) / mult
@@ -425,4 +453,99 @@ def clipper2poly(clipper_poly):
     if len(poly) > 2 and poly[0] != poly[-1]:
         poly.append(poly[0])
     return poly
+
+
+def simplify_polyline_rdp(points, tolerance):
+    """Simplify a polyline (a list of line segments given
+    as a list of points).
+    
+    Uses Ramer-Douglas-Peucker algorithm.
+    
+    See:
+        https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
+        
+    Args:
+        points (list): A list of segment endpoints
+        tolerance (float): Line flatness tolerance
+        
+    Returns:
+        A list of points defining the vertices of the simplified polyline.
+    """
+    num_points = len(points)
+    # Polyline must have at least three points to be simplified...
+    if num_points < 3:
+        return points
+    # Find the index of the point that's farthest from a chord
+    # connecting the endpoints of the polyline.
+    dmax = 0
+    dmax_index = 0
+    chord = Line(points[0], points[-1])
+    for i, p in enumerate(points[1:-1]):
+        d = chord.distance_to_point(p, segment=True)
+        if d > dmax:
+            dmax_index = i + 1
+            dmax = d
+    if dmax > tolerance:
+        if num_points == 3:
+            # Can't sub-divide an further
+            return points
+        # Divide the polyline at the max distance point and
+        # recursively get the simplified sub-polylines.
+        simplified1 = simplify_polyline_rdp(points[:(dmax_index + 1)], tolerance)
+        simplified2 = simplify_polyline_rdp(points[dmax_index:], tolerance)
+        simplified1.extend(simplified2[1:])
+        return simplified1
+    else:
+        # All points in between the endpoints are within the tolerance band
+        # so skip them.
+        return [chord.p1, chord.p2]
+
+def simplify_polyline_vw(points, tolerance):
+    """Simplify a polyline (a list of line segments given
+    as a list of points).
+    
+    Uses Visvalingam-Whyatt algorithm.
+    
+    See:
+        Visvalingam, M., and Whyatt, J.D. (1992)
+        "Line Generalisation by Repeated Elimination of Points",
+        Cartographic J., 30 (1), 46 - 51
+        
+    Args:
+        points (list): A list of segment endpoints
+        tolerance (float): Line flatness tolerance
+        
+    Returns:
+        A list of points defining the vertices of the simplified polyline.
+    """
+    # TODO: implement this...
+    # https://archive.fo/Tzq2#selection-91.0-91.89
+    # https://hydra.hull.ac.uk/resources/hull:8338
+    # https://bost.ocks.org/mike/simplify/
+    # https://bost.ocks.org/mike/simplify/simplify.js
+
+    if len(points) < 3:
+        # Nothing to simplify...
+        return points
+
+    minheap = []
+    # Populate a min-heap with triangle areas
+    p1 = points[0]
+    p2 = points[1]
+    for i, p3 in enumerate(points[2:]):
+        tarea = area_triangle(p1, p2, p3)
+        # A tuple with the vertex index and area of the triangle
+        # between it and its neighbor vertices.
+        ht = (i + 1, tarea)
+        heapq.heappush(minheap, ht)
+        p1 = p2
+        p2 = p3
+
+    n = int(tolerance * len(points))
+    n = max(1, min(n, len(points) / 2))
+    for i in range(n):
+        # Pop off the next minimum triangle
+        ht = heapq.heappop(minheap)
+        # Replace it with a new triangle created from
+        # the neighboring points
 
