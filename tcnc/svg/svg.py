@@ -744,6 +744,13 @@ class SVGContext(object):
                 y += line_height
         return text_elem
 
+    def add_elem(self, node, parent=None):
+        """Add the element to the parent or the current parent if parent is None.
+        """
+        if parent is None:
+            parent = self.current_parent
+        parent.append(node)
+
     def _create_text_line(self, text, x, y, parent):
         attrs = {'x': str(self._scale(x)), 'y': str(self._scale(y)), }
         tspan_elem = etree.SubElement(parent, svg_ns('tspan'), attrs)
@@ -918,19 +925,24 @@ def parse_path(path_data):
             if is_command:
                 # Bail if number of parameters doesn't match command
                 break
+
             # Accumulate parameters for the current command
-            nparams = len(params)
-            if nparams < pathdef[1]:
-                cast = pathdef[2][nparams]
+            param_index = len(params)
+            if param_index < pathdef[1]:
+                cast = pathdef[2][param_index]
                 value = cast(token)
                 if cmd_is_relative:
-                    axis = pathdef[3][nparams]
+                    # Get the axis this shorthand is referring to
+                    # 0 = X, 1 = Y, -1 = none
+                    axis = pathdef[3][param_index]
                     if axis >= 0:
                         # Make relative value absolute
                         value += pen[axis]
                 params.append(value)
-                nparams += 1
-            if nparams == pathdef[1]:
+                param_index += 1
+
+            if param_index == pathdef[1]:
+                # All parameters have been accumulated now process command
                 if current_cmd == 'M':
                     moveto = (params[0], params[1])
                 elif current_cmd == 'Z':
@@ -939,7 +951,7 @@ def parse_path(path_data):
                 elif current_cmd == 'H':
                     params.append(pen[1])
                 elif current_cmd == 'V':
-                    params.insert(0, pen[1])
+                    params.insert(0, pen[0])
                 elif current_cmd in ('S', 'T'):
                     params.insert(0, pen[1] + (pen[1] - last_control[1]))
                     params.insert(0, pen[0] + (pen[0] - last_control[0]))
@@ -1048,3 +1060,4 @@ def transform_attr(matrix):
     return 'matrix(%f,%f,%f,%f,%f,%f)' % (matrix[0][0], matrix[1][0],
                                           matrix[0][1], matrix[1][1],
                                           matrix[0][2], matrix[1][2])
+
