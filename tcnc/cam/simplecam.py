@@ -14,6 +14,7 @@ import math
 import logging
 
 import geom
+from geom import polygon
 
 from . import util
 from . import fillet
@@ -424,7 +425,8 @@ class SimpleCAM(object):
             # TODO: implement this...
             # Just sort the paths from bottom to top, left to right.
             # Only the first point of the path is used as a sort key...
-            path_list.sort(key=lambda cp: (cp[0].p1.y, cp[0].p1.x))
+            #path_list.sort(key=lambda cp: (cp[0].p1.y, cp[0].p1.x))
+            path_list = self._sort_segment_paths_1(path_list)
         elif sort_method == 'y+':
             # Sort by Y axis then X axis, ascending
             path_list.sort(key=lambda cp: (cp[0].p1.y, cp[0].p1.x))
@@ -447,6 +449,43 @@ class SimpleCAM(object):
             pass
 
         return path_list
+
+    def _sort_segment_paths_1(self, path_list):
+        """ This is a specialized sort for single segment paths that
+        are all more or less the same length.
+        """
+        new_path_list = []
+        batch = []
+        # Pick a path from the middle of the list
+        path = path_list[int(len(path_list) / 2)]
+        bandwidth = path[0].length() * 1.5
+        band = 1
+        band_max = bandwidth
+        is_even = False
+        # First sort by Y axis then X axis, ascending
+        path_list.sort(key=lambda cp: (cp[0].p1.y, cp[0].p1.x))
+        for path in path_list:
+            if path[0].p1.y <= band_max and path[0].p2.y <= band_max:
+                batch.append(path)
+            else:
+                # Sort each batch by X axis, alternating row directions
+                if (band % 2) == 0:
+                    is_even = not is_even
+                batch.sort(key=lambda cp: cp[0].p1.x, reverse=is_even)
+                new_path_list.extend(batch)
+                band += 1
+                band_max += bandwidth
+                batch = [path, ]
+        self._flip_paths(new_path_list)
+        return new_path_list
+
+
+
+
+
+
+        # Divide the surface into bands and sort
+
 
     def generate_segment_gcode(self, segment, depth):
         """Generate G code for Line and Arc path segments.
