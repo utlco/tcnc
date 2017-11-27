@@ -129,6 +129,13 @@ class Lines(inkext.InkscapeExtension):
         inkext.ExtOption('--v-stroke', type='string', default='#000000',
                          help=_('Line stroke color')),
 
+        inkext.ExtOption('--sine-waves', type='string', default='',
+                         help=_('Sine waves')),
+        inkext.ExtOption('--sine-amplitude', type='docunits', default=1.0,
+                         help=_('Sine wave amplitude')),
+        inkext.ExtOption('--sine-wavelength', type='docunits', default=1.0,
+                         help=_('Sine wavelength')),
+
         inkext.ExtOption('--grid-layers', type='inkbool', default=False,
                          help=_('One layer per grid part (horizontal, vertical)')),
         inkext.ExtOption('--line-fillet', type='inkbool', default=False,
@@ -466,6 +473,7 @@ class LineSet(object):
         """
         if self.is_vertical:
             dx = abs(math.cos(self.angle) * self.cliprect.height())
+#            logger.debug('dx = %f' % dx)
             max_extent = self.cliprect.width() + dx
             x1 = self.cliprect.xmin - dx
             x2 = self.cliprect.xmin
@@ -533,16 +541,23 @@ class LineSet(object):
         """
         scale = 1.0
         cycle_interval = max_extent / self.varspace_cycles
+
         t = (current_offset % cycle_interval) / cycle_interval
+
         if self.spacing_formula == 'linear':
             scale = t
         elif self.spacing_formula == 'log':
-            scale = math.log10(t * 9 + 1)
+#            scale = math.log10(t * 9 + 1)
+#            scale = math.log(t + 1, 2)
+            scale = math.log(t * (math.e - 1) + 1)
         elif self.spacing_formula == 'sine':
             scale = abs(math.sin(t * math.pi * 2))
-        if scale < 1.0 and self.varspace_invert:
+
+        if self.varspace_invert:
             scale = 1.0 - scale
-        logger.debug('interval=%f, t=%f, scale=%f', cycle_interval, t, scale)
+
+        logger.debug('max_extent=%f, interval=%f, t=%f, scale=%f',
+                     max_extent, cycle_interval, t, scale)
         spacing = self.axis_spacing * scale
         return min(max(spacing, self.varspace_min), self.varspace_max)
 
