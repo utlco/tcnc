@@ -37,6 +37,8 @@ TAU = math.pi * 2
 
 #: Tolerance value used for floating point comparisons
 EPSILON = 1e-06
+#: Handy for comparing distance**2 when avoiding sqrt
+EPSILON2 = EPSILON * EPSILON
 #: Number of digits after decimal point
 EPSILON_PRECISION = 6
 #: Format string for float values that matches precision
@@ -61,9 +63,10 @@ def set_epsilon(value):
         value: Float tolerance value.
     """
     #pylint: disable=global-statement
-    global EPSILON, EPSILON_PRECISION, EPSILON_FLOAT_FMT
+    global EPSILON, EPSILON2, EPSILON_PRECISION, EPSILON_FLOAT_FMT
     # Tolerance value
     EPSILON = float(value)
+    EPSILON2 = EPSILON * EPSILON
     # Number of digits after decimal point
     EPSILON_PRECISION = max(0, int(round(abs(math.log(value, 10)))))
     # Format string for float values that matches precision
@@ -85,7 +88,7 @@ def float_eq(value1, value2):
     Returns:
         True if the two values are approximately equal.
     """
-    # This code tries to behave better when comparing small numbers:
+    # This method tries to behave better when comparing small numbers:
     #
 #     norm = max(abs(a), abs(b))
 #     return (norm < EPSILON) or (abs(a - b) < (EPSILON * norm))
