@@ -38,6 +38,11 @@ INKSCAPE_NS = {
 # Add the standard SVG namespaces
 INKSCAPE_NS.update(svg.SVG_NS)
 
+# Vendor specific namespace (in this case us)
+UTLCO_NS = {
+    u'utlco': u'http://www.utlco.com/namespaces/utlco',
+}
+
 def inkscape_ns(tag):
     """Prepend the `inkscape` namespace to an element tag."""
     return _add_ns(tag, INKSCAPE_NS, 'inkscape')
@@ -46,6 +51,9 @@ def sodipodi_ns(tag):
     """Prepend the `sodipodi` namespace to an element tag."""
     return _add_ns(tag, INKSCAPE_NS, 'sodipodi')
 
+def utlco_ns(tag):
+    """Prepend the `utlco` namespace to an element tag"""
+    return _add_ns(tag, UTLCO_NS, 'utlco')
 
 class InkscapeSVGContext(svg.SVGContext):
     """"""
@@ -150,7 +158,7 @@ class InkscapeSVGContext(svg.SVGContext):
 #            del layer[:]
 
     def create_layer(self, name, opacity=None, clear=True,
-                     incr_suffix=False, flipy=False):
+                     incr_suffix=False, flipy=False, tag=None):
         """Create an Inkscape layer or return an existing layer.
 
         Args:
@@ -163,6 +171,9 @@ class InkscapeSVGContext(svg.SVGContext):
                 it is non-empty then add an auto-incrementing numeric suffix
                 to the name (overrides *clear*).
             flipy: Add transform to flip Y axis.
+            tag (str): A layer tag added as an extended attribute.
+                Uses `utlco` namespace. This can be used to tag layers
+                with a custom label.
 
         Returns:
             A new layer or an existing layer of the same name.
@@ -178,6 +189,8 @@ class InkscapeSVGContext(svg.SVGContext):
         if layer is None:
             layer_attrs = {inkscape_ns('groupmode'): 'layer',
                            inkscape_ns('label'): layer_name}
+            if tag is not None:
+                layer_attrs[utlco_ns('tag')] = tag
             if opacity is not None:
                 opacity = min(max(opacity, 0.0), 1.0)
                 layer_attrs['style'] = 'opacity: %.2f;' % opacity
@@ -306,7 +319,8 @@ class InkscapeSVGContext(svg.SVGContext):
 
     def get_shape_elements(self, rootnode,
                         shapetags=_DEFAULT_SHAPES,
-                        parent_transform=None, skip_layers=None):
+                        parent_transform=None, skip_layers=None,
+                        accumulate_transform=True):
         """
         Traverse a tree of SVG nodes and flatten it to a list of
         tuples containing an SVG shape element and its accumulated transform.
@@ -326,6 +340,8 @@ class InkscapeSVGContext(svg.SVGContext):
             parent_transform: Transform matrix to add to each node's
                 transforms. If None the node's parent transform is used.
             skip_layers: A list of layer names (as regexes) to ignore
+            accumulate_transform: Apply parent transform(s) to element node
+                if True. Default is True.
 
         Returns:
             A possibly empty list of 2-tuples consisting of
@@ -344,11 +360,13 @@ class InkscapeSVGContext(svg.SVGContext):
             nodes.extend(self._get_shape_nodes_recurs(node, shapetags,
                                                       parent_transform,
                                                       check_parent,
-                                                      skip_layers))
+                                                      skip_layers,
+                                                      accumulate_transform))
         return nodes
 
     def _get_shape_nodes_recurs(self, node, shapetags, parent_transform,
-                                check_parent, skip_layers):
+                                check_parent, skip_layers,
+                                accumulate_transform):
         """Recursively traverse an SVG node tree and flatten it to a list of
         tuples containing an SVG shape element and its accumulated transform.
 
@@ -364,6 +382,8 @@ class InkscapeSVGContext(svg.SVGContext):
             parent_transform: Transform matrix to add to each node's transforms.
             check_parent: Check parent visibility
             skip_layers: A list of layer names (as regexes) to ignore
+            accumulate_transform: Apply parent transform(s) to element node
+                if True.
 
         Returns:
             A possibly empty list of 2-tuples consisting of
@@ -375,22 +395,24 @@ class InkscapeSVGContext(svg.SVGContext):
             parent_transform = self.get_parent_transform(node)
         nodelist = []
         # first apply the current transform matrix to this node's tranform
-        transform = self.parse_transform_attr(node.get('transform'))
-        node_transform = transform2d.compose_transform(parent_transform,
-                                                       transform)
+        node_transform = self.parse_transform_attr(node.get('transform'))
+        if accumulate_transform:
+            node_transform = transform2d.compose_transform(parent_transform,
+                                                           node_transform)
         if self.node_is_group(node):
-            if skip_layers is not None and skip_layers:
+            if self.is_layer(node) and skip_layers is not None and skip_layers:
                 layer_name = self.get_layer_name(node)
-                logger.debug('layer: %s', layer_name)
+#                logger.debug('layer: %s', layer_name)
                 for skip_layer in skip_layers:
                     if re.match(skip_layer, layer_name) is not None:
-                        logger.debug('skipping layer: %s', layer_name)
+#                        logger.debug('skipping layer: %s', layer_name)
                         return []
             # Recursively traverse group children
             for child_node in node:
                 subnodes = self._get_shape_nodes_recurs(child_node, shapetags,
                                                         node_transform,
-                                                        False, skip_layers)
+                                                        False, skip_layers,
+                                                        accumulate_transform)
                 nodelist.extend(subnodes)
         elif node.tag == svg_ns('use') or node.tag == 'use':
             # A <use> element refers to another SVG element via an
@@ -410,161 +432,13 @@ class InkscapeSVGContext(svg.SVGContext):
                                             node_transform, translation)
                     subnodes = self._get_shape_nodes_recurs(refnode, shapetags,
                                                             node_transform,
-                                                            False, skip_layers)
+                                                            False, skip_layers,
+                                                            accumulate_transform)
                     nodelist.extend(subnodes)
         elif svg.strip_ns(node.tag) in shapetags:
             nodelist.append((node, node_transform))
         return nodelist
 
-#     def convert_element_to_path(self, node):
-#         """Convert an SVG element into a simplepath.
-#
-#         This handles paths, rectangles, circles, ellipses, lines, and polylines.
-#         Anything else raises an exception.
-#         """
-#         # Do a lazy import here so that the module doesn't depend on it.
-#         import simplepath
-#
-#         node_tag = svg.strip_ns(node.tag) # node tag stripped of namespace part
-#
-#         if node_tag == 'path':
-#             return simplepath.parsePath(node.get('d'))
-#         elif node_tag == 'rect':
-#             return self.convert_rect_to_path(node)
-#         elif node_tag == 'line':
-#             return self.convert_line_to_path(node)
-#         elif node_tag == 'circle':
-#             return self.convert_circle_to_path(node)
-#         elif node_tag == 'ellipse':
-#             return self.convert_ellipse_to_path(node)
-#         elif node_tag == 'polyline':
-#             return self.convert_polyline_to_path(node)
-#         elif node_tag == 'polygon':
-#             return self.convert_polygon_to_path(node)
-#         elif node_tag == 'text':
-#             raise Exception(_('Unable to convert text. '
-#                               'Please convert text to paths first.'))
-#         elif node_tag == 'image':
-#             raise Exception(_('Unable to convert bitmap images. '
-#                               'Please convert them to line art first.'))
-#         else:
-#             raise Exception(_('Unable to convert this SVG element to a path:'
-#                               ' <%s>') % (node.tag))
-#
-#
-#     def convert_rect_to_path(self, node):
-#         """Convert an SVG rect shape element to a simplepath.
-#
-#         Convert this:
-#            <rect x='X' y='Y' width='W' height='H'/>
-#         to this:
-#            'M X1 Y1 L X1 Y2 L X2 Y2 L X2 Y1 Z'
-#         """
-#         x1 = float(node.get('x', 0))
-#         y1 = float(node.get('y', 0))
-#         x2 = x1 + float(node.get('width', 0))
-#         y2 = y1 + float(node.get('height', 0))
-#         return [['M', [x1, y1]], ['L', [x1, y2]], ['L', [x2, y2]],
-#                 ['L', [x2, y1]], ['L', [x1, y1]]]
-#         #return 'M %f %f L %f %f L %f %f L %f %f Z' % (x1, y1, x1, y2, x2, y2, x2, y1)
-#
-#
-#     def convert_line_to_path(self, node):
-#         """Convert an SVG line shape element to a simplepath.
-#
-#         Convert this:
-#            <line x1='X1' y1='Y1' x2='X2' y2='Y2/>
-#         to this:
-#            'MX1 Y1 LX2 Y2'
-#         """
-#         x1 = float(node.get('x1', 0))
-#         y1 = float(node.get('y1', 0))
-#         x2 = float(node.get('x2', 0))
-#         y2 = float(node.get('y2', 0))
-#         return [['M', [x1, y1]], ['L', [x2, y2]]]
-#         #return 'M %s %s L %s %s' % (node.get('x1'), node.get('y1'), node.get('x2'), node.get('y2'))
-#
-#
-#     def convert_circle_to_path(self, node):
-#         """Convert an SVG circle shape element to a simplepath.
-#         The circle is divided into two 180deg circular arcs.
-#
-#         Convert this:
-#            <circle r='RX' cx='X' cy='Y'/>
-#         to this:
-#            'M X1,CY A RX,RY 0 1 0 X2,CY A ...'
-#         """
-#         r = float(node.get('r', 0))
-#         cx = float(node.get('cx', 0))
-#         cy = float(node.get('cy', 0))
-#         d = [['M', [cx + r, cy]],
-#              ['A', [r, r, 0, 1, 1, cx - r, cy]],
-#              ['A', [r, r, 0, 1, 1, cx + r, cy]]]
-#         return d
-#
-#
-#     def convert_ellipse_to_path(self, node):
-#         """Convert an SVG ellipse shape element to a path.
-#         The ellipse is divided into two 180deg elliptical arcs.
-#
-#         Convert this:
-#            <ellipse rx='RX' ry='RY' cx='X' cy='Y'/>
-#         to this:
-#            'M X1,CY A RX,RY 0 1 0 X2,CY A RX,RY 0 1 0 X1,CY'
-#         """
-#         rx = float(node.get('rx', 0))
-#         ry = float(node.get('ry', 0))
-#         cx = float(node.get('cx', 0))
-#         cy = float(node.get('cy', 0))
-#         return [['M', [cx + rx, cy]],
-#                 ['A', [rx, ry, 0, 1, 1, cx - rx, cy]],
-#                 ['A', [rx, ry, 0, 1, 1, cx + rx, cy]]]
-#
-#
-#     def convert_polyline_to_path(self, node):
-#         """Convert an SVG line shape element to a path.
-#
-#         Convert this:
-#            <polyline points='x1,y1 x2,y2 x3,y3 [...]'/>
-#         to this:
-#            'M x1 y1 L x2 y2 L x3 y3 [...]'/>
-#         """
-#         points = node.get('points', '').split()
-#         point = points[0].split(',')
-#         d = [ [ 'M', [float(point[0]), float(point[1])] ], ]
-#         #d = 'M ' + ''.join(points[0].split(',')) # remove comma separator
-#         for i in range(1, len(points)):
-#             point = points[i].split(',')
-#             d.append( ['L', [float(point[0]), float(point[1])]] )
-#             #d += ' L ' + ''.join(points[i].split(','))
-#         return d
-#
-#
-#     def convert_polygon_to_path(self, node):
-#         """Convert an SVG line shape element to a path.
-#
-#         Convert this:
-#            <polygon points='x1,y1 x2,y2 x3,y3 [...]'/>
-#         to this:
-#            'M x1 y1 L x2 y2 L x3 y3 [...]'/>
-#         """
-#         d = self.convert_polyline_to_path(node)
-#         #d += ' Z' # close path for polygons
-#         d.append(['L', d[0][1]])
-#         return d
-
-#    _number = 0
-#    def _draw_number(self, vertices):
-#        centroid = self._polygon_centroid(vertices)
-#        attrs = {'x': str(centroid.x), 'y': str(centroid.y),
-#                 inkex.addNS('space','xml'): 'preserve',
-#                 'style': 'font-size:24px;font-family:Sans;fill:#000000'}
-#        #inkex.addNS('space','xml'): 'preserve'
-#        t = inkex.etree.SubElement(self.polygon_layers[0], inkex.addNS('text', 'svg'), attrs)
-#        attrs = {'x': str(centroid.x), 'y': str(centroid.y), inkex.addNS('role','sodipodi'):'line'}
-#        span = inkex.etree.SubElement(t, inkex.addNS('tspan', 'svg'), attrs)
-#        span.text = str(self._number)
-#        self._number += 1
 
 def create_inkscape_document(width, height, doc_units='px', doc_id=None,
                              doc_name=None,
