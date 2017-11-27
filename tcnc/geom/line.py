@@ -12,6 +12,7 @@ from future_builtins import *
 # from collections import namedtuple
 
 from . import const
+from . import debug
 
 from .point import P # @UnresolvedImport
 from .box import Box # @UnresolvedImport
@@ -225,6 +226,9 @@ class Line(tuple): # namedtuple('Line', 'p1, p2')):
             The return value will be < 0.0 if the projection lies south of the
             first point, and > 1.0 if it lies north of the second point.
         """
+        # Check for degenerate case where endpoints are coincident
+        if self.p1 == self.p2:
+            return 0
         v1 = self.p2 - self.p1
         return v1.normal_projection(p - self.p1)
 
@@ -248,8 +252,8 @@ class Line(tuple): # namedtuple('Line', 'p1, p2')):
         return self.p1 + v1 * u
 
     def distance_to_point(self, p, segment=False):
-        """Return the Euclidian distance from the spcified point and
-        its normal projection on to this line.
+        """Return the Euclidian distance from the specified point and
+        its normal projection on to this line or segment.
 
         See http://mathworld.wolfram.com/Point-LineDistance2-Dimensional.html
         http://paulbourke.net/geometry/pointlineplane/
@@ -261,21 +265,9 @@ class Line(tuple): # namedtuple('Line', 'p1, p2')):
                 return the shortest distance to either of the two endpoints.
                 Default is False.
         """
-#        v1 = self.p2 - self.p1 # Normalize the line segment
-#        # Check for the degenerate case where segment endpoints are coincident
-#        L2 = v1.length2()
-#        if L2 < (const.EPSILON * const.EPSILON):
-#            return self.p1.distance(p)
-#        v2 = p - self.p1 # Normalize the point vector
-#        u = v2.dot(v1) / L2 # Projection (0->1) on to segment
-#        if segment:
-#            if u <= 0: # Projection not on segment but nearer to p1?
-#                return self.p1.distance(p)
-#            elif u >= 1.0: # Projection not on segment but nearer to p2?
-#                return self.p2.distance(p)
-#        p_proj = self.p1 + v1*u # Point of projection on line segment
-#        d = p.distance(p_proj) # distance between point and projection
-#        return d
+#        p1 = self.normal_projection_point(p, segment)
+#        debug.draw_line((p, p1), color='#00ff00')
+#        return p1.distance(p)
         return self.normal_projection_point(p, segment).distance(p)
 
     def intersection_mu(self, other, segment=False, seg_a=False, seg_b=False):
@@ -351,13 +343,76 @@ class Line(tuple): # namedtuple('Line', 'p1, p2')):
         Returns:
             A point if they intersect otherwise None.
         """
-#         mu = self.intersection_mu(other, segment, seg_a, seg_b)
-#         if mu is None:
-#             return None
-#         return self.point_at(mu)
-        if segment:
-            seg_a = True
-            seg_b = True
+        mu = self.intersection_mu(other, segment, seg_a, seg_b)
+        if mu is None:
+            return None
+        return self.point_at(mu)
+#        if segment:
+#            seg_a = True
+#            seg_b = True
+#        x1, y1 = self[0]
+#        x2, y2 = self[1]
+#        x3, y3 = other[0]
+#        x4, y4 = other[1]
+#
+#        a = (x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)
+#        b = (x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)
+#        denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
+#
+#        if abs(denom) < const.EPSILON: # Lines are parallel ?
+##            if abs(a) < const.EPSILON and abs(b) < const.EPSILON: # Lines are coincident ?
+##                return self.midpoint()
+##            else:
+##                return None
+#            return None
+#
+#        mu_a = a / denom
+#        mu_b = b / denom
+#        mu_min = -const.EPSILON
+#        mu_max = 1.0 + const.EPSILON
+#        if ((seg_a and (mu_a < mu_min or mu_a > mu_max))
+#            or (seg_b and (mu_b < mu_min or mu_b > mu_max))):
+#            # The intersection lies outside the line segments
+#            return None
+#        x = x1 + mu_a * (x2 - x1)
+#        y = y1 + mu_a * (y2 - y1)
+#        return P(x, y)
+
+    def intersects(self, other):
+        """Return True if this segment intersects another segment.
+        """
+        return self.interection_mu(other, segment=True) is not None
+        # See also: http://algs4.cs.princeton.edu/91primitives/
+        # for slightly more efficient method.
+
+
+    def is_coincident(self, other, tolerance=None):
+        """Return True if this line segment is coincident with another segment.
+        
+        Args:
+            other (tuple): Another line segment as a 2-tuple
+                of end point tuples.
+            tolerance (float): A floating point comparison tolerance.
+                Default is geom.const.EPSILON.
+        """
+        if tolerance is None:
+            tolerance = const.EPSILON
+        return (self.p1.almost_equal(other[0], tolerance)
+                and self.p2.almost_equal(other[1], tolerance))
+
+    def is_parallel(self, other, inline=False):
+        """Determine if this line segment is parallel with another line.
+        
+        Args:
+            other (tuple): The other line as a tuple of two points.
+            inline (bool): The other line must also be inline
+                with this segment.
+                
+        Returns:
+            bool: True if the other segment is parallel. If `inline` is
+                True then the other segment must also be inline.
+                Otherwise False.
+        """
         x1, y1 = self[0]
         x2, y2 = self[1]
         x3, y3 = other[0]
@@ -367,30 +422,12 @@ class Line(tuple): # namedtuple('Line', 'p1, p2')):
         b = (x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)
         denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
 
-        if abs(denom) < const.EPSILON: # Lines are parallel ?
-            if abs(a) < const.EPSILON and abs(b) < const.EPSILON: # Lines are coincident ?
-                return self.midpoint()
+        if abs(denom) < const.EPSILON:
+            if inline:
+                return abs(a) < const.EPSILON and abs(b) < const.EPSILON
             else:
-                return None
-
-        mu_a = a / denom
-        mu_b = b / denom
-        mu_min = -const.EPSILON
-        mu_max = 1.0 + const.EPSILON
-        if ((seg_a and (mu_a < mu_min or mu_a > mu_max))
-            or (seg_b and (mu_b < mu_min or mu_b > mu_max))):
-            # The intersection lies outside the line segments
-            return None
-        x = x1 + mu_a * (x2 - x1)
-        y = y1 + mu_a * (y2 - y1)
-        return P(x, y)
-
-    def intersects(self, other):
-        """Return True if this segment intersects another segment.
-        """
-        return self.interection_mu(other, segment=True) is not None
-        # See also: http://algs4.cs.princeton.edu/91primitives/
-        # for slightly more efficient method.
+                return True
+        return False
 
     def extend(self, amount, from_midpoint=False):
         """Return a Line segment that is longer (or shorter) than this line by
