@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+
+  <name>Repeater</name>
+  <id>com.utlco.repeater</id>
+  <dependency type="executable" location="extensions">tcnc/repeater.py</dependency>
+  <effect needs-live-preview="false">
+    <effects-menu>
+      <submenu _name="UTLCo"/>
+    </effects-menu>
+    <object-type>path</object-type>
+  </effect>
+  <script>
+    <command reldir="extensions" interpreter="python">tcnc/repeater.py</command>
+  </script>
+
+  <param name="active-tab" type="notebook">
+
+    <page name="tab1" _gui-text="Options">
+      <param name="copies" type="int" min="0" max="99999" _gui-text="Number of copies">1</param>
+      <param name="interval" type="float" precision="4" min="0" max="99999" _gui-text="Repeat interval">1.0</param>
+      <param name="angle" type="float" precision="4" min="0" max="360" _gui-text="Angle from horizontal">0.0</param>
+      <param name="new-layer" type="boolean" _gui-text="Create new layer for output">false</param>
+    </page>
+
+    <page name="log" _gui-text="Debug">
+      <param name="create-debug-layer" type="boolean" _gui-text="Create debug layer">false</param>
+      <param name="log-create" type="boolean" _gui-text="Generate log file">false</param>
+      <param name="log-level" type="optiongroup" appearance="minimal" _gui-text="Log level">
+        <_option value="DEBUG">Debug</_option>
+        <_option value="INFO">Info</_option>
+        <_option value="WARNING">Warning</_option>
+        <_option value="ERROR">Error</_option>
+        <_option value="CRITICAL">Critical</_option>
+      </param>
+      <param name="log-filename" type="string" _gui-text="Full path to log file">~/inkext-repeater.log</param>
+    </page>
+
+    <page name="about" _gui-text="About">
+      <_param name="about-text" type="description">
+        Repeater Version 0.1
+        Duplicates selected path(s) along a straight line.
+        Copyright 2017 Claude Zervas
+      </_param>
+    </page>
+
+  </param>
+
+</inkscape-extension>
