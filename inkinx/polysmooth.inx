@@ -18,7 +18,9 @@
   <param name="active-tab" type="notebook">
 
     <page name="polysmooth" _gui-text="Options">
-      <param name="smoothness" type="int" min="0" max="100" _gui-text="Smoothness (percent)">50</param>
+      <param name="simplify" type="boolean" _gui-text="Simplify polylines">false</param>
+      <param name="simplify-tolerance" type="float" precision="4" min="0" max="9999" _gui-text="Tolerance for simplification">.01</param>
+      <param name="smoothness" type="int" min="0" max="200" _gui-text="Smoothness (percent)">50</param>
       <param name="new-layer" type="boolean" _gui-text="Create new layer for output">false</param>
       <param name="match-style" type="boolean" _gui-text="Match style of input path">false</param>
     </page>
