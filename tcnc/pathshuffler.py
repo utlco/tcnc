@@ -34,10 +34,12 @@ class BreakShuffle(inkext.InkscapeExtension):
     OPTIONSPEC = (
         inkext.ExtOption('--shuffle', type='inkbool', default=True,
                          help=_('Shuffle paths')),
-        inkext.ExtOption('--break-paths', type='inkbool', default=False,
-                         help=_('Break paths')),
-#         inkext.ExtOption('--shuffle', default='alt',
-#                          help=_('Path shuffle method')),
+        inkext.ExtOption('--explode-paths', type='inkbool', default=False,
+                         help=_('Explode paths')),
+        inkext.ExtOption('--reverse-order', type='inkbool', default=False,
+                         help=_('Reverse path order')),
+        inkext.ExtOption('--method', default='shuffle',
+                         help=_('Path arrangement method')),
 #         inkext.ExtOption('--shuffle-pathdir', default='',
 #                          help=_('Path direction shuffle method')),
     )
@@ -47,7 +49,7 @@ class BreakShuffle(inkext.InkscapeExtension):
     def run(self):
         """Main entry point for Inkscape extensions.
         """
-        if not self.options.shuffle and not self.options.break_paths:
+        if not self.options.shuffle and not self.options.explode_paths:
             return
 
         layer_elements = []
@@ -77,7 +79,8 @@ class BreakShuffle(inkext.InkscapeExtension):
         # Create a new layer for the SVG output.
         new_layer = self.svg.create_layer(self._LAYER_NAME, incr_suffix=True)
 
-        if self.options.break_paths:
+        # Explode the paths first
+        if self.options.explode_paths:
             exploded_layer_paths = []
             for paths in layer_paths:
                 exploded_paths = []
@@ -100,16 +103,20 @@ class BreakShuffle(inkext.InkscapeExtension):
                 exploded_layer_paths.append(exploded_paths)
             layer_paths = exploded_layer_paths
 
-        if self.options.shuffle:
-            all_paths = list(itertools.chain(*layer_paths))
+        all_paths = list(itertools.chain(*layer_paths))
+        if self.options.method == 'shuffle':
             random.shuffle(all_paths)
-            for path in all_paths:
-                new_layer.append(path)
-        else:
-            # Just add the exploded paths...
-            for paths in layer_paths:
-                for path in paths:
-                    new_layer.append(path)
+#            for path in all_paths:
+#                new_layer.append(path)
+        elif self.options.method == 'reverse':
+            all_paths.reverse()
+#        else:
+#            # Just add the exploded paths...
+#            for paths in layer_paths:
+#                for path in paths:
+#                    new_layer.append(path)
+        for path in all_paths:
+            new_layer.append(path)
 
 
 if __name__ == '__main__':
