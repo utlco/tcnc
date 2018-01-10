@@ -18,7 +18,6 @@ import logging
 
 import geom.debug
 from geom import bezier
-from geom import transform2d
 from geom import polygon
 from inkscape import inkext
 from svg import geomsvg
@@ -91,7 +90,6 @@ class PolySmooth(inkext.InkscapeExtension):
             new_layer = self.svg.create_layer(self._LAYER_NAME,
                                               incr_suffix=True)
 
-        logger.debug('simpl: %f', self.options.simplify_tolerance)
         default_style = self._styles['polysmooth']
         smoothness = self.options.smoothness / 100.0
         for element, element_transform in svg_elements:
@@ -113,7 +111,8 @@ class PolySmooth(inkext.InkscapeExtension):
                 else:
                     # Replace the original element with the smoothed one
                     parent = element.getparent()
-                    parent.remove(element)
+                    if parent is not None:
+                        parent.remove(element)
                 style = default_style
                 if self.options.match_style:
                     style = element.get('style')
@@ -158,6 +157,7 @@ class PolySmooth(inkext.InkscapeExtension):
             new_path.append(next_line)
             prev_pt = next_pt
         return new_path
+
 
 if __name__ == '__main__':
     PolySmooth().main(PolySmooth.OPTIONSPEC)
