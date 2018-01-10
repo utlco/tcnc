@@ -30,11 +30,17 @@
       </param>
     </page>
 
-    <page name="polyface" _gui-text="PolyFaces">
-      <param name="polyface-draw" type="boolean" _gui-text="Create face polygons">false</param>
-      <param name="polyface-offset" type="float" precision="6" min="-1000" max="1000" _gui-text="Offset">0</param>
-      <param name="polyface-fillet" type="boolean" _gui-text="Fillet face polygons">false</param>
-      <param name="polyface-fillet-radius" type="float" precision="6" min="-1000" max="1000" _gui-text="Fillet radius">0</param>
+    <page name="polyoffset" _gui-text="PolyOffsets">
+      <param name="polyoffset-draw" type="boolean" _gui-text="Create offset polygons">false</param>
+      <param name="polyoffset-recurs" type="boolean" _gui-text="Recursively offset polygons">false</param>
+      <param name="polyoffset-jointype" type="optiongroup" appearance="minimal" _gui-text="Join type">
+        <_option value="0">Square</_option>
+        <_option value="1">Round</_option>
+        <_option value="2">Miter</_option>
+      </param>
+      <param name="polyoffset-offset" type="float" precision="6" min="-1000" max="1000" _gui-text="Offset">0</param>
+      <param name="polyoffset-fillet" type="boolean" _gui-text="Fillet offset polygons">false</param>
+      <param name="polyoffset-fillet-radius" type="float" precision="6" min="-1000" max="1000" _gui-text="Fillet radius">0</param>
     </page>
 
     <page name="polyhull" _gui-text="PolyHull">
