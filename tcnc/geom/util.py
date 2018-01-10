@@ -52,6 +52,7 @@ def normalize_angle(angle, center=math.pi):
     """
     return angle - (TAU * math.floor((angle + math.pi - center) / TAU))
 
+
 def calc_rotation(start_angle, end_angle):
     """Calculate the amount of rotation required to get from
     `start_angle` to `end_angle`.
@@ -97,3 +98,12 @@ def segments_are_g1(seg1, seg2, tolerance=None):
     td = seg1.end_tangent_angle() - seg2.start_tangent_angle()
     is_G1 = abs(td) < tolerance
     return is_G0 and is_G1
+
+
+def reverse_path(path):
+    """Reverse in place the order and direction of path segments.
+    """
+    path.reverse()
+    for i, segment in enumerate(path):
+        path[i] = segment.reversed()
+    return path
