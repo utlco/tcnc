@@ -18,19 +18,20 @@
   <param name="active-tab" type="notebook">
 
     <page name="" _gui-text="Options">
-<!-- 
-      <param name="shuffle" type="optiongroup" appearance="minimal" _gui-text="Shuffle method">
-        <_option value="alt">Alternate</_option>
-        <_option value="rand">Random shuffle</_option>
+      <param name="method" type="optiongroup" appearance="minimal" _gui-text="Method">
+        <_option value="shuffle">Shuffle paths</_option>
+        <_option value="reverse">Reverse path order</_option>
       </param>
+<!-- 
       <param name="shuffle-pathdir" type="optiongroup" appearance="minimal" _gui-text="Path direction shuffle method">
         <_option value="">None</_option>
         <_option value="alt">Alternate</_option>
         <_option value="rand">Random shuffle</_option>
       </param>
--->
       <param name="shuffle" type="boolean" _gui-text="Shuffle paths">true</param>
-      <param name="break-paths" type="boolean" _gui-text="Explode paths">false</param>
+      <param name="reverse-order" type="boolean" _gui-text="Reverse path order">false</param>
+-->
+      <param name="explode-paths" type="boolean" _gui-text="Explode paths">false</param>
     </page>
 
     <page name="log" _gui-text="Debug">
