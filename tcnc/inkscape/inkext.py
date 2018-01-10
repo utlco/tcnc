@@ -23,6 +23,9 @@ from . import inksvg
 _ = gettext.gettext
 logger = logging.getLogger(__name__)
 
+# Default name of debug output layer
+_DEBUG_LAYER_NAME = 'inkext_debug'
+
 
 def _check_inkbool(dummy_option, opt_str, value):
     """Convert a string boolean (ie 'True' or 'False') to Python boolean."""
@@ -44,6 +47,7 @@ def _check_degrees(dummy_option, opt_str, value):
     except:
         errstr = 'option %s: invalid degree value: %s' % (opt_str, value)
         raise optparse.OptionValueError(errstr)
+
 
 def _check_percent(dummy_option, opt_str, value):
     """Convert a percentage specified as 0-100 to a float 0-1.0."""
@@ -89,14 +93,18 @@ class InkscapeExtension(object):
     See Also:
         inkex.Effect
     """
-    # Name of debug output layer
-    _DEBUG_LAYER_NAME = 'inkext_debug'
-
     # Built-in default extension options. These are commonly used...
     _DEFAULT_OPTIONS = (
-        # This option is used by Inkscape to pass the ids of selected SVG nodes
+        # This option is used by Inkscape to pass the ids of selected
+        # SVG elements
         ExtOption('--id', action='append', dest='ids', default=[],
                   help=_('id attribute of selected objects.')),
+        # This option is used by Inkscape to pass a list of selected
+        # Inkscape path nodes.
+        # Each list element is a string of the form
+        # '<path-id>:<subpath-index>:<node-index>'
+        ExtOption('--selected-nodes', action='append', default=[],
+                  help=_('Selected nodes')),
         # Used by Inkscape extension dialog to keep track of current tab
         ExtOption('--active-tab',),
         ExtOption('--output-file', '-o',
@@ -125,11 +133,13 @@ class InkscapeExtension(object):
         self.svg = None
         #: Debug SVG context if a debug layer has been created
         self.debug_svg = None
-        # List of selected element nodes
+        # List of selected SVG elements
         self._selected_elements = []
+        # List of selected Inkscape path nodes
+        self._selected_nodes = []
 
     def main(self, optionspec=None, flip_debug_layer=False,
-             debug_layer_name=None):
+             debug_layer_name=_DEBUG_LAYER_NAME):
         """Main entry point for the extension.
 
         Args:
@@ -159,10 +169,6 @@ class InkscapeExtension(object):
                             doc_units=self.options.doc_units)
             self.svg = inksvg.InkscapeSVGContext(document)
 
-        if debug_layer_name is None:
-            self.debug_layer_name = self._DEBUG_LAYER_NAME
-        else:
-            self.debug_layer_name = debug_layer_name
         # Create debug log file if specified.
         # The log file name is derived from a command line option
         # so this needs to be done after option parsing.
@@ -172,9 +178,10 @@ class InkscapeExtension(object):
         # Create debug layer and context if specified
         if getattr(self.options, 'create_debug_layer', False):
             self.debug_svg = inksvg.InkscapeSVGContext(self.svg.document)
-            debug_layer = self.debug_svg.create_layer(self.debug_layer_name,
+            debug_layer = self.debug_svg.create_layer(debug_layer_name,
                                                       flipy=flip_debug_layer)
             self.debug_svg.current_parent = debug_layer
+
         # Create a list of selected elements.
         # Inkscape passes a list of element node ids via the '--ids'
         # command line option.
@@ -182,6 +189,11 @@ class InkscapeExtension(object):
             for node_id in self.options.ids:
                 node = self.svg.get_node_by_id(node_id)
                 self._selected_elements.append(node)
+
+        # Create a list of selected Inkscape path nodes if any.
+        # TODO:
+#        logger.debug('nodes: ' + str(self.options.selected_nodes))
+
 #         for opt_str in self.options.docunit_options:
 #             value = self.options.docunit_options[opt_str]
 #             uvalue = getattr(self.options, opt_str)
@@ -251,13 +263,11 @@ class InkscapeExtension(object):
         """Set up option spec and parse command line options.
 
         """
-        # This option checking function needs the SVG document context
-        # before being defined.
-        # It converts 'document' UI units to SVG user units.
-#         def _check_docunits(dummy_option, dummy_opt_str, value):
-#             return self.svg.unit2uu(value, from_unit=self.svg.doc_units)
         docunit_options = {}
+
         def _check_docunits(option, dummy_opt_str, value):
+            # Docunits will be converted to user units later
+            # once an SVG context is created.
             docunit_options[option.dest] = float(value)
             return value
 
@@ -286,7 +296,7 @@ class InkscapeExtension(object):
         if doc_units is None or not doc_units:
             doc_units = 'px'
         for opt_str in options.docunit_options:
-            value = options.docunit_options[opt_str] # getattr(options, opt_str)
+            value = options.docunit_options[opt_str]
             uu_value = self.svg.unit2uu(value, from_unit=doc_units)
             setattr(options, opt_str, uu_value)
 
