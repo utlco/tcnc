@@ -53,14 +53,18 @@ class PolyPath(inkext.InkscapeExtension):
                          help='Polygon CSS stroke color.'),
         inkext.ExtOption('--polysegpath-stroke-width', default='3px',
                          help='Polygon CSS stroke width.'),
-        inkext.ExtOption('--polyface-draw', type='inkbool', default=True,
-                         help='Create polygon faces.'),
-        inkext.ExtOption('--polyface-offset', type='float', default=0,
-                         help='Polygon face offset.'),
-        inkext.ExtOption('--polyface-fillet', type='inkbool', default=False,
-                         help='Fillet polygon faces.'),
-        inkext.ExtOption('--polyface-fillet-radius', type='float', default=0,
-                         help='Polygon face fillet radius.'),
+        inkext.ExtOption('--polyoffset-draw', type='inkbool', default=True,
+                         help='Create offset polygons.'),
+        inkext.ExtOption('--polyoffset-recurs', type='inkbool', default=True,
+                         help='Recursively offset polygons'),
+        inkext.ExtOption('--polyoffset-jointype', type='int', default=0,
+                         help='Join type.'),
+        inkext.ExtOption('--polyoffset-offset', type='float', default=0,
+                         help='Polygon offset.'),
+        inkext.ExtOption('--polyoffset-fillet', type='inkbool', default=False,
+                         help='Fillet offset polygons.'),
+        inkext.ExtOption('--polyoffset-fillet-radius', type='float', default=0,
+                         help='Offset polygon fillet radius.'),
         inkext.ExtOption('--convex-hull-draw', type='inkbool', default=True,
                          help='Draw convex hull.'),
         inkext.ExtOption('--hull-draw', type='inkbool', default=True,
@@ -138,7 +142,7 @@ class PolyPath(inkext.InkscapeExtension):
             for segment in path:
                 segment_graph.add_edge(segment)
 
-        self.clip_rect = geom.box.Box((0,0), self.svg.get_document_size())
+        self.clip_rect = geom.box.Box((0, 0), self.svg.get_document_size())
 
         if self.options.polysegpath_draw or self.options.polysegpath_longest:
             path_builder = planargraph.GraphPathBuilder(segment_graph)
@@ -147,8 +151,8 @@ class PolyPath(inkext.InkscapeExtension):
             if self.options.polysegpath_longest:
                 self._draw_longest_polypaths(path_builder)
 
-        if self.options.polyface_draw:
-            self._draw_face_polygons(segment_graph)
+        if self.options.polyoffset_draw:
+            self._draw_offset_polygons(segment_graph)
 
         if self.options.convex_hull_draw:
             self._draw_convex_hull(segment_graph)
@@ -183,24 +187,52 @@ class PolyPath(inkext.InkscapeExtension):
                                     style=self._styles['polypath'],
                                     parent=layer)
 
-    def _draw_face_polygons(self, graph):
+    def _draw_offset_polygons(self, graph):
         layer = self.svg.create_layer('q_cell_polygons', incr_suffix=True)
-        faces = graph.get_face_polygons()
-        for face_poly in faces:
-            offset_poly = polygon.offset_polygon(face_poly,
-                                                 self.options.polyface_offset)
-            if offset_poly:
-                if (self.options.polyface_fillet
-                        and self.options.polyface_fillet_radius > 0):
-                    offset_path = fillet.fillet_polygon(offset_poly,
-                                        self.options.polyface_fillet_radius)
-                    self.svg.create_polypath(offset_path, close_path=True,
-                                            style=self._styles['polypath'],
-                                            parent=layer)
-                else:
-                    self.svg.create_polygon(offset_poly, close_path=True,
-                                            style=self._styles['polypath'],
-                                            parent=layer)
+        polygons = graph.get_face_polygons()
+        offset_polygons = self._offset_polys(polygons,
+                                             self.options.polyoffset_offset,
+                                             self.options.polyoffset_jointype,
+                                             self.options.polyoffset_recurs)
+        for poly in offset_polygons:
+            if (self.options.polyoffset_fillet
+                    and self.options.polyoffset_fillet_radius > 0):
+                offset_path = fillet.fillet_polygon(poly,
+                                    self.options.polyoffset_fillet_radius)
+                self.svg.create_polypath(offset_path, close_path=True,
+                                        style=self._styles['polypath'],
+                                        parent=layer)
+            else:
+                self.svg.create_polygon(poly, close_path=True,
+                                        style=self._styles['polypath'],
+                                        parent=layer)
+#        faces = graph.get_face_polygons()
+#        for face_poly in faces:
+#            offset_polys = polygon.offset_polygons(face_poly,
+#                                                  self.options.polyoffset_offset)
+#            for poly in offset_polys:
+#                if (self.options.polyoffset_fillet
+#                        and self.options.polyoffset_fillet_radius > 0):
+#                    offset_path = fillet.fillet_polygon(poly,
+#                                        self.options.polyoffset_fillet_radius)
+#                    self.svg.create_polypath(offset_path, close_path=True,
+#                                            style=self._styles['polypath'],
+#                                            parent=layer)
+#                else:
+#                    self.svg.create_polygon(poly, close_path=True,
+#                                            style=self._styles['polypath'],
+#                                            parent=layer)
+
+    def _offset_polys(self, polygons, offset, jointype, recurs=False):
+        offset_polygons = []
+        for poly in polygons:
+            offset_polys = polygon.offset_polygons(poly, offset, jointype)
+            offset_polygons.extend(offset_polys)
+            if recurs:
+                sub_offset_polys = self._offset_polys(offset_polys, offset,
+                                                      jointype, True)
+                offset_polygons.extend(sub_offset_polys)
+        return offset_polygons
 
     def _draw_convex_hull(self, segment_graph):
         layer = self.svg.create_layer('q_convex_hull', incr_suffix=True)
@@ -299,7 +331,7 @@ class PolyPath(inkext.InkscapeExtension):
         clockwise = polygon.area(vertices) < 0
         i = -3 if vertices[-1] == vertices[0] else -2
         vert1 = vertices[i]
-        vert2 = vertices[i+1]
+        vert2 = vertices[i + 1]
         for vert3 in vertices:
             seg = geom.Line(vert1, vert2)
             side = seg.which_side(vert3, inline=True)
@@ -328,7 +360,7 @@ class PolyPath(inkext.InkscapeExtension):
         clockwise = polygon.area(vertices) < 0
         i = -3 if vertices[-1] == vertices[0] else -2
         vert1 = vertices[i]
-        vert2 = vertices[i+1]
+        vert2 = vertices[i + 1]
         for vert3 in vertices:
             seg = geom.Line(vert1, vert2)
             side = seg.which_side(vert3)
