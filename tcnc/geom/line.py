@@ -378,13 +378,12 @@ class Line(tuple): # namedtuple('Line', 'p1, p2')):
 #        y = y1 + mu_a * (y2 - y1)
 #        return P(x, y)
 
-    def intersects(self, other):
+    def intersects(self, other, segment=False):
         """Return True if this segment intersects another segment.
         """
-        return self.interection_mu(other, segment=True) is not None
+        return self.interection_mu(other, segment=segment) is not None
         # See also: http://algs4.cs.princeton.edu/91primitives/
         # for slightly more efficient method.
-
 
     def is_coincident(self, other, tolerance=None):
         """Return True if this line segment is coincident with another segment.
@@ -526,16 +525,32 @@ class Line(tuple): # namedtuple('Line', 'p1, p2')):
         c2 = v1.cross(v3)
         return (c1 >= 0 and c1 >= 0) or (c1 < 0 and c2 < 0)
 
-    def point_on_line(self, p):
+    def point_on_line(self, p, segment=False):
         """Return True if the point lies on the line defined by this segment.
+        
+        Args:
+            p (geom.Point): the point to test
+            segment: If True, the point must be collinear AND lie between the two endpoints.
+                Default is False.
         """
         v1 = self.p2 - self.p1
         v2 = p - self.p1
-        return const.is_zero(v1.cross(v2))
+        is_collinear = const.is_zero(v1.cross(v2))
+        if segment and is_collinear:
+            x1, y1 = self.p1
+            x2, y2 = self.p2
+            return ((min(x1, x2) - const.EPSILON) <= p.x <= (max(x1, x2) + const.EPSILON)
+                    and (min(y1, y2) - const.EPSILON) <= p.y <= (max(y1, y2) + const.EPSILON))
+        return is_collinear
 
     def reversed(self):
         """Return a Line segment with start and end points reversed."""
         return Line(self.p2, self.p1)
+
+    def flipped(self):
+        """Return a Line segment flipped 180deg around the first point."""
+        p2 = -(self.p2 - self.p1) + self.p1
+        return Line(self.p1, p2)
 
     def __add__(self, other):
         """Add a scalar or another vector to this line.
