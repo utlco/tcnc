@@ -10,7 +10,6 @@ from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from future_builtins import *
 
-
 # svg.SVGContext for drawing debug output. Default is None.
 _SVG_CONTEXT = None
 
@@ -36,12 +35,12 @@ def draw_point(point, radius=3, color='#000000', parent=None):
                           parent=parent)
 
 
-def draw_line(line, color='#c00000', width='1px', verbose=False, parent=None):
+def draw_line(line, color='#c00000', width='1px', opacity=1, verbose=False, parent=None):
     """Draw an SVG line segment for debugging/testing"""
     svg = svg_context()
     if svg is not None:
-        style = ('fill:none;stroke:%s;stroke-width:%f;stroke-opacity:1' %
-                 (color, svg.unit2uu(width)))
+        style = ('fill:none;stroke:%s;stroke-width:%f;stroke-opacity:%f' %
+                 (color, svg.unit2uu(width), opacity))
         svg.create_line(line[0], line[1], style, parent=parent)
         if verbose:
             draw_point(line[0], color=color)
@@ -135,5 +134,4 @@ def draw_bezier(curve, color='#cccc99', verbose=False, parent=None):
             # Draw midpoint
             mp = curve.point_at(0.5)
             draw_point(mp, color='#00ff00', parent=parent)
-
 

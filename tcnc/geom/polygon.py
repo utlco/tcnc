@@ -34,8 +34,8 @@ from .line import Line
 # def dummy():
 #     print('dummy')
 
-
 TURN_LEFT, TURN_RIGHT, TURN_NONE = (1, -1, 0)
+
 
 def turn(p, q, r):
     """Returns -1, 0, 1 if p,q,r forms a right, straight, or left turn.
@@ -46,6 +46,7 @@ def turn(p, q, r):
     :param r: End point which determines turn direction. A 2-tuple (x, y) point.
     """
     return cmp((q[0] - p[0]) * (r[1] - p[1]) - (r[0] - p[0]) * (q[1] - p[1]), 0)
+
 
 def convex_hull(points):
     """Returns points on convex hull of an array of points in CCW order.
@@ -61,6 +62,7 @@ def convex_hull(points):
 #    lh.extend(uh[i] for i in range(1, len(uh) - 1))
     lh.extend(uh[1:-1])
     return lh
+
 
 def _keep_left(hull, r):
     while len(hull) > 1 and turn(hull[-2], hull[-1], r) != TURN_LEFT:
@@ -97,6 +99,7 @@ def convex_hull_chan(points):
             hull.append(P(p))
     return hull
 
+
 def _rtangent(hull, p):
     """Return the index of the point in hull that the right tangent line from p
     to hull touches.
@@ -121,6 +124,7 @@ def _rtangent(hull, p):
             l_next = turn(p, hull[l], hull[(l + 1) % len(hull)])
     return l
 
+
 def _min_hull_pt_pair(hulls):
     """Returns the hull, point index pair that is minimal."""
     h, p = 0, 0
@@ -130,11 +134,13 @@ def _min_hull_pt_pair(hulls):
             h, p = i, j
     return (h, p)
 
+
 def _dist2(p1, p2):
     """Euclidean distance squared between two points."""
     a = p1[0] - p2[0]
     b = p1[1] - p2[1]
     return (a * a) + (b * b)
+
 
 def _next_hull_pt_pair(hulls, pair):
     """
@@ -150,6 +156,7 @@ def _next_hull_pt_pair(hulls, pair):
         if t == TURN_RIGHT or t == TURN_NONE and _dist2(p, r) > _dist2(p, q):
             nextpair = (h, s)
     return nextpair
+
 
 def bounding_box(points):
     """Simple bounding box of a collection of points.
@@ -173,6 +180,7 @@ def bounding_box(points):
 # See http://paulbourke.net/geometry/polygonmesh/
 #==============================================================================
 
+
 def area(vertices):
     """Return the area of a simple polygon.
 
@@ -190,6 +198,7 @@ def area(vertices):
         # Accumulate the cross product of each pair of vertices
         area += ((p1[0] * p2[1]) - (p2[0] * p1[1]))
     return area / 2
+
 
 def area_triangle(a, b=None, c=None):
     """Area of a triangle.
@@ -214,6 +223,7 @@ def area_triangle(a, b=None, c=None):
     vy = c[1] - a[1]
     det = (ux * vy) - (uy * vx)
     return abs(det) / 2
+
 
 def centroid(vertices):
     """Return the centroid of a simple polygon.
@@ -244,7 +254,6 @@ def centroid(vertices):
     t = area * 3
     return P(x / t, y / t)
 
-
 #==============================================================================
 #Portions of this code (point in polygon test) are derived from:
 #http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
@@ -271,6 +280,7 @@ def centroid(vertices):
 #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #SOFTWARE.
 #==============================================================================
+
 
 def point_inside(vertices, p):
     """Return True if point `p` is inside the polygon defined by `vertices`.
@@ -359,13 +369,13 @@ def intersect_line(vertices, line):
             i += 2
     return segments
 
+
 def is_closed(vertices):
     """Return True if the polygon is closed. I.e. if the
     first vertice matches the last vertice."""
     x1, y1 = vertices[0]
     xn, yn = vertices[-1]
     return const.float_eq(x1, xn) and const.float_eq(y1, yn)
-
 
 #class ClipPolygon(object):
 #    """Clipping polygon."""
@@ -393,7 +403,8 @@ def is_closed(vertices):
 #        return intersect_line(self.vertices, line)
 #
 
-def offset_polygon(poly, offset, jointype=clipper.JoinType.Square, limit=0.0):
+
+def offset_polygons(poly, offset, jointype=clipper.JoinType.Square, limit=0.0):
     """
     Offset a polygon by *offset* amount.
     This is also called polygon buffering.
@@ -409,9 +420,9 @@ def offset_polygon(poly, offset, jointype=clipper.JoinType.Square, limit=0.0):
             will be squared off.
 
     Returns:
-        An offset polygon as a list of 2-tuple vertices.
+        Zero or more offset polygons as a list of 2-tuple vertices.
         If the specified offset cannot be performed for the input polygon
-        an empty polygon will be retured.
+        an empty list will be retured.
     """
     mult = (10 ** const.EPSILON_PRECISION)
     offset *= mult
@@ -419,11 +430,8 @@ def offset_polygon(poly, offset, jointype=clipper.JoinType.Square, limit=0.0):
     clipper_poly = poly2clipper(poly)
     clipper_offset_polys = clipper.OffsetPolygons((clipper_poly,), offset,
                            jointype=jointype, limit=limit)
-    if clipper_offset_polys:
-        offset_poly = clipper2poly(clipper_offset_polys[0])
-    else:
-        offset_poly = ()
-    return offset_poly
+    return [clipper2poly(p) for p in clipper_offset_polys]
+
 
 def poly2clipper(poly):
     """
@@ -437,6 +445,7 @@ def poly2clipper(poly):
         y = int(p.y * mult)
         clipper_poly.append(clipper.Point(x, y))
     return clipper_poly
+
 
 def clipper2poly(clipper_poly):
     """
@@ -499,6 +508,7 @@ def simplify_polyline_rdp(points, tolerance):
         # All points in between the endpoints are within the tolerance band
         # so skip them.
         return [chord.p1, chord.p2]
+
 
 def simplify_polyline_vw(points, tolerance):
     """Simplify a polyline (a list of line segments given
