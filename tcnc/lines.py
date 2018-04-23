@@ -28,6 +28,7 @@ from svg import css
 
 logger = logging.getLogger(__name__)
 
+
 class Lines(inkext.InkscapeExtension):
     """"""
     OPTIONSPEC = (
@@ -84,7 +85,7 @@ class Lines(inkext.InkscapeExtension):
                          help=_('Maximum line spacing')),
         inkext.ExtOption('--vline-varspacing-cycles', type='float', default=1,
                          help=_('Number of cycles')),
-        inkext.ExtOption('--vline-varspacing-formula', default='linear',
+        inkext.ExtOption('--vline-varspacing-formula', default='',
                          help=_('Spacing formula')),
         inkext.ExtOption('--vline-varspacing-invert', type='inkbool', default=True,
                          help=_('Invert spacing order')),
@@ -416,6 +417,7 @@ class Lines(inkext.InkscapeExtension):
 class LineSet(object):
     """
     """
+
     def __init__(self, cliprect, spacing, angle,
                    spacing_jitter=0,
                    angle_jitter=0, angle_jitter_kappa=2,
@@ -556,8 +558,9 @@ class LineSet(object):
         if self.varspace_invert:
             scale = 1.0 - scale
 
-        logger.debug('max_extent=%f, interval=%f, t=%f, scale=%f',
-                     max_extent, cycle_interval, t, scale)
+        logger.debug('formula=%s, max_extent=%f, interval=%f, t=%f, scale=%f',
+                     self.spacing_formula, max_extent, cycle_interval,
+                     t, scale)
         spacing = self.axis_spacing * scale
         return min(max(spacing, self.varspace_min), self.varspace_max)
 

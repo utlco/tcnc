@@ -64,6 +64,8 @@
       <param name="segpath-draw" type="boolean" _gui-text="Chain segments into paths">True</param>
       <param name="segpath-min-segments" type="int" min="0" max="10000" _gui-text="Min segments in path">1</param>
 -->
+      <param name="segbox-fill" type="boolean" _gui-text="Fill segment boxes">True</param>
+      <param name="segbox-layers" type="boolean" _gui-text="Create layers for box types">True</param>
     </page>
 
     <page name="polygons" _gui-text="Polygons">

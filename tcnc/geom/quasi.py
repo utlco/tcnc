@@ -33,7 +33,8 @@ class QuasiPlotter(object):
 
     Does nothing by default.
     """
-    def plot_polygon(self, dummy_vertices, dummy_color):
+
+    def plot_polygon(self, vertices, color):
         """Draw a polygon.
 
         Args:
@@ -53,6 +54,17 @@ class QuasiPlotter(object):
         Args:
             p1: Segment start point as tuple containing (x,y) coordinates.
             p2:  Segment end point as tuple containing (x,y) coordinates.
+        """
+        pass
+
+    def plot_segpoly(self, vertices, color):
+        """Draw a line segment box.
+
+        Args:
+            vertices: A list of tuples containing the (x,y) coordinates of the
+                polygon vertices.
+            color: Fill color. A value between 0.0 and 1.0 or None if
+                no fill.
         """
         pass
 
@@ -79,8 +91,8 @@ class _QVector(object):
         # Calculate the Y intercepts of the parallel offset lines
         self.b = []
         for r in range(numlines):
-            y1 = (self.y * (slot * salt_y)) - (self.x * (r - numlines/2))
-            x1 = (self.x * (slot * salt_x)) + (self.y * (r - numlines/2))
+            y1 = (self.y * (slot * salt_y)) - (self.x * (r - numlines / 2))
+            x1 = (self.x * (slot * salt_x)) + (self.y * (r - numlines / 2))
             self.b.append(y1 - (self.m * x1))
 
 
@@ -153,7 +165,7 @@ class Quasi(object):
     def quasi(self):
         """Draw tiling.
         """
-        index = [0,] * self.symmetry
+        index = [0, ] * self.symmetry
         maxline = self.numlines - 1
         minline = maxline / 2
         minrad = 0.0
@@ -176,12 +188,12 @@ class Quasi(object):
                                 v1 = vectors[t]
                                 v2 = vectors[r]
                                 x0 = (v1.b[n] - v2.b[m]) / (v2.m - v1.m)
-                                y0 = v1.m*x0 + v1.b[n]
+                                y0 = v1.m * x0 + v1.b[n]
                                 do_plot = True
                                 for i in range(self.symmetry):
                                     if i != t and i != r:
                                         v = vectors[i]
-                                        dx = -x0*v.y + (y0 - v.b[0])*v.x
+                                        dx = -x0 * v.y + (y0 - v.b[0]) * v.x
                                         index[i] = int(-dx)
                                         if (index[i] > self.numlines - 3
                                                 or index[i] < 1):
@@ -196,7 +208,7 @@ class Quasi(object):
         """Initialize and construct vectors for a de Bruijn grid.
         """
         vectors = []
-        phi = 2*math.pi / self.symmetry
+        phi = 2 * math.pi / self.symmetry
         # Even symmetries will produce line slopes of zero
         # which will cause a divide by zero exception.
         # In such cases the vector angles are slightly rotated.
@@ -270,6 +282,11 @@ class Quasi(object):
                     self.plotter.plot_segment(segpoly[2], segpoly[3])
                     self.plotter.plot_segment(segpoly[0], segpoly[3])
                     self.plotter.plot_segment(segpoly[1], segpoly[2])
+                    d1 = _distance2(segpoly[0], segpoly[1])
+                    d2 = _distance2(segpoly[1], segpoly[2])
+                    # Color == aspect ratio
+                    color = self._round(min(d1, d2) / max(d1, d2))
+                    self.plotter.plot_segpoly(segpoly, color)
             else:
                 if segtype == Quasi.SEG_VERT_ACUTE:
                     self.plotter.plot_segment(vertices[1], vertices[3])
@@ -297,3 +314,10 @@ class Quasi(object):
         return abs(a - b) < self.tolerance
 
 
+def _distance2(p1, p2):
+    """Euclidean distance squared to other point.
+    This can be used to compare distances without the
+    expense of a sqrt."""
+    a = p1[0] - p2[0]
+    b = p1[1] - p2[1]
+    return (a * a) + (b * b)

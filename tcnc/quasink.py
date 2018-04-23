@@ -32,13 +32,17 @@ __version__ = "0.2"
 _ = gettext.gettext
 logger = logging.getLogger(__name__)
 
+
 class IdentityProjector(object):
     """Identity projection. No distortion."""
+
     def project(self, p):
         return p
 
+
 class SphericalProjector(IdentityProjector):
     """Project a point on to a sphere."""
+
     def __init__(self, center, radius, invert=False):
         self.center = center
         self.radius = radius
@@ -92,6 +96,8 @@ class QuasiExtension(inkext.InkscapeExtension):
         'segment':
             'fill:none;stroke-opacity:0.8;'
             'stroke-width:$segment_stroke_width;stroke:$segment_stroke;',
+        'segbox':
+            'fill:%s;stroke:None',
         'segchain':
             'fill:%s;fill-opacity:0.5;stroke-opacity:0.75;stroke-linejoin:round;'
             'stroke-width:$segchain_stroke_width;stroke:$segchain_stroke;',
@@ -290,7 +296,6 @@ class QuasiExtension(inkext.InkscapeExtension):
 #             angle_key = lambda segment: hull_centroid.ccw_angle2(hull_centroid + geom.P(1, 0), segment.midpoint())
 #             polygon_segments.sort(key=angle_key)
 
-
         # Update styles with any command line option values
         self._styles.update(self.svg.styles_from_templates(
             self._styles, self._style_defaults, vars(self.options)))
@@ -328,6 +333,7 @@ class QuasiExtension(inkext.InkscapeExtension):
 
         if self.options.segment_draw:
             self._draw_segments(q.plotter.segments)
+            self._draw_segboxes(q.plotter)
 
         if self.options.segpath_draw:
             self._draw_segment_chains(q.plotter.segments)
@@ -361,7 +367,6 @@ class QuasiExtension(inkext.InkscapeExtension):
                              line_height=self.svg.unit2uu('25px'),
                              style=self._styles['infotext'],
                              parent=layer)
-
 
     def _draw_margins(self, bbox):
         layer = self.svg.create_layer('q_margins')
@@ -434,6 +439,38 @@ class QuasiExtension(inkext.InkscapeExtension):
 #                 if self.options.min_rhombus_width < min(d1, d2):
 #                     style = self._styles['polygon'] % (fill_lut[color_index],)
 #                     self.svg.create_polygon(vertices, style=style, parent=layer2)
+
+    def _draw_segboxes(self, plotter):
+        polygon_list = plotter.segpolys
+        fill_lut = self._FILL_LUT[self.options.polygon_fill_lut]
+        fill_lut_offset = self.options.polygon_fill_lut_offset
+        fill_style_template = self._styles['segbox']
+        fill_colors = sorted(plotter.segpoly_color_count.keys())
+
+        layer_name_prefix = 'q_segpolys_%d' % self.options.symmetry
+        if self.options.segbox_layers:
+            layers = []
+            for i in range(len(fill_colors)):
+                layer_name = layer_name_prefix + '_' + str(i)
+                layer = self.svg.create_layer(layer_name, incr_suffix=True)
+                layers.append(layer)
+        else:
+            layer1 = self.svg.create_layer(layer_name_prefix, incr_suffix=True)
+
+        color_index = 0
+        for i, vertices in enumerate(polygon_list):
+            if self.options.polygon_zfill:
+                color = plotter.segpoly_colors[i]
+                color_index = fill_colors.index(color)
+            else:
+                color_index = (color_index + 1)
+            css_color = fill_lut[(color_index + fill_lut_offset) % len(fill_lut)]
+            style = fill_style_template % (css_color,)
+            if self.options.segbox_layers:
+                self.svg.create_polygon(vertices, style=style,
+                                        parent=layers[color_index])
+            else:
+                self.svg.create_polygon(vertices, style=style, parent=layer1)
 
     def _draw_inset_polygons(self, polygon_list, offset, nmax=1):
         style = self._styles['polygon']
@@ -538,7 +575,7 @@ class QuasiExtension(inkext.InkscapeExtension):
                 style = self._styles['segchain'] % 'none'
             if not self.options.segpath_closed or polygon.is_closed(vertices):
                 self.svg.create_polygon(vertices, close_polygon=False,
-                                        close_path=True, style=style,
+                                        close_path=False, style=style,
                                         parent=layer)
 
     def _create_chains(self, segments):
@@ -561,6 +598,7 @@ class QuasiExtension(inkext.InkscapeExtension):
 class _SegmentChain(list):
     """A simple polygonal chain as a series of connected line segments.
     """
+
     def __init__(self, min_corner_angle=0.0):
         self.min_corner_angle = min_corner_angle
 
@@ -618,6 +656,7 @@ class _SegmentChain(list):
 class _QuasiPlotter(quasi.QuasiPlotter):
     """Accumulates the quasi geometry. Also transforms and clips.
     """
+
     def __init__(self, clip_region, transform_matrix, projector, clip_all=True):
         """
         :param clip_region: The clipping region
@@ -630,6 +669,9 @@ class _QuasiPlotter(quasi.QuasiPlotter):
         self.polygons = []
         self.polygon_colors = []
         self.segments = []
+        self.segpolys = []
+        self.segpoly_colors = []
+        self.segpoly_color_count = {}
         self.clip_region = clip_region
         self.transform_matrix = transform_matrix
         self.clip_all = clip_all
@@ -652,16 +694,9 @@ class _QuasiPlotter(quasi.QuasiPlotter):
     def plot_polygon(self, vertices, color):
         """
         """
-        assert(0.0 <= color <= 1.0)
-        xvertices = []
-        clip_count = 0
-        for vertex in vertices:
-            p = transform2d.matrix_apply_to_point(self.transform_matrix, vertex)
-            p = self.projector.project(geom.P(p))
-            xvertices.append(p)
-            if self.clip_region and not self.clip_region.point_inside(p):
-                clip_count += 1
-        if (self.clip_all and clip_count > 0) or clip_count > 3:
+#        assert(0.0 <= color <= 1.0)
+        xvertices = self._transform(vertices)
+        if not xvertices:
             return False
         self._update_bbox(xvertices)
         self.polygons.append(xvertices)
@@ -687,6 +722,20 @@ class _QuasiPlotter(quasi.QuasiPlotter):
 #         if self.clip_region is None or (self.clip_region.point_inside(p1) and
 #                                         self.clip_region.point_inside(p1)):
         self.segments.append(geom.Line(p1, p2))
+
+    def plot_segpoly(self, vertices, color):
+        """
+        """
+        xvertices = self._transform(vertices)
+        if not xvertices:
+            return False
+        self.segpolys.append(xvertices)
+        if color in self.color_count:
+            self.segpoly_color_count[color] += 1
+        else:
+            self.segpoly_color_count[color] = 1
+        self.segpoly_colors.append(color)
+        return True
 
     def recenter(self):
         """Re-center the polygons and segments so the bounding box is centered
@@ -721,6 +770,24 @@ class _QuasiPlotter(quasi.QuasiPlotter):
         return geom.Box(geom.P(self._xmin, self._ymin),
                         geom.P(self._xmax, self._ymax))
 
+    def _transform(self, vertices):
+        """Apply projection and transforms to a list of points.
+        
+        Returns:
+            A list of transformed points.
+        """
+        xvertices = []
+        clip_count = 0
+        for vertex in vertices:
+            p = transform2d.matrix_apply_to_point(self.transform_matrix, vertex)
+            p = self.projector.project(geom.P(p))
+            xvertices.append(p)
+            if self.clip_region and not self.clip_region.point_inside(p):
+                clip_count += 1
+        if (self.clip_all and clip_count > 0) or clip_count > 3:
+            return []
+        return xvertices
+
     def _update_bbox(self, points):
         """Update the bounding box with the given vertex point."""
         for p in points:
@@ -751,6 +818,8 @@ _OPTIONSPEC = (
 #     inkext.ExtOption('--segment-stroke', default='#000000', help='Segment CSS stroke color.'),
 #     inkext.ExtOption('--segment-width', default='.1in', help='Segment CSS stroke width.'),
     inkext.ExtOption('--segment-sort', type='int', default=0, help='Sort segments by.'),
+    inkext.ExtOption('--segbox-fill', type='inkbool', default=True, help='Fill segment boxes.'),
+    inkext.ExtOption('--segbox-layers', type='inkbool', default=True, help='Create layers for box types.'),
 
     inkext.ExtOption('--segpath-draw', type='inkbool', default=False, help='Draw segment paths.'),
     inkext.ExtOption('--segpath-closed', type='inkbool', default=False, help='Draw closed polygons only.'),
@@ -808,7 +877,6 @@ _OPTIONSPEC = (
     inkext.ExtOption('--project-radius-useclip', type='inkbool', default=False, help='Use clipping circle for radius.'),
     inkext.ExtOption('--project-radius', type='docunits', default=0.0, help='Projection radius.'),
     inkext.ExtOption('--blowup-scale', type='float', default=1.0, help='Blow up scale.'),
-
 
     inkext.ExtOption('--create-info-layer', type='inkbool', default=False, help='Create info layer'),
     inkext.ExtOption('--create-culledrhombus-layer', type='inkbool', default=False, help='Create culled rhombus layer'),
